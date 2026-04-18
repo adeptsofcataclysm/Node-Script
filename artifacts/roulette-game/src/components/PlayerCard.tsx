@@ -21,7 +21,7 @@ export function PlayerCard({ name, score, isActive, playerIndex, isDead }: Playe
           : { scale: 1, opacity: isDead ? 0.4 : 0.5 }
       }
       transition={{ duration: 0.4 }}
-      className="flex flex-col items-center text-center p-6 rounded-xl min-w-[140px]"
+      className="flex flex-col items-center text-center p-4 rounded-xl min-w-[105px]"
       style={{
         boxShadow: isActive && !isDead ? `0 0 20px ${color}` : "none",
         background: isActive && !isDead ? `rgba(${playerIndex === 0 ? "52,152,219" : "231,76,60"},0.08)` : "transparent",
@@ -35,7 +35,7 @@ export function PlayerCard({ name, score, isActive, playerIndex, isDead }: Playe
       >
         {name || `Player ${playerIndex + 1}`}
       </div>
-      <div className="text-6xl font-bold text-white" data-testid={`score-player-${playerIndex}`}>
+      <div className="text-4xl font-bold text-white" data-testid={`score-player-${playerIndex}`}>
         {score}
       </div>
       {isDead && (
