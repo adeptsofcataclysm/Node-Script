@@ -1,48 +1,65 @@
 import { type Server, type Socket } from "socket.io";
 import { logger } from "./lib/logger";
 
+const MAX_PLAYERS = 5;
+
 interface GameState {
   bulletPos: number;
   currentPos: number;
-  players: string[];
+  playerSockets: Record<number, string>;
   playerNamesByIndex: Record<number, string>;
+  connectedCount: number;
   turn: number;
   isSpinning: boolean;
   gameOver: boolean;
   roundCount: number;
+  eliminated: number[];
 }
 
 function createFreshState(): GameState {
   return {
     bulletPos: -1,
     currentPos: 0,
-    players: [],
+    playerSockets: {},
     playerNamesByIndex: {},
+    connectedCount: 0,
     turn: 0,
     isSpinning: false,
     gameOver: false,
     roundCount: 0,
+    eliminated: [],
   };
 }
 
+function nextActiveTurn(current: number, eliminated: number[], total: number): number {
+  let next = (current + 1) % total;
+  let attempts = 0;
+  while (eliminated.includes(next) && attempts < total) {
+    next = (next + 1) % total;
+    attempts++;
+  }
+  return next;
+}
+
 export function setupGame(io: Server) {
-  const gameState: GameState = createFreshState();
+  let gameState: GameState = createFreshState();
 
   io.on("connection", (socket: Socket) => {
     logger.info({ socketId: socket.id }, "Player connected");
 
-    if (gameState.players.length >= 2) {
+    if (gameState.connectedCount >= MAX_PLAYERS) {
       socket.emit("roomFull");
       socket.disconnect(true);
       return;
     }
 
-    const playerIndex = gameState.players.length;
-    gameState.players.push(socket.id);
+    const playerIndex = gameState.connectedCount;
+    gameState.playerSockets[playerIndex] = socket.id;
+    gameState.connectedCount += 1;
 
     socket.emit("assignedIndex", playerIndex);
     io.emit("updatePlayers", {
-      count: gameState.players.length,
+      count: gameState.connectedCount,
       playerNames: { ...gameState.playerNamesByIndex },
     });
 
@@ -52,23 +69,24 @@ export function setupGame(io: Server) {
       turn: gameState.turn,
       isSpinning: gameState.isSpinning,
       gameOver: gameState.gameOver,
-      playerCount: gameState.players.length,
+      playerCount: gameState.connectedCount,
       roundCount: gameState.roundCount,
+      eliminated: [...gameState.eliminated],
     });
 
     socket.on("setName", (name: string) => {
       const safeName = String(name).slice(0, 20).trim() || `Player ${playerIndex + 1}`;
       gameState.playerNamesByIndex[playerIndex] = safeName;
       io.emit("updatePlayers", {
-        count: gameState.players.length,
+        count: gameState.connectedCount,
         playerNames: { ...gameState.playerNamesByIndex },
       });
     });
 
     socket.on("spin", () => {
-      if (gameState.players[gameState.turn] !== socket.id) return;
+      if (gameState.playerSockets[gameState.turn] !== socket.id) return;
       if (gameState.isSpinning) return;
-      if (gameState.players.length < 2) return;
+      if (gameState.connectedCount < MAX_PLAYERS) return;
       if (gameState.gameOver) return;
 
       gameState.isSpinning = true;
@@ -85,26 +103,56 @@ export function setupGame(io: Server) {
     });
 
     socket.on("shoot", () => {
-      if (gameState.players[gameState.turn] !== socket.id) return;
+      if (gameState.playerSockets[gameState.turn] !== socket.id) return;
       if (gameState.isSpinning) return;
       if (gameState.bulletPos === -1) return;
       if (gameState.gameOver) return;
 
       const isBang = gameState.currentPos === gameState.bulletPos;
-
-      io.emit("shotResult", {
-        isBang,
-        playerIndex: gameState.turn,
-        pos: gameState.currentPos,
-        shooterId: socket.id,
-      });
+      const shooterIndex = gameState.turn;
 
       if (isBang) {
-        gameState.gameOver = true;
-        gameState.bulletPos = -1;
+        gameState.eliminated.push(shooterIndex);
+        const activeCount = MAX_PLAYERS - gameState.eliminated.length;
+
+        if (activeCount <= 1) {
+          gameState.gameOver = true;
+          gameState.bulletPos = -1;
+          const winnerIndex = Array.from({ length: MAX_PLAYERS }, (_, i) => i)
+            .find(i => !gameState.eliminated.includes(i)) ?? -1;
+
+          io.emit("shotResult", {
+            isBang: true,
+            playerIndex: shooterIndex,
+            pos: shooterIndex,
+            eliminated: [...gameState.eliminated],
+            winner: winnerIndex,
+          });
+        } else {
+          gameState.bulletPos = -1;
+          gameState.currentPos = 0;
+          gameState.turn = nextActiveTurn(shooterIndex, gameState.eliminated, MAX_PLAYERS);
+
+          io.emit("shotResult", {
+            isBang: true,
+            playerIndex: shooterIndex,
+            pos: shooterIndex,
+            eliminated: [...gameState.eliminated],
+            winner: null,
+          });
+          io.emit("nextTurn", { turn: gameState.turn });
+        }
       } else {
         gameState.currentPos = (gameState.currentPos + 1) % 6;
-        gameState.turn = (gameState.turn + 1) % 2;
+        gameState.turn = nextActiveTurn(shooterIndex, gameState.eliminated, MAX_PLAYERS);
+
+        io.emit("shotResult", {
+          isBang: false,
+          playerIndex: shooterIndex,
+          pos: gameState.currentPos,
+          eliminated: [...gameState.eliminated],
+          winner: null,
+        });
         io.emit("nextTurn", { turn: gameState.turn });
       }
     });
@@ -112,7 +160,22 @@ export function setupGame(io: Server) {
     socket.on("rematch", () => {
       if (!gameState.gameOver) return;
       const savedNames = { ...gameState.playerNamesByIndex };
-      const savedPlayers = [...gameState.players];
+      const savedSockets = { ...gameState.playerSockets };
+      const savedCount = gameState.connectedCount;
+
+      gameState = createFreshState();
+      gameState.playerNamesByIndex = savedNames;
+      gameState.playerSockets = savedSockets;
+      gameState.connectedCount = savedCount;
+
+      io.emit("rematch");
+    });
+
+    socket.on("disconnect", () => {
+      logger.info({ socketId: socket.id }, "Player disconnected");
+
+      delete gameState.playerSockets[playerIndex];
+      gameState.connectedCount -= 1;
 
       gameState.bulletPos = -1;
       gameState.currentPos = 0;
@@ -120,31 +183,10 @@ export function setupGame(io: Server) {
       gameState.isSpinning = false;
       gameState.gameOver = false;
       gameState.roundCount = 0;
-      gameState.playerNamesByIndex = savedNames;
-      gameState.players = savedPlayers;
-
-      io.emit("rematch");
-    });
-
-    socket.on("disconnect", () => {
-      logger.info({ socketId: socket.id }, "Player disconnected");
-      const disconnectedIndex = gameState.players.indexOf(socket.id);
-      gameState.players = gameState.players.filter((id) => id !== socket.id);
-      if (disconnectedIndex !== -1) {
-        delete gameState.playerNamesByIndex[disconnectedIndex];
-      }
-
-      if (gameState.players.length < 2) {
-        gameState.bulletPos = -1;
-        gameState.currentPos = 0;
-        gameState.turn = 0;
-        gameState.isSpinning = false;
-        gameState.gameOver = false;
-        gameState.roundCount = 0;
-      }
+      gameState.eliminated = [];
 
       io.emit("updatePlayers", {
-        count: gameState.players.length,
+        count: gameState.connectedCount,
         playerNames: { ...gameState.playerNamesByIndex },
       });
       io.emit("opponentLeft");
