@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pandora Roulette: Duo Mode</title>
+    <style>
+        :root { 
+            --bg: #050208; 
+            --accent: #9b59b6; 
+            --gold: #f1c40f; 
+            --p1-color: #3498db;
+            --p2-color: #e74c3c;
+        }
+        
+        body { 
+            background: var(--bg); color: white; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .custom-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('ТВОЯ_ССЫЛКА_ТУТ') no-repeat center center;
+            background-size: cover; z-index: -2;
+            filter: brightness(0.3) contrast(1.2);
+        }
+
+        /* Игровое табло */
+        .scoreboard {
+            position: absolute; top: 40px; display: flex; justify-content: space-around; width: 100%; max-width: 600px;
+        }
+        .player-info { text-align: center; transition: 0.5s; opacity: 0.5; padding: 10px; border-radius: 10px; }
+        .player-info.active { opacity: 1; transform: scale(1.2); box-shadow: 0 0 20px var(--accent); background: rgba(155, 89, 182, 0.1); }
+        .p1-name { color: var(--p1-color); letter-spacing: 2px; }
+        .p2-name { color: var(--p2-color); letter-spacing: 2px; }
+        .score-val { font-size: 3rem; font-weight: bold; }
+
+        #turn-announcer { margin-bottom: 20px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 3px; color: var(--accent); }
+
+        .cylinder { 
+            width: 260px; height: 260px; border: 4px solid var(--accent); border-radius: 50%; 
+            position: relative; transition: transform 2s cubic-bezier(0.15, 0, 0.15, 1);
+            background: rgba(0,0,0,0.95); box-shadow: 0 0 20px var(--accent);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 40px;
+        }
+
+        .chamber { width: 50px; height: 50px; background: #111; border-radius: 50%; position: absolute; border: 2px solid #222; }
+        .c1 { transform: rotate(0deg) translateY(-85px); }
+        .c2 { transform: rotate(60deg) translateY(-85px); }
+        .c3 { transform: rotate(120deg) translateY(-85px); }
+        .c4 { transform: rotate(180deg) translateY(-85px); }
+        .c5 { transform: rotate(240deg) translateY(-85px); }
+        .c6 { transform: rotate(300deg) translateY(-85px); }
+        .loaded { background: var(--gold); box-shadow: 0 0 30px var(--gold); }
+
+        .controls { display: flex; gap: 20px; z-index: 10; }
+        button { 
+            padding: 18px 36px; border: 1px solid var(--accent); background: rgba(0,0,0,0.8); 
+            color: var(--accent); cursor: pointer; font-weight: bold; text-transform: uppercase; 
+        }
+        button:hover:not(:disabled) { background: var(--accent); color: white; }
+        button:disabled { opacity: 0.1; }
+
+        #wasted {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center;
+            z-index: 100; flex-direction: column; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="custom-bg"></div>
+
+<div class="scoreboard">
+    <div id="p1-ui" class="player-info active">
+        <div class="p1-name">ИГРОК 1</div>
+        <div id="p1-score" class="score-val">0</div>
+    </div>
+    <div id="p2-ui" class="player-info">
+        <div class="p2-name">ИГРОК 2</div>
+        <div id="p2-score" class="score-val">0</div>
+    </div>
+</div>
+
+<div id="turn-announcer">Ход Игрока 1</div>
+
+<div class="cylinder" id="drum">
+    <div class="chamber c1" id="ch0"></div>
+    <div class="chamber c2" id="ch1"></div>
+    <div class="chamber c3" id="ch2"></div>
+    <div class="chamber c4" id="ch3"></div>
+    <div class="chamber c5" id="ch4"></div>
+    <div class="chamber c6" id="ch5"></div>
+</div>
+
+<div class="controls">
+    <button id="spinBtn" onclick="spin()">Крутануть</button>
+    <button id="shootBtn" onclick="shoot()" disabled>Выстрел</button>
+</div>
+
+<div id="wasted">
+    <h1 id="win-msg" style="color: white; font-size: 3rem; text-shadow: 0 0 20px var(--accent);"></h1>
+    <button onclick="restart()">Реванш</button>
+</div>
+
+<script>
+    let bulletPos = -1; 
+    let currentPos = 0; 
+    let rotation = 0;
+    let currentPlayer = 1;
+    let scores = { 1: 0, 2: 0 };
+    let isGameOver = false;
+
+    const sounds = {
+        spin: new Audio('https://soundjay.com'),
+        click: new Audio('https://soundjay.com'),
+        bang: new Audio('https://soundjay.com')
+    };
+
+    function spin() {
+        if (isGameOver) return;
+        document.getElementById('spinBtn').disabled = true;
+        bulletPos = Math.floor(Math.random() * 6);
+        currentPos = 0;
+        rotation += 1440 + (Math.floor(Math.random() * 6) * 60);
+        document.getElementById('drum').style.transform = `rotate(${rotation}deg)`;
+        sounds.spin.play();
+        setTimeout(() => {
+            document.getElementById('shootBtn').disabled = false;
+            document.getElementById('spinBtn').disabled = false;
+        }, 2000);
+    }
+
+    function shoot() {
+        if (isGameOver || bulletPos === -1) return;
+
+        if (currentPos === bulletPos) {
+            sounds.bang.play();
+            isGameOver = true;
+            document.getElementById(`ch${currentPos}`).classList.add('loaded');
+            const winner = currentPlayer === 1 ? 2 : 1;
+            document.getElementById('win-msg').innerHTML = `ИГРОК ${currentPlayer} ВЫБЫЛ<br><span style="color:var(--accent)">ПОБЕДА ИГРОКА ${winner}</span>`;
+            document.getElementById('wasted').style.display = 'flex';
+        } else {
+            sounds.click.play();
+            scores[currentPlayer]++;
+            updateUI();
+            
+            // Смена игрока
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            document.getElementById('turn-announcer').innerText = `Ход Игрока ${currentPlayer}`;
+            document.getElementById('p1-ui').classList.toggle('active');
+            document.getElementById('p2-ui').classList.toggle('active');
+
+            currentPos = (currentPos + 1) % 6;
+            rotation += 60;
+            document.getElementById('drum').style.transform = `rotate(${rotation}deg)`;
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('p1-score').innerText = scores[1];
+        document.getElementById('p2-score').innerText = scores[2];
+    }
+
+    function restart() {
+        scores = { 1: 0, 2: 0 };
+        currentPlayer = 1;
+        isGameOver = false;
+        bulletPos = -1;
+        updateUI();
+        document.getElementById('wasted').style.display = 'none';
+        document.getElementById('p1-ui').classList.add('active');
+        document.getElementById('p2-ui').classList.remove('active');
+        document.getElementById('turn-announcer').innerText = `Ход Игрока 1`;
+        document.getElementById('shootBtn').disabled = true;
+        document.querySelectorAll('.chamber').forEach(c => c.classList.remove('loaded'));
+    }
+</script>
+</body>
+</html>

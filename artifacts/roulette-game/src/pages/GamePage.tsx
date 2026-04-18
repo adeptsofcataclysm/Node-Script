@@ -6,6 +6,8 @@ import { PlayerCard } from "../components/PlayerCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const PLAYER_COLORS = ["#3498db", "#e74c3c"] as const;
+
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
   const {
@@ -21,6 +23,7 @@ export function GamePage() {
     myName,
     opponentLeft,
     roomFull,
+    scores,
     connectAndSetName,
     spin,
     shoot,
@@ -38,10 +41,10 @@ export function GamePage() {
 
   if (roomFull) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full p-8 border border-zinc-800 bg-zinc-900 rounded-lg text-center">
-          <h2 className="text-3xl font-serif text-red-600 mb-4">Room Full</h2>
-          <p className="text-zinc-400 font-mono text-sm">There is already a game in progress.</p>
+      <div className="game-root flex items-center justify-center p-4">
+        <div className="pandora-card text-center p-10 rounded-xl max-w-md w-full">
+          <h2 className="text-3xl font-bold uppercase tracking-widest mb-4" style={{ color: "#9b59b6" }}>Room Full</h2>
+          <p className="text-gray-400 font-mono text-sm">A game is already in progress.</p>
         </div>
       </div>
     );
@@ -49,36 +52,52 @@ export function GamePage() {
 
   if (!myName) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-        
-        <motion.div 
+      <div className="game-root flex items-center justify-center p-4">
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full p-8 border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm rounded-lg text-center relative z-10"
+          className="pandora-card text-center p-10 rounded-xl max-w-md w-full"
         >
-          <h1 className="text-5xl font-serif font-bold text-zinc-100 mb-2 tracking-tighter">ROULETTE</h1>
-          <p className="text-zinc-500 font-mono text-xs tracking-widest mb-8 uppercase">A game of chance</p>
-          
-          <form onSubmit={handleJoin} className="space-y-6">
-            <div className="space-y-2">
-              <Input
-                type="text"
-                placeholder="Enter your alias"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                className="bg-zinc-950 border-zinc-800 text-center font-mono uppercase tracking-wider h-12 rounded-none focus-visible:ring-1 focus-visible:ring-red-900 focus-visible:border-red-900"
-                maxLength={12}
-                required
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-red-900 hover:bg-red-800 text-zinc-100 rounded-none font-mono uppercase tracking-widest transition-all duration-300"
+          <h1 className="text-5xl font-bold uppercase tracking-widest mb-1" style={{ color: "white" }}>
+            PANDORA
+          </h1>
+          <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
+            Roulette: Duo Mode
+          </p>
+          <form onSubmit={handleJoin} className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Enter your alias"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="bg-black/60 border text-center font-mono uppercase tracking-wider h-12 rounded-none focus-visible:ring-0"
+              style={{ borderColor: "#9b59b6", color: "white" }}
+              maxLength={12}
+              required
+              data-testid="input-alias"
+            />
+            <button
+              type="submit"
               disabled={!nameInput.trim()}
+              className="w-full h-12 font-bold uppercase tracking-widest border transition-all duration-200 disabled:opacity-10"
+              style={{
+                borderColor: "#9b59b6",
+                background: "rgba(0,0,0,0.8)",
+                color: "#9b59b6",
+              }}
+              onMouseEnter={(e) => {
+                if (!nameInput.trim()) return;
+                (e.currentTarget as HTMLButtonElement).style.background = "#9b59b6";
+                (e.currentTarget as HTMLButtonElement).style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.8)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#9b59b6";
+              }}
+              data-testid="button-enter-room"
             >
               Enter Room
-            </Button>
+            </button>
           </form>
         </motion.div>
       </div>
@@ -86,113 +105,182 @@ export function GamePage() {
   }
 
   const oppIndex = myIndex === 0 ? 1 : 0;
-  const myNameDisplay = playerNames[String(myIndex)] || myName;
-  const oppNameDisplay = playerNames[String(oppIndex)] || "Waiting...";
+  const p0Name = playerNames["0"] || "Player 1";
+  const p1Name = playerNames["1"] || "Player 2";
+
+  const turnPlayerName = turn === 0 ? p0Name : p1Name;
+  const turnColor = PLAYER_COLORS[turn];
+
+  const winnerIndex = gameOver && shotResult
+    ? shotResult.playerIndex === 0 ? 1 : 0
+    : null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col relative overflow-hidden text-zinc-100">
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-      
-      {/* Cinematic Flash Effects */}
+    <div className="game-root flex flex-col items-center relative overflow-hidden">
+      {/* BANG flash */}
       <AnimatePresence>
-        {shotResult && (
+        {shotResult?.isBang && (
           <motion.div
-            key={`flash-${Date.now()}`}
-            initial={{ opacity: 1 }}
+            key="bang-flash"
+            initial={{ opacity: 0.8 }}
             animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className={`fixed inset-0 z-50 pointer-events-none ${
-              shotResult.isBang ? "bg-red-600 mix-blend-screen" : "bg-white mix-blend-overlay"
-            }`}
+            transition={{ duration: 1.8, ease: "easeOut" }}
+            className="fixed inset-0 z-50 pointer-events-none"
+            style={{ background: "rgba(231,76,60,0.4)", mixBlendMode: "screen" }}
           />
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col items-center justify-between p-6 md:p-12 relative z-10">
-        {/* Header / Status */}
-        <header className="w-full text-center space-y-2">
-          <h1 className="text-3xl font-serif font-bold tracking-widest opacity-80">ROULETTE</h1>
-          <div className="h-6">
-            {opponentLeft ? (
-              <p className="text-red-500 font-mono text-sm uppercase tracking-widest">Opponent abandoned the table</p>
-            ) : playerCount < 2 ? (
-              <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest animate-pulse">Waiting for opponent...</p>
-            ) : null}
-          </div>
-        </header>
-
-        {/* Players & Cylinder Area */}
-        <div className="w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 my-8">
-          <div className="order-2 md:order-1 w-full md:w-auto flex justify-center">
-            <PlayerCard 
-              name={myNameDisplay}
-              isMyTurn={turn === myIndex && playerCount === 2}
-              isMe={true}
-              isDead={gameOver && shotResult?.playerIndex === myIndex}
-            />
-          </div>
-          
-          <div className="order-1 md:order-2">
-            <Cylinder 
-              currentPos={currentPos} 
-              bulletPos={bulletPos} 
-              isSpinning={isSpinning} 
-              gameOver={gameOver} 
-            />
-          </div>
-
-          <div className="order-3 w-full md:w-auto flex justify-center">
-            <PlayerCard 
-              name={oppNameDisplay}
-              isMyTurn={turn === oppIndex && playerCount === 2}
-              isMe={false}
-              isDead={gameOver && shotResult?.playerIndex === oppIndex}
-            />
-          </div>
+      {/* Scoreboard */}
+      <div className="w-full max-w-xl flex justify-around items-center pt-10 pb-4 px-4">
+        <PlayerCard
+          name={p0Name}
+          score={scores[0] ?? 0}
+          isActive={turn === 0 && playerCount === 2 && !gameOver}
+          playerIndex={0}
+          isDead={gameOver && shotResult?.playerIndex === 0}
+        />
+        <div className="flex flex-col items-center gap-1 px-4">
+          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: "#9b59b6" }}>vs</span>
         </div>
+        <PlayerCard
+          name={p1Name}
+          score={scores[1] ?? 0}
+          isActive={turn === 1 && playerCount === 2 && !gameOver}
+          playerIndex={1}
+          isDead={gameOver && shotResult?.playerIndex === 1}
+        />
+      </div>
 
-        {/* Action Area */}
-        <div className="h-32 flex flex-col items-center justify-center w-full max-w-md">
-          {shotResult && !isSpinning && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`text-2xl font-serif font-bold tracking-widest uppercase mb-6 ${shotResult.isBang ? "text-red-500" : "text-zinc-400"}`}
+      {/* Turn announcer */}
+      <div className="h-8 flex items-center justify-center mb-2">
+        {opponentLeft ? (
+          <p className="text-sm font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
+            Opponent left the table
+          </p>
+        ) : playerCount < 2 ? (
+          <motion.p
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-sm font-mono uppercase tracking-[3px]"
+            style={{ color: "#9b59b6" }}
+          >
+            Waiting for opponent...
+          </motion.p>
+        ) : !gameOver ? (
+          <motion.p
+            key={`turn-${turn}`}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-sm font-bold uppercase tracking-[3px]"
+            style={{ color: turnColor }}
+          >
+            {isMyTurn ? "Your Turn" : `${turnPlayerName}'s Turn`}
+          </motion.p>
+        ) : null}
+      </div>
+
+      {/* Cylinder */}
+      <div className="my-6">
+        <Cylinder
+          currentPos={currentPos}
+          bulletPos={bulletPos}
+          isSpinning={isSpinning}
+          gameOver={gameOver}
+        />
+      </div>
+
+      {/* Controls */}
+      <div className="flex gap-5 z-10 mt-2">
+        <PandoraButton
+          onClick={spin}
+          disabled={!isMyTurn || isSpinning || gameOver || bulletPos !== -1}
+          data-testid="button-spin"
+        >
+          Spin Cylinder
+        </PandoraButton>
+        <PandoraButton
+          onClick={shoot}
+          disabled={!isMyTurn || isSpinning || gameOver || bulletPos === -1}
+          data-testid="button-shoot"
+        >
+          Fire
+        </PandoraButton>
+      </div>
+
+      {/* Result overlay */}
+      <AnimatePresence>
+        {gameOver && shotResult && (
+          <motion.div
+            key="result-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center text-center"
+            style={{ background: "rgba(0,0,0,0.92)" }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="flex flex-col items-center gap-6"
             >
-              {shotResult.isBang ? "BANG." : "Click."}
+              <h1
+                className="text-4xl md:text-5xl font-bold uppercase tracking-widest"
+                style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
+              >
+                {shotResult.playerIndex === 0 ? p0Name : p1Name} Eliminated
+              </h1>
+              {winnerIndex !== null && (
+                <p className="text-2xl font-bold uppercase tracking-widest" style={{ color: "#9b59b6" }}>
+                  {winnerIndex === 0 ? p0Name : p1Name} Wins
+                </p>
+              )}
+              <PandoraButton onClick={rematch} data-testid="button-rematch">
+                Rematch
+              </PandoraButton>
             </motion.div>
-          )}
-
-          {gameOver ? (
-            <Button
-              onClick={rematch}
-              className="px-12 py-6 bg-red-900 hover:bg-red-800 text-zinc-100 font-mono uppercase tracking-widest border border-red-700 shadow-[0_0_20px_rgba(153,27,27,0.3)] rounded-none"
-            >
-              Play Again
-            </Button>
-          ) : isMyTurn && !isSpinning && !gameOver ? (
-            <div className="flex gap-4 w-full">
-              {bulletPos === -1 && (
-                <Button
-                  onClick={spin}
-                  className="flex-1 py-8 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono uppercase tracking-widest border border-zinc-700 rounded-none"
-                >
-                  Spin Cylinder
-                </Button>
-              )}
-              {bulletPos !== -1 && (
-                <Button
-                  onClick={shoot}
-                  className="flex-1 py-8 bg-red-950 hover:bg-red-900 text-red-100 font-serif text-xl font-bold tracking-widest border border-red-800 shadow-[0_0_20px_rgba(153,27,27,0.2)] hover:shadow-[0_0_30px_rgba(153,27,27,0.4)] rounded-none transition-all"
-                >
-                  PULL TRIGGER
-                </Button>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function PandoraButton({
+  children,
+  onClick,
+  disabled,
+  "data-testid": testId,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  "data-testid"?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      data-testid={testId}
+      className="px-9 py-5 font-bold uppercase tracking-widest border transition-all duration-200 disabled:opacity-10 disabled:cursor-not-allowed"
+      style={{
+        borderColor: "#9b59b6",
+        background: "rgba(0,0,0,0.8)",
+        color: "#9b59b6",
+      }}
+      onMouseEnter={(e) => {
+        if (disabled) return;
+        (e.currentTarget as HTMLButtonElement).style.background = "#9b59b6";
+        (e.currentTarget as HTMLButtonElement).style.color = "white";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.8)";
+        (e.currentTarget as HTMLButtonElement).style.color = "#9b59b6";
+      }}
+    >
+      {children}
+    </button>
   );
 }

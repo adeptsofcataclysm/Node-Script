@@ -16,6 +16,7 @@ export function useGameSocket() {
   const [myName, setMyName] = useState("");
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
+  const [scores, setScores] = useState<Record<number, number>>({ 0: 0, 1: 0 });
 
   useEffect(() => {
     const s = io({ path: "/socket.io" });
@@ -55,6 +56,11 @@ export function useGameSocket() {
       if (result.isBang) {
         setGameOver(true);
         setBulletPos(result.pos);
+      } else {
+        setScores((prev) => ({
+          ...prev,
+          [result.playerIndex]: (prev[result.playerIndex] ?? 0) + 1,
+        }));
       }
       setCurrentPos(result.pos);
     });
@@ -69,6 +75,7 @@ export function useGameSocket() {
       setCurrentPos(0);
       setShotResult(null);
       setIsSpinning(false);
+      setScores({ 0: 0, 1: 0 });
     });
 
     s.on("opponentLeft", () => {
@@ -92,21 +99,15 @@ export function useGameSocket() {
   }, [socket]);
 
   const spin = useCallback(() => {
-    if (socket) {
-      socket.emit("spin");
-    }
+    if (socket) socket.emit("spin");
   }, [socket]);
 
   const shoot = useCallback(() => {
-    if (socket) {
-      socket.emit("shoot");
-    }
+    if (socket) socket.emit("shoot");
   }, [socket]);
 
   const rematch = useCallback(() => {
-    if (socket) {
-      socket.emit("rematch");
-    }
+    if (socket) socket.emit("rematch");
   }, [socket]);
 
   return {
@@ -123,6 +124,7 @@ export function useGameSocket() {
     myName,
     opponentLeft,
     roomFull,
+    scores,
     connectAndSetName,
     spin,
     shoot,

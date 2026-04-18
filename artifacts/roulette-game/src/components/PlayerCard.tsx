@@ -2,43 +2,52 @@ import { motion } from "framer-motion";
 
 interface PlayerCardProps {
   name: string;
-  isMyTurn: boolean;
-  isMe: boolean;
+  score: number;
+  isActive: boolean;
+  playerIndex: number;
   isDead: boolean;
 }
 
-export function PlayerCard({ name, isMyTurn, isMe, isDead }: PlayerCardProps) {
+const PLAYER_COLORS = ["#3498db", "#e74c3c"] as const;
+
+export function PlayerCard({ name, score, isActive, playerIndex, isDead }: PlayerCardProps) {
+  const color = PLAYER_COLORS[playerIndex] ?? "#9b59b6";
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`p-6 rounded-lg border-2 w-full max-w-[240px] flex flex-col items-center justify-center transition-colors duration-300 ${
-        isMyTurn && !isDead ? "border-red-800 bg-zinc-900/80 shadow-[0_0_30px_rgba(153,27,27,0.15)]" : "border-zinc-800 bg-zinc-950"
-      } ${isDead ? "opacity-50 grayscale" : ""}`}
+    <motion.div
+      animate={
+        isActive && !isDead
+          ? { scale: 1.15, opacity: 1 }
+          : { scale: 1, opacity: isDead ? 0.4 : 0.5 }
+      }
+      transition={{ duration: 0.4 }}
+      className="flex flex-col items-center text-center p-6 rounded-xl min-w-[140px]"
+      style={{
+        boxShadow: isActive && !isDead ? `0 0 20px ${color}` : "none",
+        background: isActive && !isDead ? `rgba(${playerIndex === 0 ? "52,152,219" : "231,76,60"},0.08)` : "transparent",
+        border: `1px solid ${isActive && !isDead ? color : "transparent"}`,
+        transition: "box-shadow 0.4s, background 0.4s, border 0.4s",
+      }}
     >
-      <h3 className="font-serif text-2xl font-bold tracking-wider text-zinc-100 uppercase mb-2 truncate w-full text-center">
-        {name}
-      </h3>
-      
-      {isMe && (
-        <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4">
-          (You)
-        </span>
-      )}
-      
-      <div className="h-8 flex items-center justify-center">
-        {isDead ? (
-          <span className="text-4xl text-red-600 filter drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] font-serif font-bold">DEAD</span>
-        ) : isMyTurn ? (
-          <motion.div 
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="px-3 py-1 bg-red-950/50 border border-red-900 text-red-500 text-xs font-mono uppercase tracking-widest rounded"
-          >
-            Turn
-          </motion.div>
-        ) : null}
+      <div
+        className="text-sm font-bold uppercase tracking-[3px] mb-2"
+        style={{ color }}
+      >
+        {name || `Player ${playerIndex + 1}`}
       </div>
+      <div className="text-6xl font-bold text-white" data-testid={`score-player-${playerIndex}`}>
+        {score}
+      </div>
+      {isDead && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mt-2 text-xs font-mono uppercase tracking-widest"
+          style={{ color: "#e74c3c" }}
+        >
+          Eliminated
+        </motion.div>
+      )}
     </motion.div>
   );
 }

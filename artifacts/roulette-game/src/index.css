@@ -50,32 +50,35 @@
 }
 
 :root {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 90%;
-  --border: 0 0% 15%;
-  --card: 0 0% 6%;
-  --card-foreground: 0 0% 90%;
-  --card-border: 0 0% 15%;
-  --popover: 0 0% 6%;
-  --popover-foreground: 0 0% 90%;
-  --popover-border: 0 0% 15%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 38 92% 50%;
-  --accent-foreground: 0 0% 10%;
-  --destructive: 0 84% 45%;
+  /* Deep near-black background like #050208 */
+  --background: 270 43% 2%;
+  --foreground: 0 0% 92%;
+  --border: 270 20% 18%;
+  --card: 270 30% 5%;
+  --card-foreground: 0 0% 92%;
+  --card-border: 270 20% 16%;
+  --popover: 270 30% 5%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: 270 20% 16%;
+  /* Purple accent #9b59b6 → hsl(288 47% 53%) */
+  --primary: 288 47% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 270 20% 10%;
+  --secondary-foreground: 0 0% 85%;
+  --muted: 270 20% 10%;
+  --muted-foreground: 270 10% 55%;
+  /* Gold accent for special use */
+  --accent: 45 97% 50%;
+  --accent-foreground: 0 0% 5%;
+  --destructive: 6 78% 57%;
   --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 15%;
-  --ring: 0 0% 30%;
+  --input: 270 20% 14%;
+  --ring: 288 47% 40%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: 'Playfair Display', Georgia, serif;
-  --app-font-mono: 'Space Mono', monospace;
-  --radius: 0.25rem;
+  --app-font-sans: 'Arial', sans-serif;
+  --app-font-serif: 'Arial', sans-serif;
+  --app-font-mono: 'Courier New', monospace;
+  --radius: 0rem;
 
   --primary-border: hsl(var(--primary));
   --secondary-border: hsl(var(--secondary));
@@ -85,27 +88,27 @@
 }
 
 .dark {
-  --background: 0 0% 4%;
-  --foreground: 0 0% 90%;
-  --border: 0 0% 15%;
-  --card: 0 0% 6%;
-  --card-foreground: 0 0% 90%;
-  --card-border: 0 0% 15%;
-  --popover: 0 0% 6%;
-  --popover-foreground: 0 0% 90%;
-  --popover-border: 0 0% 15%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 38 92% 50%;
-  --accent-foreground: 0 0% 10%;
-  --destructive: 0 84% 45%;
+  --background: 270 43% 2%;
+  --foreground: 0 0% 92%;
+  --border: 270 20% 18%;
+  --card: 270 30% 5%;
+  --card-foreground: 0 0% 92%;
+  --card-border: 270 20% 16%;
+  --popover: 270 30% 5%;
+  --popover-foreground: 0 0% 92%;
+  --popover-border: 270 20% 16%;
+  --primary: 288 47% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 270 20% 10%;
+  --secondary-foreground: 0 0% 85%;
+  --muted: 270 20% 10%;
+  --muted-foreground: 270 10% 55%;
+  --accent: 45 97% 50%;
+  --accent-foreground: 0 0% 5%;
+  --destructive: 6 78% 57%;
   --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 15%;
-  --ring: 0 0% 30%;
+  --input: 270 20% 14%;
+  --ring: 288 47% 40%;
 }
 
 @layer base {
@@ -115,7 +118,18 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif tracking-tight;
-  }
+}
+
+.game-root {
+  min-height: 100vh;
+  background: #050208;
+  color: white;
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.pandora-card {
+  background: rgba(5, 2, 8, 0.92);
+  border: 1px solid #9b59b6;
+  box-shadow: 0 0 30px rgba(155, 89, 182, 0.15);
 }
