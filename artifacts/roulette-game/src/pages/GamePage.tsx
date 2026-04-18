@@ -2,11 +2,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameSocket } from "../hooks/useGameSocket";
 import { Cylinder } from "../components/Cylinder";
-import { PlayerCard } from "../components/PlayerCard";
-import { Button } from "@/components/ui/button";
+import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 
-const PLAYER_COLORS = ["#3498db", "#e74c3c"] as const;
+const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
@@ -23,28 +22,37 @@ export function GamePage() {
     myName,
     opponentLeft,
     roomFull,
+    eliminated,
+    winner,
     scores,
     hasSpun,
+    maxPlayers,
     connectAndSetName,
     spin,
     shoot,
     rematch,
   } = useGameSocket();
 
-  const isMyTurn = myIndex !== null && myIndex === turn && playerCount === 2;
+  const gameReady = playerCount === maxPlayers;
+  const isMyTurn =
+    myIndex !== null &&
+    myIndex === turn &&
+    gameReady &&
+    !eliminated.includes(myIndex) &&
+    !gameOver;
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (nameInput.trim()) {
-      connectAndSetName(nameInput.trim());
-    }
+    if (nameInput.trim()) connectAndSetName(nameInput.trim());
   };
 
   if (roomFull) {
     return (
       <div className="game-root flex items-center justify-center p-4">
         <div className="pandora-card text-center p-10 rounded-xl max-w-md w-full">
-          <h2 className="text-3xl font-bold uppercase tracking-widest mb-4" style={{ color: "#9b59b6" }}>Room Full</h2>
+          <h2 className="text-3xl font-bold uppercase tracking-widest mb-4" style={{ color: "#9b59b6" }}>
+            Room Full
+          </h2>
           <p className="text-gray-400 font-mono text-sm">A game is already in progress.</p>
         </div>
       </div>
@@ -54,16 +62,7 @@ export function GamePage() {
   if (!myName) {
     return (
       <div className="game-root flex items-center justify-center p-4">
-        {/* Background image */}
-        <div
-          className="fixed inset-0 z-0"
-          style={{
-            backgroundImage: "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "brightness(0.3) contrast(1.2)",
-          }}
-        />
+        <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3) contrast(1.2)" }} />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -73,7 +72,7 @@ export function GamePage() {
             PANDORA
           </h1>
           <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
-            Roulette: Duo Mode
+            Roulette: {maxPlayers}-Player Mode
           </p>
           <form onSubmit={handleJoin} className="space-y-4">
             <Input
@@ -87,57 +86,28 @@ export function GamePage() {
               required
               data-testid="input-alias"
             />
-            <button
-              type="submit"
-              disabled={!nameInput.trim()}
-              className="w-full h-12 font-bold uppercase tracking-widest border transition-all duration-200 disabled:opacity-10"
-              style={{
-                borderColor: "#9b59b6",
-                background: "rgba(0,0,0,0.8)",
-                color: "#9b59b6",
-              }}
-              onMouseEnter={(e) => {
-                if (!nameInput.trim()) return;
-                (e.currentTarget as HTMLButtonElement).style.background = "#9b59b6";
-                (e.currentTarget as HTMLButtonElement).style.color = "white";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.8)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#9b59b6";
-              }}
-              data-testid="button-enter-room"
-            >
+            <PandoraButton type="submit" disabled={!nameInput.trim()} data-testid="button-enter-room">
               Enter Room
-            </button>
+            </PandoraButton>
           </form>
         </motion.div>
       </div>
     );
   }
 
-  const oppIndex = myIndex === 0 ? 1 : 0;
-  const p0Name = playerNames["0"] || "Player 1";
-  const p1Name = playerNames["1"] || "Player 2";
+  const turnPlayerName = playerNames[String(turn)] || `P${turn + 1}`;
+  const turnColor = PLAYER_COLORS[turn] ?? "#9b59b6";
 
-  const turnPlayerName = turn === 0 ? p0Name : p1Name;
-  const turnColor = PLAYER_COLORS[turn];
-
-  const winnerIndex = gameOver && shotResult
-    ? shotResult.playerIndex === 0 ? 1 : 0
+  const winnerName = winner !== null ? (playerNames[String(winner)] || `P${winner + 1}`) : null;
+  const eliminatedPlayerName = shotResult
+    ? playerNames[String(shotResult.playerIndex)] || `P${shotResult.playerIndex + 1}`
     : null;
 
   return (
     <div className="game-root flex flex-col items-center relative overflow-hidden">
-      {/* Background image */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "brightness(0.25) contrast(1.2)",
-        }}
-      />
+      {/* Background */}
+      <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
+
       {/* BANG flash */}
       <AnimatePresence>
         {shotResult?.isBang && (
@@ -153,44 +123,38 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* Scoreboard */}
-      <div className="w-full max-w-xl flex justify-around items-center pt-10 pb-4 px-4">
-        <PlayerCard
-          name={p0Name}
-          score={scores[0] ?? 0}
-          isActive={turn === 0 && playerCount === 2 && !gameOver}
-          playerIndex={0}
-          isDead={gameOver && shotResult?.playerIndex === 0}
-        />
-        <div className="flex flex-col items-center gap-1 px-4">
-          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: "#9b59b6" }}>vs</span>
-        </div>
-        <PlayerCard
-          name={p1Name}
-          score={scores[1] ?? 0}
-          isActive={turn === 1 && playerCount === 2 && !gameOver}
-          playerIndex={1}
-          isDead={gameOver && shotResult?.playerIndex === 1}
-        />
+      {/* Scoreboard — 5 cards */}
+      <div className="w-full max-w-3xl flex flex-wrap justify-center items-center gap-2 pt-6 pb-2 px-4 z-10">
+        {Array.from({ length: maxPlayers }, (_, i) => (
+          <PlayerCard
+            key={i}
+            name={playerNames[String(i)] || `P${i + 1}`}
+            score={scores[i] ?? 0}
+            isActive={turn === i && gameReady && !gameOver}
+            playerIndex={i}
+            isDead={!!shotResult?.isBang && shotResult.playerIndex === i && gameOver}
+            isEliminated={eliminated.includes(i)}
+          />
+        ))}
       </div>
 
-      {/* Cylinder + controls centered block */}
+      {/* Cylinder + controls */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 z-10 pb-10">
 
         {/* Turn announcer */}
         <div className="h-8 flex items-center justify-center">
           {opponentLeft ? (
             <p className="text-sm font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
-              Opponent left the table
+              A player left the table
             </p>
-          ) : playerCount < 2 ? (
+          ) : !gameReady ? (
             <motion.p
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="text-sm font-mono uppercase tracking-[3px]"
               style={{ color: "#9b59b6" }}
             >
-              Waiting for opponent...
+              Waiting for players... ({playerCount}/{maxPlayers})
             </motion.p>
           ) : !gameOver ? (
             <motion.p
@@ -233,9 +197,9 @@ export function GamePage() {
 
       </div>
 
-      {/* Result overlay */}
+      {/* Result overlay — game over (last player standing) */}
       <AnimatePresence>
-        {gameOver && shotResult && (
+        {gameOver && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
@@ -250,21 +214,44 @@ export function GamePage() {
               transition={{ delay: 0.2, type: "spring" }}
               className="flex flex-col items-center gap-6"
             >
-              <h1
-                className="text-4xl md:text-5xl font-bold uppercase tracking-widest"
-                style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
-              >
-                {shotResult.playerIndex === 0 ? p0Name : p1Name} Eliminated
-              </h1>
-              {winnerIndex !== null && (
-                <p className="text-2xl font-bold uppercase tracking-widest" style={{ color: "#9b59b6" }}>
-                  {winnerIndex === 0 ? p0Name : p1Name} Wins
+              {eliminatedPlayerName && (
+                <p className="text-2xl font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
+                  {eliminatedPlayerName} Eliminated
                 </p>
+              )}
+              {winnerName && (
+                <h1
+                  className="text-4xl md:text-5xl font-bold uppercase tracking-widest"
+                  style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
+                >
+                  {winnerName} Wins
+                </h1>
               )}
               <PandoraButton onClick={rematch} data-testid="button-rematch">
                 Rematch
               </PandoraButton>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mid-round elimination notice (bang but game not over) */}
+      <AnimatePresence>
+        {shotResult?.isBang && !gameOver && (
+          <motion.div
+            key={`elim-${shotResult.playerIndex}`}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-24 left-0 right-0 flex justify-center z-30 pointer-events-none"
+          >
+            <div
+              className="px-6 py-3 font-mono uppercase tracking-widest text-sm"
+              style={{ background: "rgba(0,0,0,0.85)", border: "1px solid #e74c3c", color: "#e74c3c" }}
+            >
+              {eliminatedPlayerName} is out
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -276,24 +263,23 @@ function PandoraButton({
   children,
   onClick,
   disabled,
+  type = "button",
   "data-testid": testId,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  type?: "button" | "submit";
   "data-testid"?: string;
 }) {
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
-      className="px-9 py-5 font-bold uppercase tracking-widest border transition-all duration-200 disabled:opacity-10 disabled:cursor-not-allowed"
-      style={{
-        borderColor: "#9b59b6",
-        background: "rgba(0,0,0,0.8)",
-        color: "#9b59b6",
-      }}
+      className="w-full px-9 py-4 font-bold uppercase tracking-widest border transition-all duration-200 disabled:opacity-10 disabled:cursor-not-allowed"
+      style={{ borderColor: "#9b59b6", background: "rgba(0,0,0,0.8)", color: "#9b59b6" }}
       onMouseEnter={(e) => {
         if (disabled) return;
         (e.currentTarget as HTMLButtonElement).style.background = "#9b59b6";
