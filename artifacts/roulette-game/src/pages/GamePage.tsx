@@ -217,7 +217,7 @@ export function GamePage() {
         <div className="flex gap-5">
           <PandoraButton
             onClick={spin}
-            disabled={!isMyTurn || isSpinning || gameOver || hasSpun}
+            disabled={!isMyTurn || isSpinning || gameOver}
             data-testid="button-spin"
           >
             Spin Cylinder
