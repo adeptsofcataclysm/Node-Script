@@ -121,7 +121,7 @@
 }
 
 .game-root {
-  min-height: 100vh;
+  height: 100vh;
   background: #050208;
   color: white;
   font-family: 'Arial', sans-serif;

@@ -174,60 +174,63 @@ export function GamePage() {
         />
       </div>
 
-      {/* Turn announcer */}
-      <div className="h-8 flex items-center justify-center mb-2">
-        {opponentLeft ? (
-          <p className="text-sm font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
-            Opponent left the table
-          </p>
-        ) : playerCount < 2 ? (
-          <motion.p
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="text-sm font-mono uppercase tracking-[3px]"
-            style={{ color: "#9b59b6" }}
-          >
-            Waiting for opponent...
-          </motion.p>
-        ) : !gameOver ? (
-          <motion.p
-            key={`turn-${turn}`}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-sm font-bold uppercase tracking-[3px]"
-            style={{ color: turnColor }}
-          >
-            {isMyTurn ? "Your Turn" : `${turnPlayerName}'s Turn`}
-          </motion.p>
-        ) : null}
-      </div>
+      {/* Cylinder + controls centered block */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 z-10 pb-10">
 
-      {/* Cylinder */}
-      <div className="my-6">
+        {/* Turn announcer */}
+        <div className="h-8 flex items-center justify-center">
+          {opponentLeft ? (
+            <p className="text-sm font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
+              Opponent left the table
+            </p>
+          ) : playerCount < 2 ? (
+            <motion.p
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-sm font-mono uppercase tracking-[3px]"
+              style={{ color: "#9b59b6" }}
+            >
+              Waiting for opponent...
+            </motion.p>
+          ) : !gameOver ? (
+            <motion.p
+              key={`turn-${turn}`}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-sm font-bold uppercase tracking-[3px]"
+              style={{ color: turnColor }}
+            >
+              {isMyTurn ? "Your Turn" : `${turnPlayerName}'s Turn`}
+            </motion.p>
+          ) : null}
+        </div>
+
+        {/* Cylinder */}
         <Cylinder
           currentPos={currentPos}
           bulletPos={bulletPos}
           isSpinning={isSpinning}
           gameOver={gameOver}
         />
-      </div>
 
-      {/* Controls */}
-      <div className="flex gap-5 z-10 mt-2">
-        <PandoraButton
-          onClick={spin}
-          disabled={!isMyTurn || isSpinning || gameOver || hasSpun}
-          data-testid="button-spin"
-        >
-          Spin Cylinder
-        </PandoraButton>
-        <PandoraButton
-          onClick={shoot}
-          disabled={!isMyTurn || isSpinning || gameOver || !hasSpun}
-          data-testid="button-shoot"
-        >
-          Fire
-        </PandoraButton>
+        {/* Controls */}
+        <div className="flex gap-5">
+          <PandoraButton
+            onClick={spin}
+            disabled={!isMyTurn || isSpinning || gameOver || hasSpun}
+            data-testid="button-spin"
+          >
+            Spin Cylinder
+          </PandoraButton>
+          <PandoraButton
+            onClick={shoot}
+            disabled={!isMyTurn || isSpinning || gameOver || !hasSpun}
+            data-testid="button-shoot"
+          >
+            Fire
+          </PandoraButton>
+        </div>
+
       </div>
 
       {/* Result overlay */}
