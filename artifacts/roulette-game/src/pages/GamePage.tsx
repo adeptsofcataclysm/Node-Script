@@ -24,6 +24,7 @@ export function GamePage() {
     opponentLeft,
     roomFull,
     scores,
+    hasSpun,
     connectAndSetName,
     spin,
     shoot,
@@ -195,14 +196,14 @@ export function GamePage() {
       <div className="flex gap-5 z-10 mt-2">
         <PandoraButton
           onClick={spin}
-          disabled={!isMyTurn || isSpinning || gameOver || bulletPos !== -1}
+          disabled={!isMyTurn || isSpinning || gameOver || hasSpun}
           data-testid="button-spin"
         >
           Spin Cylinder
         </PandoraButton>
         <PandoraButton
           onClick={shoot}
-          disabled={!isMyTurn || isSpinning || gameOver || bulletPos === -1}
+          disabled={!isMyTurn || isSpinning || gameOver || !hasSpun}
           data-testid="button-shoot"
         >
           Fire

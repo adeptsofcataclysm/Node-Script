@@ -17,6 +17,7 @@ export function useGameSocket() {
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>({ 0: 0, 1: 0 });
+  const [hasSpun, setHasSpun] = useState(false);
 
   useEffect(() => {
     const s = io({ path: "/socket.io" });
@@ -43,11 +44,13 @@ export function useGameSocket() {
 
     s.on("startSpin", () => {
       setIsSpinning(true);
+      setHasSpun(false);
       setShotResult(null);
     });
 
     s.on("stopSpin", ({ roundCount }: { roundCount: number }) => {
       setIsSpinning(false);
+      setHasSpun(true);
       setRoundCount(roundCount);
     });
 
@@ -67,6 +70,7 @@ export function useGameSocket() {
 
     s.on("nextTurn", ({ turn }: { turn: number }) => {
       setTurn(turn);
+      setHasSpun(false);
     });
 
     s.on("rematch", () => {
@@ -75,6 +79,7 @@ export function useGameSocket() {
       setCurrentPos(0);
       setShotResult(null);
       setIsSpinning(false);
+      setHasSpun(false);
       setScores({ 0: 0, 1: 0 });
     });
 
@@ -125,6 +130,7 @@ export function useGameSocket() {
     opponentLeft,
     roomFull,
     scores,
+    hasSpun,
     connectAndSetName,
     spin,
     shoot,
