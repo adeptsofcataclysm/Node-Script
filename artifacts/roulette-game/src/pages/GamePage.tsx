@@ -54,10 +54,20 @@ export function GamePage() {
   if (!myName) {
     return (
       <div className="game-root flex items-center justify-center p-4">
+        {/* Background image */}
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundImage: "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "brightness(0.3) contrast(1.2)",
+          }}
+        />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="pandora-card text-center p-10 rounded-xl max-w-md w-full"
+          className="pandora-card text-center p-10 rounded-xl max-w-md w-full relative z-10"
         >
           <h1 className="text-5xl font-bold uppercase tracking-widest mb-1" style={{ color: "white" }}>
             PANDORA
