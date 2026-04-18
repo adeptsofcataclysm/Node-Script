@@ -13,7 +13,6 @@ interface GameState {
   isSpinning: boolean;
   gameOver: boolean;
   roundCount: number;
-  eliminated: number[];
 }
 
 function createFreshState(): GameState {
@@ -27,18 +26,7 @@ function createFreshState(): GameState {
     isSpinning: false,
     gameOver: false,
     roundCount: 0,
-    eliminated: [],
   };
-}
-
-function nextActiveTurn(current: number, eliminated: number[], total: number): number {
-  let next = (current + 1) % total;
-  let attempts = 0;
-  while (eliminated.includes(next) && attempts < total) {
-    next = (next + 1) % total;
-    attempts++;
-  }
-  return next;
 }
 
 export function setupGame(io: Server) {
@@ -71,7 +59,6 @@ export function setupGame(io: Server) {
       gameOver: gameState.gameOver,
       playerCount: gameState.connectedCount,
       roundCount: gameState.roundCount,
-      eliminated: [...gameState.eliminated],
     });
 
     socket.on("setName", (name: string) => {
@@ -112,46 +99,20 @@ export function setupGame(io: Server) {
       const shooterIndex = gameState.turn;
 
       if (isBang) {
-        gameState.eliminated.push(shooterIndex);
-        const activeCount = MAX_PLAYERS - gameState.eliminated.length;
-
-        if (activeCount <= 1) {
-          gameState.gameOver = true;
-          gameState.bulletPos = -1;
-          const winnerIndex = Array.from({ length: MAX_PLAYERS }, (_, i) => i)
-            .find(i => !gameState.eliminated.includes(i)) ?? -1;
-
-          io.emit("shotResult", {
-            isBang: true,
-            playerIndex: shooterIndex,
-            pos: shooterIndex,
-            eliminated: [...gameState.eliminated],
-            winner: winnerIndex,
-          });
-        } else {
-          gameState.bulletPos = -1;
-          gameState.currentPos = 0;
-          gameState.turn = nextActiveTurn(shooterIndex, gameState.eliminated, MAX_PLAYERS);
-
-          io.emit("shotResult", {
-            isBang: true,
-            playerIndex: shooterIndex,
-            pos: shooterIndex,
-            eliminated: [...gameState.eliminated],
-            winner: null,
-          });
-          io.emit("nextTurn", { turn: gameState.turn });
-        }
+        gameState.gameOver = true;
+        gameState.bulletPos = -1;
+        io.emit("shotResult", {
+          isBang: true,
+          playerIndex: shooterIndex,
+          pos: gameState.currentPos,
+        });
       } else {
         gameState.currentPos = (gameState.currentPos + 1) % 6;
-        gameState.turn = nextActiveTurn(shooterIndex, gameState.eliminated, MAX_PLAYERS);
-
+        gameState.turn = (gameState.turn + 1) % MAX_PLAYERS;
         io.emit("shotResult", {
           isBang: false,
           playerIndex: shooterIndex,
           pos: gameState.currentPos,
-          eliminated: [...gameState.eliminated],
-          winner: null,
         });
         io.emit("nextTurn", { turn: gameState.turn });
       }
@@ -183,7 +144,6 @@ export function setupGame(io: Server) {
       gameState.isSpinning = false;
       gameState.gameOver = false;
       gameState.roundCount = 0;
-      gameState.eliminated = [];
 
       io.emit("updatePlayers", {
         count: gameState.connectedCount,

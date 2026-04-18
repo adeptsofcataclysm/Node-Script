@@ -18,14 +18,10 @@ export function useGameSocket() {
     isBang: boolean;
     playerIndex: number;
     pos: number;
-    eliminated: number[];
-    winner: number | null;
   } | null>(null);
   const [myName, setMyName] = useState("");
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
-  const [eliminated, setEliminated] = useState<number[]>([]);
-  const [winner, setWinner] = useState<number | null>(null);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(Array.from({ length: MAX_PLAYERS }, (_, i) => [i, 0]))
   );
@@ -35,9 +31,7 @@ export function useGameSocket() {
     const s = io({ path: "/socket.io" });
     setSocket(s);
 
-    s.on("assignedIndex", (index: number) => {
-      setMyIndex(index);
-    });
+    s.on("assignedIndex", (index: number) => setMyIndex(index));
 
     s.on("updatePlayers", ({ count, playerNames }: { count: number; playerNames: Record<string, string> }) => {
       setPlayerCount(count);
@@ -52,7 +46,6 @@ export function useGameSocket() {
       setGameOver(state.gameOver);
       setPlayerCount(state.playerCount);
       setRoundCount(state.roundCount);
-      setEliminated(state.eliminated ?? []);
     });
 
     s.on("startSpin", () => {
@@ -67,19 +60,21 @@ export function useGameSocket() {
       setRoundCount(roundCount);
     });
 
-    s.on("shotResult", (result: any) => {
+    s.on("shotResult", (result: { isBang: boolean; playerIndex: number; pos: number }) => {
       setShotResult(result);
-      setEliminated(result.eliminated ?? []);
       if (result.isBang) {
+        setGameOver(true);
         setBulletPos(result.pos);
-        if (result.winner !== null && result.winner !== undefined) {
-          setGameOver(true);
-          setWinner(result.winner);
-          setScores((prev) => ({
-            ...prev,
-            [result.winner]: (prev[result.winner] ?? 0) + 1,
-          }));
-        }
+        // everyone except the eliminated player gets +1 survival point
+        setScores((prev) => {
+          const next = { ...prev };
+          for (let i = 0; i < MAX_PLAYERS; i++) {
+            if (i !== result.playerIndex) {
+              next[i] = (next[i] ?? 0) + 1;
+            }
+          }
+          return next;
+        });
       } else {
         setCurrentPos(result.pos);
       }
@@ -98,33 +93,23 @@ export function useGameSocket() {
       setShotResult(null);
       setIsSpinning(false);
       setHasSpun(false);
-      setEliminated([]);
-      setWinner(null);
     });
 
     s.on("opponentLeft", () => {
       setOpponentLeft(true);
-      setEliminated([]);
-      setWinner(null);
       setGameOver(false);
       setShotResult(null);
       setHasSpun(false);
     });
 
-    s.on("roomFull", () => {
-      setRoomFull(true);
-    });
+    s.on("roomFull", () => setRoomFull(true));
 
-    return () => {
-      s.disconnect();
-    };
+    return () => { s.disconnect(); };
   }, []);
 
   const connectAndSetName = useCallback((name: string) => {
     setMyName(name);
-    if (socket) {
-      socket.emit("setName", name);
-    }
+    if (socket) socket.emit("setName", name);
   }, [socket]);
 
   const spin = useCallback(() => {
@@ -153,8 +138,6 @@ export function useGameSocket() {
     myName,
     opponentLeft,
     roomFull,
-    eliminated,
-    winner,
     scores,
     hasSpun,
     maxPlayers: MAX_PLAYERS,

@@ -22,8 +22,6 @@ export function GamePage() {
     myName,
     opponentLeft,
     roomFull,
-    eliminated,
-    winner,
     scores,
     hasSpun,
     maxPlayers,
@@ -34,12 +32,7 @@ export function GamePage() {
   } = useGameSocket();
 
   const gameReady = playerCount === maxPlayers;
-  const isMyTurn =
-    myIndex !== null &&
-    myIndex === turn &&
-    gameReady &&
-    !eliminated.includes(myIndex) &&
-    !gameOver;
+  const isMyTurn = myIndex !== null && myIndex === turn && gameReady && !gameOver;
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,10 +90,8 @@ export function GamePage() {
 
   const turnPlayerName = playerNames[String(turn)] || `P${turn + 1}`;
   const turnColor = PLAYER_COLORS[turn] ?? "#9b59b6";
-
-  const winnerName = winner !== null ? (playerNames[String(winner)] || `P${winner + 1}`) : null;
-  const eliminatedPlayerName = shotResult
-    ? playerNames[String(shotResult.playerIndex)] || `P${shotResult.playerIndex + 1}`
+  const eliminatedName = shotResult?.isBang
+    ? (playerNames[String(shotResult.playerIndex)] || `P${shotResult.playerIndex + 1}`)
     : null;
 
   return (
@@ -132,8 +123,7 @@ export function GamePage() {
             score={scores[i] ?? 0}
             isActive={turn === i && gameReady && !gameOver}
             playerIndex={i}
-            isDead={!!shotResult?.isBang && shotResult.playerIndex === i && gameOver}
-            isEliminated={eliminated.includes(i)}
+            isEliminated={gameOver && !!shotResult?.isBang && shotResult.playerIndex === i}
           />
         ))}
       </div>
@@ -179,27 +169,19 @@ export function GamePage() {
 
         {/* Controls */}
         <div className="flex gap-5">
-          <PandoraButton
-            onClick={spin}
-            disabled={!isMyTurn || isSpinning || gameOver}
-            data-testid="button-spin"
-          >
+          <PandoraButton onClick={spin} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-spin">
             Spin Cylinder
           </PandoraButton>
-          <PandoraButton
-            onClick={shoot}
-            disabled={!isMyTurn || isSpinning || gameOver || !hasSpun}
-            data-testid="button-shoot"
-          >
+          <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver || !hasSpun} data-testid="button-shoot">
             Fire
           </PandoraButton>
         </div>
 
       </div>
 
-      {/* Result overlay — game over (last player standing) */}
+      {/* Game over overlay */}
       <AnimatePresence>
-        {gameOver && (
+        {gameOver && shotResult?.isBang && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
@@ -214,44 +196,22 @@ export function GamePage() {
               transition={{ delay: 0.2, type: "spring" }}
               className="flex flex-col items-center gap-6"
             >
-              {eliminatedPlayerName && (
-                <p className="text-2xl font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
-                  {eliminatedPlayerName} Eliminated
-                </p>
-              )}
-              {winnerName && (
-                <h1
-                  className="text-4xl md:text-5xl font-bold uppercase tracking-widest"
-                  style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
-                >
-                  {winnerName} Wins
-                </h1>
-              )}
+              <div
+                className="text-6xl font-bold uppercase tracking-[6px]"
+                style={{ color: "#e74c3c", textShadow: "0 0 30px #e74c3c" }}
+              >
+                BANG
+              </div>
+              <h1
+                className="text-3xl font-bold uppercase tracking-widest"
+                style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
+              >
+                {eliminatedName} is eliminated
+              </h1>
               <PandoraButton onClick={rematch} data-testid="button-rematch">
-                Rematch
+                Play Again
               </PandoraButton>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Mid-round elimination notice (bang but game not over) */}
-      <AnimatePresence>
-        {shotResult?.isBang && !gameOver && (
-          <motion.div
-            key={`elim-${shotResult.playerIndex}`}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-24 left-0 right-0 flex justify-center z-30 pointer-events-none"
-          >
-            <div
-              className="px-6 py-3 font-mono uppercase tracking-widest text-sm"
-              style={{ background: "rgba(0,0,0,0.85)", border: "1px solid #e74c3c", color: "#e74c3c" }}
-            >
-              {eliminatedPlayerName} is out
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
