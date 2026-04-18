@@ -128,6 +128,16 @@ export function GamePage() {
 
   return (
     <div className="game-root flex flex-col items-center relative overflow-hidden">
+      {/* Background image */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "brightness(0.25) contrast(1.2)",
+        }}
+      />
       {/* BANG flash */}
       <AnimatePresence>
         {shotResult?.isBang && (
