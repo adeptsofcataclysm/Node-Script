@@ -89,9 +89,12 @@ export function GamePage() {
     shoot,
     rematch,
   } = useGameSocket();
-  // Синхронизированные щелчки с замедлением при вращении барабана
+  // Локальный счётчик спинов — растёт каждый раз при старте кручения,
+  // не зависит от задержки серверного roundCount
+  const [spinVersion, setSpinVersion] = useState(0);
   useEffect(() => {
     if (isSpinning) {
+      setSpinVersion((v) => v + 1);
       playSpinTicks();
     }
   }, [isSpinning]);
@@ -376,7 +379,7 @@ export function GamePage() {
           bulletPos={bulletPos}
           isSpinning={isSpinning}
           gameOver={gameOver}
-          roundCount={roundCount}
+          spinVersion={spinVersion}
         />
 
         {/* Controls */}

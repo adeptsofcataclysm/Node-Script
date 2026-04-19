@@ -5,16 +5,29 @@ interface CylinderProps {
   bulletPos: number;
   isSpinning: boolean;
   gameOver: boolean;
-  roundCount: number;
+  spinVersion: number; // increments every time a new spin starts
 }
 
-export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, roundCount }: CylinderProps) {
+export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, spinVersion }: CylinderProps) {
   const chambers = [0, 1, 2, 3, 4, 5];
 
-  // Each spin: rotate 5 full circles × roundCount so target always increases → animation always fires
-  const spinRotation = 360 * 5 * Math.max(roundCount, 1);
-  const idleRotation = currentPos * -60;
-  const rotation = isSpinning ? spinRotation : idleRotation;
+  // Cumulative spin-end rotation (always grows → animation always fires, never reverses)
+  const spinEndRotation = 360 * 5 * Math.max(spinVersion, 1);
+
+  // Compute the minimal forward (or zero) adjustment needed to reach the correct chamber
+  // after the spin ends. This avoids any large backward jump.
+  const chamberAngle = ((currentPos * -60) % 360 + 360) % 360;
+  const spinEndAngle = spinEndRotation % 360;
+  let delta = chamberAngle - spinEndAngle;
+  // Normalise to [-180, +180] then force forward (>=0) to avoid backward motion
+  if (delta < -180) delta += 360;
+  if (delta > 180) delta -= 360;
+  if (delta < 0) delta += 360; // always move forward (at most 360°)
+
+  // When idle: land exactly on the correct chamber coming from the spin direction
+  const idleRotation = spinEndRotation + delta;
+
+  const rotation = isSpinning ? spinEndRotation : idleRotation;
 
   return (
     <div className="relative flex items-center justify-center">
@@ -45,8 +58,8 @@ export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, roundCou
         animate={{ rotate: rotation }}
         transition={
           isSpinning
-            ? { duration: 1.7, ease: [0.08, 0.82, 0.35, 1.0] }
-            : { type: "spring", stiffness: 180, damping: 18 }
+            ? { duration: 1.7, ease: [0.0, 0.0, 0.2, 1.0] }
+            : { duration: 0.35, ease: "easeOut" }
         }
       >
         {/* Center hub */}
