@@ -69,10 +69,11 @@ export function useGameSocket() {
       setShotResult(null);
     });
 
-    s.on("stopSpin", ({ roundCount }: { roundCount: number }) => {
+    s.on("stopSpin", ({ roundCount, currentPos: pos }: { roundCount: number; currentPos?: number }) => {
       setIsSpinning(false);
       setHasSpun(true);
       setRoundCount(roundCount);
+      if (pos !== undefined) setCurrentPos(pos);
     });
 
     s.on("shotResult", (result: { isBang: boolean; playerIndex: number; pos: number }) => {

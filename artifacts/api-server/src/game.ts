@@ -265,7 +265,7 @@ export function setupGame(io: Server) {
 
       setTimeout(() => {
         gameState.isSpinning = false;
-        io.emit("stopSpin", { roundCount: gameState.roundCount });
+        io.emit("stopSpin", { roundCount: gameState.roundCount, currentPos: gameState.currentPos });
       }, 1700);
     });
 

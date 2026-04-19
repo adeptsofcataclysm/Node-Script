@@ -59,9 +59,10 @@ export function useSpectatorSocket() {
       setShotResult(null);
     });
 
-    s.on("stopSpin", () => {
+    s.on("stopSpin", ({ currentPos: pos }: { currentPos?: number } = {}) => {
       setIsSpinning(false);
       setHasSpun(true);
+      if (pos !== undefined) setCurrentPos(pos);
     });
 
     s.on("shotResult", (result: { isBang: boolean; playerIndex: number; pos: number }) => {
