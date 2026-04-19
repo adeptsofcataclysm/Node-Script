@@ -79,6 +79,27 @@ export function setupGame(io: Server) {
   let gameState: GameState = createFreshState();
 
   io.on("connection", (socket: Socket) => {
+    // ── SPECTATOR ────────────────────────────────────────────────────────────
+    if (socket.handshake.query.spectator === "1") {
+      logger.info({ socketId: socket.id }, "Spectator connected");
+      socket.emit("sync", {
+        bulletPos: gameState.bulletPos,
+        currentPos: gameState.currentPos,
+        turn: gameState.turn,
+        isSpinning: gameState.isSpinning,
+        gameOver: gameState.gameOver,
+        playerCount: filledSlotCount(gameState),
+        roundCount: gameState.roundCount,
+        playerNames: buildPlayerNames(gameState),
+        onlineStatus: buildOnlineStatus(gameState),
+      });
+      socket.on("disconnect", () => {
+        logger.info({ socketId: socket.id }, "Spectator disconnected");
+      });
+      return; // spectators receive all broadcasts but never interact
+    }
+
+    // ── PLAYER ───────────────────────────────────────────────────────────────
     logger.info({ socketId: socket.id }, "Player connected");
 
     const freeIdx = gameState.slots.findIndex((s) => s === null);
