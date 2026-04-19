@@ -35,6 +35,26 @@ function playToasty() {
     audio.play();
   } catch (_) {}
 }
+
+{/* Картинка из локальной папки public */}
+<div style={{
+    position: "fixed",
+    bottom: "20px",
+    left: "20px",
+    zIndex: 20,
+    pointerEvents: "none"
+}}>
+    <img 
+        src="/my-image.png"  /* Если файл называется my-image.png */
+        alt="artifact"
+        style={{
+            width: "180px", // Подбери нужный размер
+            height: "auto",
+            filter: "drop-shadow(0 0 15px rgba(155, 89, 182, 0.3))" // Твой фиолетовый вайб
+        }}
+    />
+</div>
+
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
   const musicRef = useRef<HTMLAudioElement | null>(null);
