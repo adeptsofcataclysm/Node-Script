@@ -18,6 +18,7 @@ function playToasty() {
 
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   const {
     myIndex,
     playerCount,
@@ -90,6 +91,26 @@ export function GamePage() {
       turnsSinceGhost.current = 0;
     }
   }, [gameOver]);
+
+  // Music: start when all players ready, stop when someone leaves
+  useEffect(() => {
+    if (!musicRef.current) {
+      const audio = new Audio("/music.m4a");
+      audio.loop = true;
+      audio.volume = 0.45;
+      musicRef.current = audio;
+    }
+    const audio = musicRef.current;
+    if (gameReady && !opponentLeft) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    return () => {
+      audio.pause();
+    };
+  }, [gameReady, opponentLeft]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
