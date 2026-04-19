@@ -16,6 +16,7 @@ interface GameState {
   turn: number;
   isSpinning: boolean;
   gameOver: boolean;
+  gameStarted: boolean;
   roundCount: number;
   eliminatedIndex: number | null;
   bannedNames: string[];
@@ -29,6 +30,7 @@ function createFreshState(): GameState {
     turn: 0,
     isSpinning: false,
     gameOver: false,
+    gameStarted: false,
     roundCount: 0,
     eliminatedIndex: null,
     bannedNames: [],
@@ -121,6 +123,7 @@ export function setupGame(io: Server) {
         turn: gameState.turn,
         isSpinning: gameState.isSpinning,
         gameOver: gameState.gameOver,
+        gameStarted: gameState.gameStarted,
         playerCount: filledSlotCount(gameState),
         roundCount: gameState.roundCount,
         playerNames: buildPlayerNames(gameState),
@@ -161,6 +164,7 @@ export function setupGame(io: Server) {
         turn: gameState.turn,
         isSpinning: gameState.isSpinning,
         gameOver: gameState.gameOver,
+        gameStarted: gameState.gameStarted,
         playerCount: filledSlotCount(gameState),
         roundCount: gameState.roundCount,
         playerNames: buildPlayerNames(gameState),
@@ -200,6 +204,7 @@ export function setupGame(io: Server) {
           turn: gameState.turn,
           isSpinning: gameState.isSpinning,
           gameOver: gameState.gameOver,
+          gameStarted: gameState.gameStarted,
           playerCount: filledSlotCount(gameState),
           roundCount: gameState.roundCount,
           playerNames: buildPlayerNames(gameState),
@@ -246,10 +251,12 @@ export function setupGame(io: Server) {
       const slot = gameState.slots[gameState.turn];
       if (!slot || slot.socketId !== socket.id) return;
       if (gameState.isSpinning) return;
-      if (!allSlotsReady(gameState)) return;
       if (gameState.gameOver) return;
+      // First game requires all slots filled; after that, play continues with whoever is left
+      if (!gameState.gameStarted && !allSlotsReady(gameState)) return;
 
       gameState.isSpinning = true;
+      gameState.gameStarted = true;
       gameState.bulletPos = Math.floor(Math.random() * 6);
       gameState.currentPos = 0;
       gameState.roundCount += 1;

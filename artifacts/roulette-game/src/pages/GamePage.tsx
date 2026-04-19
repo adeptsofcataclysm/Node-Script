@@ -63,6 +63,7 @@ export function GamePage() {
     rematchTrigger,
     maxPlayers,
     allSlotsReady,
+    gameStarted,
     connectAndSetName,
     spin,
     shoot,

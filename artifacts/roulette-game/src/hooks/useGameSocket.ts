@@ -31,6 +31,7 @@ export function useGameSocket() {
   const [hasSpun, setHasSpun] = useState(false);
   const [rematchTrigger, setRematchTrigger] = useState(0);
   const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     const s = io({ path: "/socket.io" });
@@ -56,6 +57,7 @@ export function useGameSocket() {
       setGameOver(state.gameOver);
       setPlayerCount(state.playerCount);
       setRoundCount(state.roundCount);
+      if (state.gameStarted) setGameStarted(true);
       if (state.playerNames) setPlayerNames(state.playerNames);
       if (state.onlineStatus) setOnlineStatus(state.onlineStatus);
     });
@@ -63,6 +65,7 @@ export function useGameSocket() {
     s.on("startSpin", () => {
       setIsSpinning(true);
       setHasSpun(false);
+      setGameStarted(true);
       setShotResult(null);
     });
 
@@ -186,8 +189,9 @@ export function useGameSocket() {
     if (socket) socket.emit("setFate", text);
   }, [socket]);
 
-  const allSlotsReady = playerCount === MAX_PLAYERS &&
-    Object.keys(playerNames).length === MAX_PLAYERS;
+  // Game is ready when all 5 slots filled initially, OR after gameStarted (continues with fewer)
+  const allSlotsReady = gameStarted ||
+    (playerCount === MAX_PLAYERS && Object.keys(playerNames).length === MAX_PLAYERS);
 
   return {
     myIndex,
@@ -211,6 +215,7 @@ export function useGameSocket() {
     rematchTrigger,
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
+    gameStarted,
     connectAndSetName,
     spin,
     shoot,

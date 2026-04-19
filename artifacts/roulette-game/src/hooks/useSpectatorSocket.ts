@@ -23,6 +23,7 @@ export function useSpectatorSocket() {
   const [rematchTrigger, setRematchTrigger] = useState(0);
   const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
   const [hasSpun, setHasSpun] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export function useSpectatorSocket() {
       setIsSpinning(state.isSpinning);
       setGameOver(state.gameOver);
       setPlayerCount(state.playerCount);
+      if (state.gameStarted) setGameStarted(true);
       if (state.playerNames) setPlayerNames(state.playerNames);
       if (state.onlineStatus) setOnlineStatus(state.onlineStatus);
     });
@@ -53,6 +55,7 @@ export function useSpectatorSocket() {
     s.on("startSpin", () => {
       setIsSpinning(true);
       setHasSpun(false);
+      setGameStarted(true);
       setShotResult(null);
     });
 
@@ -120,9 +123,8 @@ export function useSpectatorSocket() {
     return () => { s.disconnect(); };
   }, []);
 
-  const allSlotsReady =
-    playerCount === MAX_PLAYERS &&
-    Object.keys(playerNames).length === MAX_PLAYERS;
+  const allSlotsReady = gameStarted ||
+    (playerCount === MAX_PLAYERS && Object.keys(playerNames).length === MAX_PLAYERS);
 
   const rematch = useCallback(() => {
     if (socketRef.current) socketRef.current.emit("rematch");
@@ -144,6 +146,7 @@ export function useSpectatorSocket() {
     hasSpun,
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
+    gameStarted,
     rematch,
   };
 }
