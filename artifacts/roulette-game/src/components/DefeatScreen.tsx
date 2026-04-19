@@ -2,9 +2,10 @@ import { motion } from "framer-motion";
 
 interface DefeatScreenProps {
   playerName: string;
+  onLeave: () => void;
 }
 
-export function DefeatScreen({ playerName }: DefeatScreenProps) {
+export function DefeatScreen({ playerName, onLeave }: DefeatScreenProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -77,15 +78,27 @@ export function DefeatScreen({ playerName }: DefeatScreenProps) {
           style={{ background: "linear-gradient(to right, transparent, #9b59b6, transparent)" }}
         />
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.5, 0.5, 0.5, 1] }}
-          transition={{ delay: 1.4, duration: 2, repeat: Infinity, repeatType: "reverse" }}
-          className="text-xs font-mono uppercase tracking-[3px] text-center"
-          style={{ color: "#555" }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4 }}
+          className="w-full"
         >
-          Ожидание следующего раунда...
-        </motion.p>
+          <button
+            onClick={onLeave}
+            className="w-full py-3 font-mono text-xs uppercase tracking-[3px] transition-all duration-200"
+            style={{
+              background: "transparent",
+              border: "1px solid #9b59b6",
+              color: "#9b59b6",
+              textShadow: "0 0 8px #9b59b6",
+              boxShadow: "0 0 10px rgba(155,89,182,0.2)",
+              cursor: "pointer",
+            }}
+          >
+            Покинуть стол
+          </button>
+        </motion.div>
 
       </div>
     </motion.div>

@@ -39,6 +39,7 @@ function playToasty() {
 
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
+  const [leftTable, setLeftTable] = useState(false);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const {
     myIndex,
@@ -134,11 +135,14 @@ export function GamePage() {
     }
   }, [gameOver]);
 
-  // Restart music on rematch
+  // Restart music on rematch, reset leftTable
   useEffect(() => {
-    if (rematchTrigger > 0 && musicRef.current) {
-      musicRef.current.currentTime = 0;
-      musicRef.current.play().catch(() => {});
+    if (rematchTrigger > 0) {
+      setLeftTable(false);
+      if (musicRef.current) {
+        musicRef.current.currentTime = 0;
+        musicRef.current.play().catch(() => {});
+      }
     }
   }, [rematchTrigger]);
 
@@ -370,17 +374,18 @@ export function GamePage() {
 
       {/* Defeat screen — shown only to the eliminated player */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && myIndex !== null && shotResult.playerIndex === myIndex && (
+        {gameOver && shotResult?.isBang && myIndex !== null && shotResult.playerIndex === myIndex && !leftTable && (
           <DefeatScreen
             key="defeat-screen"
             playerName={eliminatedName}
+            onLeave={() => setLeftTable(true)}
           />
         )}
       </AnimatePresence>
 
       {/* Game over overlay — shown to surviving players */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && (myIndex === null || shotResult.playerIndex !== myIndex) && (
+        {gameOver && shotResult?.isBang && (myIndex === null || shotResult.playerIndex !== myIndex || leftTable) && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
