@@ -501,6 +501,7 @@ export function GamePage() {
                   textShadow: "0 0 40px rgba(255,255,255,0.08)",
                   fontFamily: "Georgia, serif",
                   lineHeight: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 C'est la vie
