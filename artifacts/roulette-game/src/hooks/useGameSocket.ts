@@ -65,18 +65,12 @@ export function useGameSocket() {
       if (result.isBang) {
         setGameOver(true);
         setBulletPos(result.pos);
-        // everyone except the eliminated player gets +1 survival point
-        setScores((prev) => {
-          const next = { ...prev };
-          for (let i = 0; i < MAX_PLAYERS; i++) {
-            if (i !== result.playerIndex) {
-              next[i] = (next[i] ?? 0) + 1;
-            }
-          }
-          return next;
-        });
       } else {
         setCurrentPos(result.pos);
+        setScores((prev) => ({
+          ...prev,
+          [result.playerIndex]: (prev[result.playerIndex] ?? 0) + 1,
+        }));
       }
     });
 
