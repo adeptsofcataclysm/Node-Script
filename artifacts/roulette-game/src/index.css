@@ -135,9 +135,9 @@
 }
 
 @keyframes corner-glow {
-  0%   { filter: drop-shadow(0 0 3px rgba(155, 89, 182, 0.25)) drop-shadow(0 0 6px rgba(155, 89, 182, 0.1)); }
-  50%  { filter: drop-shadow(0 0 8px rgba(185, 100, 220, 0.45)) drop-shadow(0 0 16px rgba(155, 89, 182, 0.22)); }
-  100% { filter: drop-shadow(0 0 3px rgba(155, 89, 182, 0.25)) drop-shadow(0 0 6px rgba(155, 89, 182, 0.1)); }
+  0%   { filter: drop-shadow(0 0 4px rgba(155, 89, 182, 0.35)) drop-shadow(0 0 10px rgba(155, 89, 182, 0.15)); }
+  50%  { filter: drop-shadow(0 0 12px rgba(185, 100, 220, 0.65)) drop-shadow(0 0 24px rgba(155, 89, 182, 0.35)); }
+  100% { filter: drop-shadow(0 0 4px rgba(155, 89, 182, 0.35)) drop-shadow(0 0 10px rgba(155, 89, 182, 0.15)); }
 }
 
 .corner-logo {
