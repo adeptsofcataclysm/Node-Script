@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameSocket } from "../hooks/useGameSocket";
 import { Cylinder } from "../components/Cylinder";
+import { DefeatScreen } from "../components/DefeatScreen";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 
@@ -88,6 +89,8 @@ export function GamePage() {
     spin,
     shoot,
     rematch,
+    submitFate,
+    fateAnnounced,
   } = useGameSocket();
   // Локальный счётчик спинов — растёт каждый раз при старте кручения,
   // не зависит от задержки серверного roundCount
@@ -394,22 +397,35 @@ export function GamePage() {
 
       </div>
 
-      {/* Game over overlay */}
+      {/* Defeat screen — shown only to the eliminated player */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && (
+        {gameOver && shotResult?.isBang && myIndex !== null && shotResult.playerIndex === myIndex && (
+          <DefeatScreen
+            key="defeat-screen"
+            playerName={eliminatedName}
+            onSubmitFate={submitFate}
+            onRematch={rematch}
+            fateSent={!!fateAnnounced}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Game over overlay — shown to surviving players */}
+      <AnimatePresence>
+        {gameOver && shotResult?.isBang && (myIndex === null || shotResult.playerIndex !== myIndex) && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 flex flex-col items-center justify-center text-center"
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center text-center px-6"
             style={{ background: "rgba(0,0,0,0.92)" }}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: "spring" }}
-              className="flex flex-col items-center gap-6"
+              className="flex flex-col items-center gap-6 w-full max-w-md"
             >
               <div
                 className="text-6xl font-bold uppercase tracking-[6px]"
@@ -418,13 +434,41 @@ export function GamePage() {
                 WASTED
               </div>
               <h1
-                className="text-3xl font-bold uppercase tracking-widest"
+                className="text-2xl font-bold uppercase tracking-widest"
                 style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
               >
-               Игрока {eliminatedName} поглатила тьма!
+                Игрока {eliminatedName} поглотила тьма!
               </h1>
+
+              {/* Fate announcement */}
+              <AnimatePresence>
+                {fateAnnounced && (
+                  <motion.div
+                    key="fate-box"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full flex flex-col gap-2"
+                  >
+                    <p className="text-xs font-mono uppercase tracking-[3px]" style={{ color: "#aaa" }}>
+                      Судьба {fateAnnounced.name}:
+                    </p>
+                    <div
+                      className="w-full p-4 text-sm font-mono text-left"
+                      style={{
+                        border: "1px solid #9b59b6",
+                        color: "#ddd",
+                        background: "rgba(155,89,182,0.08)",
+                        boxShadow: "inset 0 0 16px rgba(155,89,182,0.1)",
+                      }}
+                    >
+                      {fateAnnounced.text}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <PandoraButton onClick={rematch} data-testid="button-rematch">
-                🔄Заменить игрока за столом🔄
+                Заменить игрока за столом
               </PandoraButton>
             </motion.div>
           </motion.div>

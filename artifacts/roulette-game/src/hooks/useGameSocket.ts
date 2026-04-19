@@ -30,6 +30,7 @@ export function useGameSocket() {
   );
   const [hasSpun, setHasSpun] = useState(false);
   const [rematchTrigger, setRematchTrigger] = useState(0);
+  const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
 
   useEffect(() => {
     const s = io({ path: "/socket.io" });
@@ -113,6 +114,7 @@ export function useGameSocket() {
         setScores((prev) => ({ ...prev, [data.eliminatedIndex!]: 0 }));
       }
       setRematchTrigger((n) => n + 1);
+      setFateAnnounced(null);
     });
 
     s.on("playerOffline", ({ playerIndex }: { playerIndex: number }) => {
@@ -121,6 +123,10 @@ export function useGameSocket() {
 
     s.on("playerOnline", ({ playerIndex }: { playerIndex: number }) => {
       setOnlineStatus((prev) => ({ ...prev, [String(playerIndex)]: true }));
+    });
+
+    s.on("fateAnnounced", (data: { name: string; text: string }) => {
+      setFateAnnounced(data);
     });
 
     s.on("roomFull", () => setRoomFull(true));
@@ -165,6 +171,10 @@ export function useGameSocket() {
     if (socket) socket.emit("rematch");
   }, [socket]);
 
+  const submitFate = useCallback((text: string) => {
+    if (socket) socket.emit("setFate", text);
+  }, [socket]);
+
   const allSlotsReady = playerCount === MAX_PLAYERS &&
     Object.keys(playerNames).length === MAX_PLAYERS;
 
@@ -194,5 +204,7 @@ export function useGameSocket() {
     spin,
     shoot,
     rematch,
+    submitFate,
+    fateAnnounced,
   };
 }

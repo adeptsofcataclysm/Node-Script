@@ -230,6 +230,15 @@ export function setupGame(io: Server) {
       }
     });
 
+    socket.on("setFate", (text: string) => {
+      if (!gameState.gameOver) return;
+      if (gameState.eliminatedIndex === null) return;
+      const slot = gameState.slots[gameState.eliminatedIndex];
+      if (!slot || slot.socketId !== socket.id) return;
+      const safeText = String(text).slice(0, 300);
+      io.emit("fateAnnounced", { name: slot.name, text: safeText });
+    });
+
     socket.on("rematch", () => {
       if (!gameState.gameOver) return;
 
