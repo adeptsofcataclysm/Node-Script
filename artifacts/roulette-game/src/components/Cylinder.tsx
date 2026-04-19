@@ -5,11 +5,16 @@ interface CylinderProps {
   bulletPos: number;
   isSpinning: boolean;
   gameOver: boolean;
+  roundCount: number;
 }
 
-export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver }: CylinderProps) {
+export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, roundCount }: CylinderProps) {
   const chambers = [0, 1, 2, 3, 4, 5];
-  const rotation = isSpinning ? 360 * 8 : currentPos * -60;
+
+  // Each spin: rotate 5 full circles × roundCount so target always increases → animation always fires
+  const spinRotation = 360 * 5 * Math.max(roundCount, 1);
+  const idleRotation = currentPos * -60;
+  const rotation = isSpinning ? spinRotation : idleRotation;
 
   return (
     <div className="relative flex items-center justify-center">
@@ -40,7 +45,7 @@ export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver }: Cylind
         animate={{ rotate: rotation }}
         transition={
           isSpinning
-            ? { duration: 1.7, ease: "linear", repeat: Infinity }
+            ? { duration: 1.7, ease: [0.08, 0.82, 0.35, 1.0] }
             : { type: "spring", stiffness: 180, damping: 18 }
         }
       >

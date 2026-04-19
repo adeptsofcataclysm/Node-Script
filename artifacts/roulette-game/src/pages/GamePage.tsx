@@ -7,12 +7,35 @@ import { Input } from "@/components/ui/input";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
-function playSpinSound() {
-  try {
-    const audio = new Audio("/spin.mp3"); // Звук вращения (цикличный или длинный)
-    audio.volume = 1;
-    audio.play();
-  } catch (_) {}
+// Decelerating tick schedule over TOTAL ms:
+// starts at START_MS per tick, slows to END_MS per tick (exponential curve)
+const SPIN_TOTAL_MS = 1700;
+const SPIN_TICK_START = 70;
+const SPIN_TICK_END = 350;
+
+function computeTickTimes(): number[] {
+  const ratio = SPIN_TICK_END / SPIN_TICK_START;
+  const times: number[] = [];
+  let t = 0;
+  while (t < SPIN_TOTAL_MS) {
+    times.push(t);
+    const interval = SPIN_TICK_START * Math.pow(ratio, t / SPIN_TOTAL_MS);
+    t += interval;
+  }
+  return times;
+}
+
+function playSpinTicks() {
+  const times = computeTickTimes();
+  times.forEach((delay) => {
+    setTimeout(() => {
+      try {
+        const audio = new Audio("/click.mp3");
+        audio.volume = 0.28;
+        audio.play();
+      } catch (_) {}
+    }, delay);
+  });
 }
 function playClickSound() {
   try {
@@ -58,6 +81,7 @@ export function GamePage() {
     scores,
     hasSpun,
     rematchTrigger,
+    roundCount,
     maxPlayers,
     allSlotsReady,
     connectAndSetName,
@@ -65,10 +89,10 @@ export function GamePage() {
     shoot,
     rematch,
   } = useGameSocket();
-  // Звук вращения барабана
+  // Синхронизированные щелчки с замедлением при вращении барабана
   useEffect(() => {
     if (isSpinning) {
-      playSpinSound();
+      playSpinTicks();
     }
   }, [isSpinning]);
 
@@ -352,6 +376,7 @@ export function GamePage() {
           bulletPos={bulletPos}
           isSpinning={isSpinning}
           gameOver={gameOver}
+          roundCount={roundCount}
         />
 
         {/* Controls */}
