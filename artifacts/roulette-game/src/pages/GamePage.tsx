@@ -403,9 +403,7 @@ export function GamePage() {
           <DefeatScreen
             key="defeat-screen"
             playerName={eliminatedName}
-            onSubmitFate={submitFate}
             onRematch={rematch}
-            fateSent={!!fateAnnounced}
           />
         )}
       </AnimatePresence>
