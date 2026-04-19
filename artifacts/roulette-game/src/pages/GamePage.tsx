@@ -8,37 +8,11 @@ import { Input } from "@/components/ui/input";
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSf5cJtQRheUgVuauvLlzTHXFM91q7LmaPv8N03yxgT_nnn9-UF";
 
-function playCreepySound() {
+function playToasty() {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-    // Low rumble
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sawtooth";
-    osc1.frequency.setValueAtTime(55, ctx.currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 3);
-    gain1.gain.setValueAtTime(0, ctx.currentTime);
-    gain1.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.4);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start();
-    osc1.stop(ctx.currentTime + 3);
-
-    // High whisper overtone
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(440, ctx.currentTime);
-    osc2.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 3);
-    gain2.gain.setValueAtTime(0, ctx.currentTime);
-    gain2.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.6);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start();
-    osc2.stop(ctx.currentTime + 3);
+    const audio = new Audio("/toasty.mp3");
+    audio.volume = 0.85;
+    audio.play();
   } catch (_) {}
 }
 
@@ -104,7 +78,7 @@ export function GamePage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
-      playCreepySound();
+      playToasty();
 
       setTimeout(() => setShowGhost(false), 3000);
     }
