@@ -6,7 +6,7 @@ import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
-const GHOST_URL = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSf5cJtQRheUgVuauvLlzTHXFM91q7LmaPv8N03yxgT_nnn9-UF";
+const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
 
 function playToasty() {
   try {
