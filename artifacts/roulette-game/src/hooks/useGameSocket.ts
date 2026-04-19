@@ -24,10 +24,12 @@ export function useGameSocket() {
   const [roomFull, setRoomFull] = useState(false);
   const [gameInProgress, setGameInProgress] = useState(false);
   const [slotReserved, setSlotReserved] = useState(false);
+  const [nameBanned, setNameBanned] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(Array.from({ length: MAX_PLAYERS }, (_, i) => [i, 0]))
   );
   const [hasSpun, setHasSpun] = useState(false);
+  const [rematchTrigger, setRematchTrigger] = useState(0);
 
   useEffect(() => {
     const s = io({ path: "/socket.io" });
@@ -89,7 +91,13 @@ export function useGameSocket() {
       setHasSpun(false);
     });
 
-    s.on("rematch", (data?: { playerNames?: Record<string, string>; onlineStatus?: Record<string, boolean>; turn?: number }) => {
+    s.on("rematch", (data?: {
+      playerNames?: Record<string, string>;
+      onlineStatus?: Record<string, boolean>;
+      turn?: number;
+      count?: number;
+      eliminatedIndex?: number | null;
+    }) => {
       setGameOver(false);
       setBulletPos(-1);
       setCurrentPos(0);
@@ -99,6 +107,12 @@ export function useGameSocket() {
       if (data?.playerNames) setPlayerNames(data.playerNames);
       if (data?.onlineStatus) setOnlineStatus(data.onlineStatus);
       if (data?.turn !== undefined) setTurn(data.turn);
+      if (data?.count !== undefined) setPlayerCount(data.count);
+      // Clear score of eliminated player
+      if (data?.eliminatedIndex !== null && data?.eliminatedIndex !== undefined) {
+        setScores((prev) => ({ ...prev, [data.eliminatedIndex!]: 0 }));
+      }
+      setRematchTrigger((n) => n + 1);
     });
 
     s.on("playerOffline", ({ playerIndex }: { playerIndex: number }) => {
@@ -119,7 +133,14 @@ export function useGameSocket() {
 
     s.on("slotReserved", () => {
       setSlotReserved(true);
-      setMyName(""); // reset so lobby form reappears
+      setNameBanned(false);
+      setMyName("");
+    });
+
+    s.on("nameBanned", () => {
+      setNameBanned(true);
+      setSlotReserved(false);
+      setMyName("");
     });
 
     return () => { s.disconnect(); };
@@ -128,6 +149,7 @@ export function useGameSocket() {
   const connectAndSetName = useCallback((name: string) => {
     setMyName(name);
     setSlotReserved(false);
+    setNameBanned(false);
     if (socket) socket.emit("setName", name);
   }, [socket]);
 
@@ -162,8 +184,10 @@ export function useGameSocket() {
     roomFull,
     gameInProgress,
     slotReserved,
+    nameBanned,
     scores,
     hasSpun,
+    rematchTrigger,
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
     connectAndSetName,

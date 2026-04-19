@@ -17,6 +17,8 @@ interface GameState {
   isSpinning: boolean;
   gameOver: boolean;
   roundCount: number;
+  eliminatedIndex: number | null;
+  bannedNames: string[];
 }
 
 function createFreshState(): GameState {
@@ -28,6 +30,8 @@ function createFreshState(): GameState {
     isSpinning: false,
     gameOver: false,
     roundCount: 0,
+    eliminatedIndex: null,
+    bannedNames: [],
   };
 }
 
@@ -66,7 +70,9 @@ function nextOnlineTurn(state: GameState, from: number): number {
     const idx = (from + i) % MAX_PLAYERS;
     if (state.slots[idx]?.isOnline) return idx;
   }
-  return from;
+  // Fallback: first non-null slot
+  const first = state.slots.findIndex((s) => s !== null);
+  return first >= 0 ? first : 0;
 }
 
 export function setupGame(io: Server) {
@@ -78,18 +84,15 @@ export function setupGame(io: Server) {
     const freeIdx = gameState.slots.findIndex((s) => s === null);
     const hasOfflineSlots = gameState.slots.some((s) => s !== null && !s.isOnline);
 
-    // Block only when all 5 slots are online simultaneously
     if (freeIdx === -1 && !hasOfflineSlots) {
       socket.emit("roomFull");
       socket.disconnect(true);
       return;
     }
 
-    // assignedIndex = -1 means "pending" — game in progress, waiting to match offline slot
     let assignedIndex = freeIdx;
 
     if (freeIdx !== -1) {
-      // Normal new slot
       gameState.slots[assignedIndex] = { socketId: socket.id, name: null, isOnline: true };
       socket.emit("assignedIndex", assignedIndex);
       io.emit("updatePlayers", {
@@ -109,7 +112,6 @@ export function setupGame(io: Server) {
         onlineStatus: buildOnlineStatus(gameState),
       });
     } else {
-      // Pending: game running, only reconnect by matching name allowed
       socket.emit("gameInProgress", {
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
@@ -120,8 +122,13 @@ export function setupGame(io: Server) {
       const safeName = String(name).slice(0, 20).trim();
       if (!safeName) return;
 
+      // Block banned names (eliminated players)
+      if (gameState.bannedNames.includes(safeName)) {
+        socket.emit("nameBanned");
+        return;
+      }
+
       if (assignedIndex === -1) {
-        // Pending player — must match an offline slot exactly
         const matchIdx = gameState.slots.findIndex(
           (s) => s !== null && !s.isOnline && s.name === safeName
         );
@@ -152,7 +159,6 @@ export function setupGame(io: Server) {
         return;
       }
 
-      // Normal new slot — also check if name matches an offline slot
       const offlineMatchIdx = gameState.slots.findIndex(
         (s, i) =>
           s !== null &&
@@ -214,6 +220,7 @@ export function setupGame(io: Server) {
       if (isBang) {
         gameState.gameOver = true;
         gameState.bulletPos = -1;
+        gameState.eliminatedIndex = shooterIndex;
         io.emit("shotResult", { isBang: true, playerIndex: shooterIndex, pos: gameState.currentPos });
       } else {
         gameState.currentPos = (gameState.currentPos + 1) % 6;
@@ -225,26 +232,49 @@ export function setupGame(io: Server) {
 
     socket.on("rematch", () => {
       if (!gameState.gameOver) return;
-      const savedSlots = gameState.slots.map((s) => (s ? { ...s } : null));
-      gameState = createFreshState();
-      gameState.slots = savedSlots;
+
+      const elimIdx = gameState.eliminatedIndex;
+
+      // Ban the eliminated player's name so they can't rejoin under the same nick
+      if (elimIdx !== null) {
+        const elimName = gameState.slots[elimIdx]?.name;
+        if (elimName && !gameState.bannedNames.includes(elimName)) {
+          gameState.bannedNames.push(elimName);
+        }
+        // Clear the eliminated slot
+        gameState.slots[elimIdx] = null;
+      }
+
+      // Reset round state only (keep slots, scores tracked client-side, banlist)
+      gameState.bulletPos = -1;
+      gameState.currentPos = 0;
+      gameState.isSpinning = false;
+      gameState.gameOver = false;
+      gameState.roundCount = 0;
+      gameState.eliminatedIndex = null;
+
+      // Advance turn to next online player after the cleared slot
+      const startFrom = elimIdx !== null ? elimIdx : gameState.turn;
+      gameState.turn = nextOnlineTurn(gameState, startFrom);
+
       io.emit("rematch", {
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
         turn: gameState.turn,
+        count: filledSlotCount(gameState),
+        eliminatedIndex: elimIdx,
       });
     });
 
     socket.on("disconnect", () => {
       logger.info({ socketId: socket.id }, "Player disconnected");
 
-      if (assignedIndex === -1) return; // pending player, nothing to clean up
+      if (assignedIndex === -1) return;
 
       const slot = gameState.slots[assignedIndex];
       if (!slot) return;
 
       if (slot.name) {
-        // Named player — keep slot as offline
         gameState.slots[assignedIndex] = { ...slot, socketId: null, isOnline: false };
 
         if (gameState.turn === assignedIndex && !gameState.gameOver) {
@@ -262,7 +292,6 @@ export function setupGame(io: Server) {
         });
         io.emit("playerOffline", { playerIndex: assignedIndex });
       } else {
-        // Unnamed player — free the slot
         gameState.slots[assignedIndex] = null;
         io.emit("updatePlayers", {
           count: filledSlotCount(gameState),

@@ -54,8 +54,10 @@ export function GamePage() {
     roomFull,
     gameInProgress,
     slotReserved,
+    nameBanned,
     scores,
     hasSpun,
+    rematchTrigger,
     maxPlayers,
     allSlotsReady,
     connectAndSetName,
@@ -130,6 +132,14 @@ export function GamePage() {
       turnsSinceGhost.current = 0;
     }
   }, [gameOver]);
+
+  // Restart music on rematch
+  useEffect(() => {
+    if (rematchTrigger > 0 && musicRef.current) {
+      musicRef.current.currentTime = 0;
+      musicRef.current.play().catch(() => {});
+    }
+  }, [rematchTrigger]);
 
   // Stop music on any shot
   useEffect(() => {
@@ -216,6 +226,11 @@ export function GamePage() {
               Этот ник не зарезервирован. Введите своё прежнее имя.
             </p>
           )}
+          {nameBanned && (
+            <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: "#e74c3c" }}>
+              Этот игрок выбыл из игры. Войдите под другим именем.
+            </p>
+          )}
 
           <form onSubmit={handleJoin} className="space-y-4">
             <Input
@@ -224,7 +239,7 @@ export function GamePage() {
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               className="bg-black/60 border text-center font-mono uppercase tracking-wider h-12 rounded-none focus-visible:ring-0"
-              style={{ borderColor: slotReserved ? "#e74c3c" : "#9b59b6", color: "white" }}
+              style={{ borderColor: (slotReserved || nameBanned) ? "#e74c3c" : "#9b59b6", color: "white" }}
               maxLength={12}
               required
               data-testid="input-alias"
