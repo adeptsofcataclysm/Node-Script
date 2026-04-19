@@ -7,6 +7,19 @@ import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
 
+function playSpinTicks() {
+  try { const a = new Audio("/spin.mp3"); a.volume = 1; a.play(); } catch (_) {}
+}
+function playClickSound() {
+  try { const a = new Audio("/click.mp3"); a.volume = 1; a.play(); } catch (_) {}
+}
+function playBangSound() {
+  try { const a = new Audio("/bang.mp3"); a.volume = 1; a.play(); } catch (_) {}
+}
+function playToasty() {
+  try { const a = new Audio("/toasty.mp3"); a.volume = 0.85; a.play(); } catch (_) {}
+}
+
 export function SpectatorPage() {
   const {
     playerCount,
@@ -58,6 +71,22 @@ export function SpectatorPage() {
     };
   }, [gameReady]);
 
+  // Spin sound
+  useEffect(() => {
+    if (isSpinning) playSpinTicks();
+  }, [isSpinning]);
+
+  // Shot sounds
+  useEffect(() => {
+    if (shotResult) {
+      if (shotResult.isBang) {
+        playBangSound();
+      } else {
+        playClickSound();
+      }
+    }
+  }, [shotResult]);
+
   // Stop music on BANG
   useEffect(() => {
     if (shotResult?.isBang && musicRef.current) {
@@ -99,6 +128,7 @@ export function SpectatorPage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
+      playToasty();
       setTimeout(() => setShowGhost(false), 3100);
     }
   }, [turn, gameReady, gameOver]);
