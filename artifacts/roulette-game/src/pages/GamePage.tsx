@@ -152,7 +152,7 @@ export function GamePage() {
           className="pandora-card text-center p-10 rounded-xl max-w-md w-full relative z-10"
         >
           <h1 className="text-5xl font-bold uppercase tracking-widest mb-1" style={{ color: "white" }}>
-            PANDORA
+            ЯЩИК ПАНДОРЫ
           </h1>
           <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
             Roulette: {maxPlayers}-Player Mode
@@ -170,7 +170,7 @@ export function GamePage() {
               data-testid="input-alias"
             />
             <PandoraButton type="submit" disabled={!nameInput.trim()} data-testid="button-enter-room">
-              Enter Room
+              Открыть ящик
             </PandoraButton>
           </form>
         </motion.div>
