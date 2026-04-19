@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
 
 const MAX_PLAYERS = 5;
 
@@ -23,9 +23,11 @@ export function useSpectatorSocket() {
   const [rematchTrigger, setRematchTrigger] = useState(0);
   const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
   const [hasSpun, setHasSpun] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     const s = io({ path: "/socket.io", query: { spectator: "1" } });
+    socketRef.current = s;
 
     s.on("updatePlayers", ({ count, playerNames, onlineStatus }: {
       count: number;
@@ -122,6 +124,10 @@ export function useSpectatorSocket() {
     playerCount === MAX_PLAYERS &&
     Object.keys(playerNames).length === MAX_PLAYERS;
 
+  const rematch = useCallback(() => {
+    if (socketRef.current) socketRef.current.emit("rematch");
+  }, []);
+
   return {
     playerCount,
     playerNames,
@@ -138,5 +144,6 @@ export function useSpectatorSocket() {
     hasSpun,
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
+    rematch,
   };
 }

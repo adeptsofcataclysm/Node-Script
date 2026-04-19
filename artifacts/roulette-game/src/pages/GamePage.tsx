@@ -374,7 +374,6 @@ export function GamePage() {
           <DefeatScreen
             key="defeat-screen"
             playerName={eliminatedName}
-            onRematch={rematch}
           />
         )}
       </AnimatePresence>
@@ -436,9 +435,12 @@ export function GamePage() {
                 )}
               </AnimatePresence>
 
-              <PandoraButton onClick={rematch} data-testid="button-rematch">
-                Заменить игрока за столом
-              </PandoraButton>
+              <p
+                className="text-xs font-mono uppercase tracking-[3px]"
+                style={{ color: "#555" }}
+              >
+                Ожидание следующего раунда...
+              </p>
             </motion.div>
           </motion.div>
         )}

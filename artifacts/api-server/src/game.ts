@@ -78,6 +78,39 @@ function nextOnlineTurn(state: GameState, from: number): number {
 export function setupGame(io: Server) {
   let gameState: GameState = createFreshState();
 
+  // Shared rematch logic — callable from both player and spectator sockets
+  function doRematch() {
+    if (!gameState.gameOver) return;
+
+    const elimIdx = gameState.eliminatedIndex;
+
+    if (elimIdx !== null) {
+      const elimName = gameState.slots[elimIdx]?.name;
+      if (elimName && !gameState.bannedNames.includes(elimName)) {
+        gameState.bannedNames.push(elimName);
+      }
+      gameState.slots[elimIdx] = null;
+    }
+
+    gameState.bulletPos = -1;
+    gameState.currentPos = 0;
+    gameState.isSpinning = false;
+    gameState.gameOver = false;
+    gameState.roundCount = 0;
+    gameState.eliminatedIndex = null;
+
+    const startFrom = elimIdx !== null ? elimIdx : gameState.turn;
+    gameState.turn = nextOnlineTurn(gameState, startFrom);
+
+    io.emit("rematch", {
+      playerNames: buildPlayerNames(gameState),
+      onlineStatus: buildOnlineStatus(gameState),
+      turn: gameState.turn,
+      count: filledSlotCount(gameState),
+      eliminatedIndex: elimIdx,
+    });
+  }
+
   io.on("connection", (socket: Socket) => {
     // ── SPECTATOR ────────────────────────────────────────────────────────────
     if (socket.handshake.query.spectator === "1") {
@@ -93,6 +126,7 @@ export function setupGame(io: Server) {
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
       });
+      socket.on("rematch", doRematch);
       socket.on("disconnect", () => {
         logger.info({ socketId: socket.id }, "Spectator disconnected");
       });
@@ -260,41 +294,7 @@ export function setupGame(io: Server) {
       io.emit("fateAnnounced", { name: slot.name, text: safeText });
     });
 
-    socket.on("rematch", () => {
-      if (!gameState.gameOver) return;
-
-      const elimIdx = gameState.eliminatedIndex;
-
-      // Ban the eliminated player's name so they can't rejoin under the same nick
-      if (elimIdx !== null) {
-        const elimName = gameState.slots[elimIdx]?.name;
-        if (elimName && !gameState.bannedNames.includes(elimName)) {
-          gameState.bannedNames.push(elimName);
-        }
-        // Clear the eliminated slot
-        gameState.slots[elimIdx] = null;
-      }
-
-      // Reset round state only (keep slots, scores tracked client-side, banlist)
-      gameState.bulletPos = -1;
-      gameState.currentPos = 0;
-      gameState.isSpinning = false;
-      gameState.gameOver = false;
-      gameState.roundCount = 0;
-      gameState.eliminatedIndex = null;
-
-      // Advance turn to next online player after the cleared slot
-      const startFrom = elimIdx !== null ? elimIdx : gameState.turn;
-      gameState.turn = nextOnlineTurn(gameState, startFrom);
-
-      io.emit("rematch", {
-        playerNames: buildPlayerNames(gameState),
-        onlineStatus: buildOnlineStatus(gameState),
-        turn: gameState.turn,
-        count: filledSlotCount(gameState),
-        eliminatedIndex: elimIdx,
-      });
-    });
+    socket.on("rematch", doRematch);
 
     socket.on("disconnect", () => {
       logger.info({ socketId: socket.id }, "Player disconnected");

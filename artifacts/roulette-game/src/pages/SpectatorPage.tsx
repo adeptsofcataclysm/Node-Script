@@ -36,6 +36,7 @@ export function SpectatorPage() {
     fateAnnounced,
     maxPlayers,
     allSlotsReady,
+    rematch,
   } = useSpectatorSocket();
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
@@ -325,12 +326,23 @@ export function SpectatorPage() {
                 )}
               </AnimatePresence>
 
-              <p
-                className="text-xs font-mono uppercase tracking-[3px]"
-                style={{ color: "#555" }}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.0 }}
+                onClick={rematch}
+                className="w-full py-3 font-mono text-xs uppercase tracking-[3px] transition-all duration-200"
+                style={{
+                  background: "transparent",
+                  border: "1px solid #9b59b6",
+                  color: "#9b59b6",
+                  textShadow: "0 0 8px #9b59b6",
+                  boxShadow: "0 0 16px rgba(155,89,182,0.25)",
+                  cursor: "pointer",
+                }}
               >
-                Ожидание следующего раунда...
-              </p>
+                Заменить игрока за столом
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
