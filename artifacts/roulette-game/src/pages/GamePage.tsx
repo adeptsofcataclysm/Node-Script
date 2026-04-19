@@ -39,7 +39,8 @@ function playToasty() {
 
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
-  const [leftTable, setLeftTable] = useState(false);
+  const [showCestLaVie, setShowCestLaVie] = useState(false);
+  const wasEliminatedRef = useRef(false);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const {
     myIndex,
@@ -84,6 +85,13 @@ export function GamePage() {
       }
     }
   }, [shotResult]);
+
+  // Track elimination so we can show C'est la vie on rematch
+  useEffect(() => {
+    if (gameOver && shotResult?.isBang && shotResult.playerIndex === myIndex) {
+      wasEliminatedRef.current = true;
+    }
+  }, [gameOver, shotResult, myIndex]);
   // Apparition state
   const [showGhost, setShowGhost] = useState(false);
   const [ghostPos, setGhostPos] = useState({ top: "20%", left: "10%" });
@@ -135,10 +143,13 @@ export function GamePage() {
     }
   }, [gameOver]);
 
-  // Restart music on rematch, reset leftTable
+  // Restart music on rematch; show C'est la vie to eliminated player
   useEffect(() => {
     if (rematchTrigger > 0) {
-      setLeftTable(false);
+      if (wasEliminatedRef.current) {
+        setShowCestLaVie(true);
+        wasEliminatedRef.current = false;
+      }
       if (musicRef.current) {
         musicRef.current.currentTime = 0;
         musicRef.current.play().catch(() => {});
@@ -374,18 +385,17 @@ export function GamePage() {
 
       {/* Defeat screen — shown only to the eliminated player */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && myIndex !== null && shotResult.playerIndex === myIndex && !leftTable && (
+        {gameOver && shotResult?.isBang && myIndex !== null && shotResult.playerIndex === myIndex && (
           <DefeatScreen
             key="defeat-screen"
             playerName={eliminatedName}
-            onLeave={() => setLeftTable(true)}
           />
         )}
       </AnimatePresence>
 
       {/* Game over overlay — shown to surviving players */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && (myIndex === null || shotResult.playerIndex !== myIndex || leftTable) && (
+        {gameOver && shotResult?.isBang && (myIndex === null || shotResult.playerIndex !== myIndex) && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
@@ -445,6 +455,69 @@ export function GamePage() {
                 style={{ color: "#555" }}
               >
                 Ожидание следующего раунда...
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* C'est la vie — shown to eliminated player after rematch */}
+      <AnimatePresence>
+        {showCestLaVie && (
+          <motion.div
+            key="cest-la-vie"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.4 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+            style={{ background: "#000" }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
+              className="flex flex-col items-center gap-6 px-10 py-12"
+              style={{
+                border: "1px solid #333",
+                background: "#0a0a0a",
+                maxWidth: 420,
+                width: "90%",
+              }}
+            >
+              <div
+                className="font-mono text-xs uppercase tracking-[5px]"
+                style={{ color: "#444" }}
+              >
+                Pandora Roulette
+              </div>
+
+              <div
+                className="font-black italic"
+                style={{
+                  fontSize: "clamp(2.8rem, 10vw, 5rem)",
+                  color: "#fff",
+                  letterSpacing: "-1px",
+                  textShadow: "0 0 40px rgba(255,255,255,0.08)",
+                  fontFamily: "Georgia, serif",
+                  lineHeight: 1,
+                }}
+              >
+                C'est la vie
+              </div>
+
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 1.0, duration: 0.8 }}
+                className="w-full h-px"
+                style={{ background: "linear-gradient(to right, transparent, #333, transparent)" }}
+              />
+
+              <p
+                className="font-mono text-xs uppercase tracking-[3px] text-center"
+                style={{ color: "#333" }}
+              >
+                Таков жребий
               </p>
             </motion.div>
           </motion.div>
