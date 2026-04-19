@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameSocket } from "../hooks/useGameSocket";
 import { Cylinder } from "../components/Cylinder";
@@ -6,6 +6,41 @@ import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
+const GHOST_URL = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSf5cJtQRheUgVuauvLlzTHXFM91q7LmaPv8N03yxgT_nnn9-UF";
+
+function playCreepySound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    // Low rumble
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(55, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 3);
+    gain1.gain.setValueAtTime(0, ctx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.4);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start();
+    osc1.stop(ctx.currentTime + 3);
+
+    // High whisper overtone
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(440, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 3);
+    gain2.gain.setValueAtTime(0, ctx.currentTime);
+    gain2.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.6);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start();
+    osc2.stop(ctx.currentTime + 3);
+  } catch (_) {}
+}
 
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
@@ -31,8 +66,56 @@ export function GamePage() {
     rematch,
   } = useGameSocket();
 
+  // Apparition state
+  const [showGhost, setShowGhost] = useState(false);
+  const [ghostPos, setGhostPos] = useState({ top: "20%", left: "10%" });
+  const turnsSinceGhost = useRef(0);
+  const prevTurn = useRef<number | null>(null);
+
   const gameReady = playerCount === maxPlayers;
   const isMyTurn = myIndex !== null && myIndex === turn && gameReady && !gameOver;
+
+  // Detect turn changes and maybe trigger ghost
+  useEffect(() => {
+    if (!gameReady || gameOver) {
+      prevTurn.current = null;
+      return;
+    }
+    if (prevTurn.current === null) {
+      prevTurn.current = turn;
+      return;
+    }
+    if (prevTurn.current === turn) return;
+    prevTurn.current = turn;
+
+    turnsSinceGhost.current += 1;
+
+    if (turnsSinceGhost.current >= 3 && Math.random() < 0.45) {
+      turnsSinceGhost.current = 0;
+
+      // Random screen position (avoid center where cylinder is)
+      const positions = [
+        { top: "8%", left: "5%" },
+        { top: "8%", left: "68%" },
+        { top: "60%", left: "5%" },
+        { top: "60%", left: "68%" },
+        { top: "35%", left: "2%" },
+        { top: "35%", left: "72%" },
+      ];
+      setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
+      setShowGhost(true);
+      playCreepySound();
+
+      setTimeout(() => setShowGhost(false), 3000);
+    }
+  }, [turn, gameReady, gameOver]);
+
+  // Reset counter on rematch
+  useEffect(() => {
+    if (!gameOver) {
+      turnsSinceGhost.current = 0;
+    }
+  }, [gameOver]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +197,31 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* Scoreboard — 5 cards */}
+      {/* Ghost apparition */}
+      <AnimatePresence>
+        {showGhost && (
+          <motion.div
+            key="ghost"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: [0, 0.85, 0.85, 0] }}
+            transition={{ duration: 3, times: [0, 0.15, 0.75, 1] }}
+            className="fixed z-30 pointer-events-none"
+            style={{ top: ghostPos.top, left: ghostPos.left }}
+          >
+            <img
+              src={GHOST_URL}
+              alt=""
+              style={{
+                width: "180px",
+                filter: "drop-shadow(0 0 18px rgba(155,89,182,0.9)) brightness(0.9) contrast(1.1)",
+                borderRadius: "8px",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Scoreboard */}
       <div className="w-full max-w-3xl flex flex-wrap justify-center items-center gap-2 pt-6 pb-2 px-4 z-10">
         {Array.from({ length: maxPlayers }, (_, i) => (
           <PlayerCard
