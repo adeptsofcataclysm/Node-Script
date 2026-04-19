@@ -155,7 +155,7 @@ export function GamePage() {
             ЯЩИК ПАНДОРЫ
           </h1>
           <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
-            Roulette: {maxPlayers}-Player Mode
+           
           </p>
           <form onSubmit={handleJoin} className="space-y-4">
             <Input
