@@ -40,7 +40,7 @@ export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver }: Cylind
         animate={{ rotate: rotation }}
         transition={
           isSpinning
-            ? { duration: 2.5, ease: "linear", repeat: Infinity }
+            ? { duration: 1.9, ease: "linear", repeat: Infinity }
             : { type: "spring", stiffness: 180, damping: 18 }
         }
       >
