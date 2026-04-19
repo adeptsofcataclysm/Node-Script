@@ -486,14 +486,7 @@ export function GamePage() {
               }}
             >
               <div
-                className="font-mono text-xs uppercase tracking-[5px]"
-                style={{ color: "#444" }}
-              >
-                Pandora Roulette
-              </div>
-
-              <div
-                className="font-black italic"
+                className="font-black italic text-center"
                 style={{
                   fontSize: "clamp(2.8rem, 10vw, 5rem)",
                   color: "#fff",
