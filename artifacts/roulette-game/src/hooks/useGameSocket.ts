@@ -89,7 +89,7 @@ export function useGameSocket() {
       setHasSpun(false);
     });
 
-    s.on("rematch", (data?: { playerNames?: Record<string, string>; onlineStatus?: Record<string, boolean> }) => {
+    s.on("rematch", (data?: { playerNames?: Record<string, string>; onlineStatus?: Record<string, boolean>; turn?: number }) => {
       setGameOver(false);
       setBulletPos(-1);
       setCurrentPos(0);
@@ -98,6 +98,7 @@ export function useGameSocket() {
       setHasSpun(false);
       if (data?.playerNames) setPlayerNames(data.playerNames);
       if (data?.onlineStatus) setOnlineStatus(data.onlineStatus);
+      if (data?.turn !== undefined) setTurn(data.turn);
     });
 
     s.on("playerOffline", ({ playerIndex }: { playerIndex: number }) => {

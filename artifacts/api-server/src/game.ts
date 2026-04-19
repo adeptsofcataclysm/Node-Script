@@ -231,6 +231,7 @@ export function setupGame(io: Server) {
       io.emit("rematch", {
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
+        turn: gameState.turn,
       });
     });
 
