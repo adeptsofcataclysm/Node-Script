@@ -158,7 +158,7 @@ export function GamePage() {
       audio.pause();
       audio.currentTime = 0;
     }
-  }, [gameReady, opponentLeft, gameOver]);
+  }, [gameReady, opponentLeft]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
