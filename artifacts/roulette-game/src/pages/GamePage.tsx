@@ -7,7 +7,27 @@ import { Input } from "@/components/ui/input";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
-
+function playSpinSound() {
+  try {
+    const audio = new Audio("/spin.mp3"); // Звук вращения (цикличный или длинный)
+    audio.volume = 1;
+    audio.play();
+  } catch (_) {}
+}
+function playClickSound() {
+  try {
+    const audio = new Audio("/click.mp3"); // Холостой выстрел
+    audio.volume = 1;
+    audio.play();
+  } catch (_) {}
+}
+function playBangSound() {
+  try {
+    const audio = new Audio("/bang.mp3"); // Смертельный выстрел
+    audio.volume = 1.0;
+    audio.play();
+  } catch (_) {}
+}
 function playToasty() {
   try {
     const audio = new Audio("/toasty.mp3");
@@ -15,7 +35,6 @@ function playToasty() {
     audio.play();
   } catch (_) {}
 }
-
 export function GamePage() {
   const [nameInput, setNameInput] = useState("");
   const musicRef = useRef<HTMLAudioElement | null>(null);
@@ -40,7 +59,23 @@ export function GamePage() {
     shoot,
     rematch,
   } = useGameSocket();
+  // Звук вращения барабана
+  useEffect(() => {
+    if (isSpinning) {
+      playSpinSound();
+    }
+  }, [isSpinning]);
 
+  // Звук выстрела (результат)
+  useEffect(() => {
+    if (shotResult) {
+      if (shotResult.isBang) {
+        playBangSound();
+      } else {
+        playClickSound();
+      }
+    }
+  }, [shotResult]);
   // Apparition state
   const [showGhost, setShowGhost] = useState(false);
   const [ghostPos, setGhostPos] = useState({ top: "20%", left: "10%" });
