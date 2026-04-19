@@ -1,33 +1,65 @@
-import { motion } from "framer-motion";
+import { motion, useMotionValue, animate } from "framer-motion";
+import { useEffect, useRef } from "react";
 
 interface CylinderProps {
   currentPos: number;
   bulletPos: number;
   isSpinning: boolean;
   gameOver: boolean;
-  spinVersion: number; // increments every time a new spin starts
 }
 
-export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, spinVersion }: CylinderProps) {
+export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver }: CylinderProps) {
   const chambers = [0, 1, 2, 3, 4, 5];
+  const rotate = useMotionValue(0);
 
-  // Cumulative spin-end rotation (always grows → animation always fires, never reverses)
-  const spinEndRotation = 360 * 5 * Math.max(spinVersion, 1);
+  // Absolute rotation (never resets between spins)
+  const absRot = useRef(0);
+  // Tracks whether we are mid-spin
+  const wasSpinning = useRef(false);
+  // Tracks last known currentPos to detect position changes from shots
+  const prevPos = useRef(currentPos);
 
-  // Compute the minimal forward (or zero) adjustment needed to reach the correct chamber
-  // after the spin ends. This avoids any large backward jump.
-  const chamberAngle = ((currentPos * -60) % 360 + 360) % 360;
-  const spinEndAngle = spinEndRotation % 360;
-  let delta = chamberAngle - spinEndAngle;
-  // Normalise to [-180, +180] then force forward (>=0) to avoid backward motion
-  if (delta < -180) delta += 360;
-  if (delta > 180) delta -= 360;
-  if (delta < 0) delta += 360; // always move forward (at most 360°)
+  // ── SPIN START / SPIN END ────────────────────────────────────────────────
+  useEffect(() => {
+    if (isSpinning && !wasSpinning.current) {
+      // New spin: always add +1800° (5 full rotations) forward
+      wasSpinning.current = true;
+      const next = absRot.current + 360 * 5;
+      animate(rotate, next, { duration: 1.7, ease: [0.4, 0, 0.6, 1] });
+      absRot.current = next;
 
-  // When idle: land exactly on the correct chamber coming from the spin direction
-  const idleRotation = spinEndRotation + delta;
+    } else if (!isSpinning && wasSpinning.current) {
+      // Spin just ended: nudge forward to align the correct chamber
+      wasSpinning.current = false;
+      const targetAngle = ((currentPos * -60) % 360 + 360) % 360;
+      const spinEndAngle = ((absRot.current % 360) + 360) % 360;
+      let delta = targetAngle - spinEndAngle;
+      if (delta < 0) delta += 360; // always go forward (0-360)
+      const settleTo = absRot.current + delta;
+      animate(rotate, settleTo, { duration: 0.35, ease: "easeOut" });
+      absRot.current = settleTo;
+      prevPos.current = currentPos;
+    }
+  }, [isSpinning]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const rotation = isSpinning ? spinEndRotation : idleRotation;
+  // ── POSITION CHANGE FROM SHOTS ───────────────────────────────────────────
+  useEffect(() => {
+    // Ignore while spinning or immediately after spin (handled above)
+    if (isSpinning || wasSpinning.current) return;
+    if (currentPos === prevPos.current) return;
+
+    prevPos.current = currentPos;
+
+    // Advance via shortest spring path (60° per chamber click)
+    const targetAngle = ((currentPos * -60) % 360 + 360) % 360;
+    const currentAngle = ((absRot.current % 360) + 360) % 360;
+    let delta = targetAngle - currentAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    const moveTo = absRot.current + delta;
+    animate(rotate, moveTo, { type: "spring", stiffness: 200, damping: 22 } as any);
+    absRot.current = moveTo;
+  }, [currentPos, isSpinning]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="relative flex items-center justify-center">
@@ -54,13 +86,8 @@ export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, spinVers
           background: "rgba(0,0,0,0.95)",
           border: "4px solid #9b59b6",
           boxShadow: "0 0 20px #9b59b6, inset 0 0 40px rgba(0,0,0,0.8)",
+          rotate,
         }}
-        animate={{ rotate: rotation }}
-        transition={
-          isSpinning
-            ? { duration: 1.7, ease: [0.4, 0.0, 0.6, 1.0] }
-            : { duration: 0.35, ease: "easeOut" }
-        }
       >
         {/* Center hub */}
         <div

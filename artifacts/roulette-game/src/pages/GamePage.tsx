@@ -59,7 +59,6 @@ export function GamePage() {
     scores,
     hasSpun,
     rematchTrigger,
-    roundCount,
     maxPlayers,
     allSlotsReady,
     connectAndSetName,
@@ -69,14 +68,9 @@ export function GamePage() {
     submitFate,
     fateAnnounced,
   } = useGameSocket();
-  // Локальный счётчик спинов — растёт каждый раз при старте кручения,
-  // не зависит от задержки серверного roundCount
-  const [spinVersion, setSpinVersion] = useState(0);
+  // Звук кручения барабана
   useEffect(() => {
-    if (isSpinning) {
-      setSpinVersion((v) => v + 1);
-      playSpinTicks();
-    }
+    if (isSpinning) playSpinTicks();
   }, [isSpinning]);
 
   // Звук выстрела (результат)
@@ -355,11 +349,11 @@ export function GamePage() {
 
         {/* Cylinder */}
         <Cylinder
+          key={rematchTrigger}
           currentPos={currentPos}
           bulletPos={bulletPos}
           isSpinning={isSpinning}
           gameOver={gameOver}
-          spinVersion={spinVersion}
         />
 
         {/* Controls */}
