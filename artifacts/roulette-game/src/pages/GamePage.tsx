@@ -155,12 +155,12 @@ export function GamePage() {
             ЯЩИК ПАНДОРЫ
           </h1>
           <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
-           
+           маму ебал, как я люблю кодить
           </p>
           <form onSubmit={handleJoin} className="space-y-4">
             <Input
               type="text"
-              placeholder="Enter your alias"
+              placeholder="Введите своё имя"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               className="bg-black/60 border text-center font-mono uppercase tracking-wider h-12 rounded-none focus-visible:ring-0"
@@ -258,7 +258,7 @@ export function GamePage() {
               className="text-sm font-mono uppercase tracking-[3px]"
               style={{ color: "#9b59b6" }}
             >
-              Waiting for players... ({playerCount}/{maxPlayers})
+              Ожидание игроков... ({playerCount}/{maxPlayers})
             </motion.p>
           ) : !gameOver ? (
             <motion.p
@@ -284,10 +284,10 @@ export function GamePage() {
         {/* Controls */}
         <div className="flex gap-5">
           <PandoraButton onClick={spin} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-spin">
-            Spin Cylinder
+            Крутить
           </PandoraButton>
           <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver || !hasSpun} data-testid="button-shoot">
-            Fire
+            Испытать судьбу
           </PandoraButton>
         </div>
 
