@@ -58,7 +58,7 @@ export function Cylinder({ currentPos, bulletPos, isSpinning, gameOver, spinVers
         animate={{ rotate: rotation }}
         transition={
           isSpinning
-            ? { duration: 1.7, ease: [0.0, 0.0, 0.2, 1.0] }
+            ? { duration: 1.7, ease: [0.4, 0.0, 0.6, 1.0] }
             : { duration: 0.35, ease: "easeOut" }
         }
       >
