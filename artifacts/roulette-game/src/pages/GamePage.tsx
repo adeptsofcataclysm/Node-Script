@@ -314,16 +314,16 @@ export function GamePage() {
                 className="text-6xl font-bold uppercase tracking-[6px]"
                 style={{ color: "#e74c3c", textShadow: "0 0 30px #e74c3c" }}
               >
-                BANG
+                WASTED
               </div>
               <h1
                 className="text-3xl font-bold uppercase tracking-widest"
                 style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
               >
-                {eliminatedName} is eliminated
+               Игрока {eliminatedName} поглатила тьма
               </h1>
               <PandoraButton onClick={rematch} data-testid="button-rematch">
-                Play Again
+                Начать заново
               </PandoraButton>
             </motion.div>
           </motion.div>
