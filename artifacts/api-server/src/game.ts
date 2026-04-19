@@ -128,6 +128,7 @@ export function setupGame(io: Server) {
       gameState.playerNamesByIndex = savedNames;
       gameState.playerSockets = savedSockets;
       gameState.connectedCount = savedCount;
+      gameState.isSpinning = false;
 
       io.emit("rematch");
     });
