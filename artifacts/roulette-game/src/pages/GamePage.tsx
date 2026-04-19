@@ -52,6 +52,8 @@ export function GamePage() {
     shotResult,
     myName,
     roomFull,
+    gameInProgress,
+    slotReserved,
     scores,
     hasSpun,
     maxPlayers,
@@ -195,20 +197,32 @@ export function GamePage() {
           <p className="text-sm font-mono uppercase tracking-[5px] mb-8" style={{ color: "#9b59b6" }}>
            маму ебал, как я люблю кодить
           </p>
+
+          {gameInProgress && (
+            <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: "#f39c12" }}>
+              Игра идёт. Введите своё прежнее имя для возврата.
+            </p>
+          )}
+          {slotReserved && (
+            <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: "#e74c3c" }}>
+              Этот ник не зарезервирован. Введите своё прежнее имя.
+            </p>
+          )}
+
           <form onSubmit={handleJoin} className="space-y-4">
             <Input
               type="text"
-              placeholder="Введите своё имя"
+              placeholder={gameInProgress ? "Ваше прежнее имя" : "Введите своё имя"}
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               className="bg-black/60 border text-center font-mono uppercase tracking-wider h-12 rounded-none focus-visible:ring-0"
-              style={{ borderColor: "#9b59b6", color: "white" }}
+              style={{ borderColor: slotReserved ? "#e74c3c" : "#9b59b6", color: "white" }}
               maxLength={12}
               required
               data-testid="input-alias"
             />
             <PandoraButton type="submit" disabled={!nameInput.trim()} data-testid="button-enter-room">
-              Открыть ящик
+              {gameInProgress ? "Вернуться" : "Открыть ящик"}
             </PandoraButton>
           </form>
         </motion.div>

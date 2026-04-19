@@ -22,6 +22,8 @@ export function useGameSocket() {
   } | null>(null);
   const [myName, setMyName] = useState("");
   const [roomFull, setRoomFull] = useState(false);
+  const [gameInProgress, setGameInProgress] = useState(false);
+  const [slotReserved, setSlotReserved] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(Array.from({ length: MAX_PLAYERS }, (_, i) => [i, 0]))
   );
@@ -108,11 +110,23 @@ export function useGameSocket() {
 
     s.on("roomFull", () => setRoomFull(true));
 
+    s.on("gameInProgress", (data: { playerNames: Record<string, string>; onlineStatus: Record<string, boolean> }) => {
+      setGameInProgress(true);
+      setPlayerNames(data.playerNames);
+      setOnlineStatus(data.onlineStatus);
+    });
+
+    s.on("slotReserved", () => {
+      setSlotReserved(true);
+      setMyName(""); // reset so lobby form reappears
+    });
+
     return () => { s.disconnect(); };
   }, []);
 
   const connectAndSetName = useCallback((name: string) => {
     setMyName(name);
+    setSlotReserved(false);
     if (socket) socket.emit("setName", name);
   }, [socket]);
 
@@ -145,6 +159,8 @@ export function useGameSocket() {
     shotResult,
     myName,
     roomFull,
+    gameInProgress,
+    slotReserved,
     scores,
     hasSpun,
     maxPlayers: MAX_PLAYERS,
