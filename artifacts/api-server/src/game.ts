@@ -3,12 +3,16 @@ import { logger } from "./lib/logger";
 
 const MAX_PLAYERS = 5;
 
+interface SlotInfo {
+  socketId: string | null;
+  name: string | null;
+  isOnline: boolean;
+}
+
 interface GameState {
   bulletPos: number;
   currentPos: number;
-  playerSockets: Record<number, string>;
-  playerNamesByIndex: Record<number, string>;
-  connectedCount: number;
+  slots: (SlotInfo | null)[];
   turn: number;
   isSpinning: boolean;
   gameOver: boolean;
@@ -19,14 +23,50 @@ function createFreshState(): GameState {
   return {
     bulletPos: -1,
     currentPos: 0,
-    playerSockets: {},
-    playerNamesByIndex: {},
-    connectedCount: 0,
+    slots: Array(MAX_PLAYERS).fill(null),
     turn: 0,
     isSpinning: false,
     gameOver: false,
     roundCount: 0,
   };
+}
+
+function filledSlotCount(state: GameState): number {
+  return state.slots.filter((s) => s !== null).length;
+}
+
+function buildPlayerNames(state: GameState): Record<string, string> {
+  const result: Record<string, string> = {};
+  state.slots.forEach((slot, i) => {
+    if (slot?.name) result[String(i)] = slot.name;
+  });
+  return result;
+}
+
+function buildOnlineStatus(state: GameState): Record<string, boolean> {
+  const result: Record<string, boolean> = {};
+  state.slots.forEach((slot, i) => {
+    if (slot !== null) result[String(i)] = slot.isOnline;
+  });
+  return result;
+}
+
+function allSlotsReady(state: GameState): boolean {
+  return state.slots.every((s) => s !== null && s.name !== null);
+}
+
+function onlineIndices(state: GameState): number[] {
+  return state.slots
+    .map((s, i) => (s?.isOnline ? i : -1))
+    .filter((i) => i >= 0);
+}
+
+function nextOnlineTurn(state: GameState, from: number): number {
+  for (let i = 1; i <= MAX_PLAYERS; i++) {
+    const idx = (from + i) % MAX_PLAYERS;
+    if (state.slots[idx]?.isOnline) return idx;
+  }
+  return from;
 }
 
 export function setupGame(io: Server) {
@@ -35,20 +75,22 @@ export function setupGame(io: Server) {
   io.on("connection", (socket: Socket) => {
     logger.info({ socketId: socket.id }, "Player connected");
 
-    if (gameState.connectedCount >= MAX_PLAYERS) {
+    const freeIdx = gameState.slots.findIndex((s) => s === null);
+    if (freeIdx === -1) {
       socket.emit("roomFull");
       socket.disconnect(true);
       return;
     }
 
-    const playerIndex = gameState.connectedCount;
-    gameState.playerSockets[playerIndex] = socket.id;
-    gameState.connectedCount += 1;
+    let assignedIndex = freeIdx;
+    gameState.slots[assignedIndex] = { socketId: socket.id, name: null, isOnline: true };
 
-    socket.emit("assignedIndex", playerIndex);
+    socket.emit("assignedIndex", assignedIndex);
+
     io.emit("updatePlayers", {
-      count: gameState.connectedCount,
-      playerNames: { ...gameState.playerNamesByIndex },
+      count: filledSlotCount(gameState),
+      playerNames: buildPlayerNames(gameState),
+      onlineStatus: buildOnlineStatus(gameState),
     });
 
     socket.emit("sync", {
@@ -57,23 +99,48 @@ export function setupGame(io: Server) {
       turn: gameState.turn,
       isSpinning: gameState.isSpinning,
       gameOver: gameState.gameOver,
-      playerCount: gameState.connectedCount,
+      playerCount: filledSlotCount(gameState),
       roundCount: gameState.roundCount,
+      playerNames: buildPlayerNames(gameState),
+      onlineStatus: buildOnlineStatus(gameState),
     });
 
     socket.on("setName", (name: string) => {
-      const safeName = String(name).slice(0, 20).trim() || `Player ${playerIndex + 1}`;
-      gameState.playerNamesByIndex[playerIndex] = safeName;
+      const safeName = String(name).slice(0, 20).trim() || `Player ${assignedIndex + 1}`;
+
+      const offlineMatchIdx = gameState.slots.findIndex(
+        (s, i) =>
+          s !== null &&
+          !s.isOnline &&
+          s.name === safeName &&
+          i !== assignedIndex
+      );
+
+      if (offlineMatchIdx !== -1) {
+        gameState.slots[assignedIndex] = null;
+        assignedIndex = offlineMatchIdx;
+        gameState.slots[offlineMatchIdx] = { socketId: socket.id, name: safeName, isOnline: true };
+        socket.emit("assignedIndex", offlineMatchIdx);
+        io.emit("playerOnline", { playerIndex: offlineMatchIdx });
+      } else {
+        const existing = gameState.slots[assignedIndex];
+        if (existing) {
+          gameState.slots[assignedIndex] = { ...existing, name: safeName };
+        }
+      }
+
       io.emit("updatePlayers", {
-        count: gameState.connectedCount,
-        playerNames: { ...gameState.playerNamesByIndex },
+        count: filledSlotCount(gameState),
+        playerNames: buildPlayerNames(gameState),
+        onlineStatus: buildOnlineStatus(gameState),
       });
     });
 
     socket.on("spin", () => {
-      if (gameState.playerSockets[gameState.turn] !== socket.id) return;
+      const slot = gameState.slots[gameState.turn];
+      if (!slot || slot.socketId !== socket.id) return;
       if (gameState.isSpinning) return;
-      if (gameState.connectedCount < MAX_PLAYERS) return;
+      if (!allSlotsReady(gameState)) return;
       if (gameState.gameOver) return;
 
       gameState.isSpinning = true;
@@ -90,7 +157,8 @@ export function setupGame(io: Server) {
     });
 
     socket.on("shoot", () => {
-      if (gameState.playerSockets[gameState.turn] !== socket.id) return;
+      const slot = gameState.slots[gameState.turn];
+      if (!slot || slot.socketId !== socket.id) return;
       if (gameState.isSpinning) return;
       if (gameState.bulletPos === -1) return;
       if (gameState.gameOver) return;
@@ -101,55 +169,57 @@ export function setupGame(io: Server) {
       if (isBang) {
         gameState.gameOver = true;
         gameState.bulletPos = -1;
-        io.emit("shotResult", {
-          isBang: true,
-          playerIndex: shooterIndex,
-          pos: gameState.currentPos,
-        });
+        io.emit("shotResult", { isBang: true, playerIndex: shooterIndex, pos: gameState.currentPos });
       } else {
         gameState.currentPos = (gameState.currentPos + 1) % 6;
-        gameState.turn = (gameState.turn + 1) % MAX_PLAYERS;
-        io.emit("shotResult", {
-          isBang: false,
-          playerIndex: shooterIndex,
-          pos: gameState.currentPos,
-        });
+        gameState.turn = nextOnlineTurn(gameState, gameState.turn);
+        io.emit("shotResult", { isBang: false, playerIndex: shooterIndex, pos: gameState.currentPos });
         io.emit("nextTurn", { turn: gameState.turn });
       }
     });
 
     socket.on("rematch", () => {
       if (!gameState.gameOver) return;
-      const savedNames = { ...gameState.playerNamesByIndex };
-      const savedSockets = { ...gameState.playerSockets };
-      const savedCount = gameState.connectedCount;
-
+      const savedSlots = gameState.slots.map((s) => (s ? { ...s } : null));
       gameState = createFreshState();
-      gameState.playerNamesByIndex = savedNames;
-      gameState.playerSockets = savedSockets;
-      gameState.connectedCount = savedCount;
-
-      io.emit("rematch");
+      gameState.slots = savedSlots;
+      io.emit("rematch", {
+        playerNames: buildPlayerNames(gameState),
+        onlineStatus: buildOnlineStatus(gameState),
+      });
     });
 
     socket.on("disconnect", () => {
       logger.info({ socketId: socket.id }, "Player disconnected");
 
-      delete gameState.playerSockets[playerIndex];
-      gameState.connectedCount -= 1;
+      const slot = gameState.slots[assignedIndex];
+      if (!slot) return;
 
-      gameState.bulletPos = -1;
-      gameState.currentPos = 0;
-      gameState.turn = 0;
-      gameState.isSpinning = false;
-      gameState.gameOver = false;
-      gameState.roundCount = 0;
+      if (slot.name) {
+        gameState.slots[assignedIndex] = { ...slot, socketId: null, isOnline: false };
 
-      io.emit("updatePlayers", {
-        count: gameState.connectedCount,
-        playerNames: { ...gameState.playerNamesByIndex },
-      });
-      io.emit("opponentLeft");
+        if (gameState.turn === assignedIndex && !gameState.gameOver) {
+          const online = onlineIndices(gameState);
+          if (online.length > 0) {
+            gameState.turn = nextOnlineTurn(gameState, assignedIndex);
+            io.emit("nextTurn", { turn: gameState.turn });
+          }
+        }
+
+        io.emit("updatePlayers", {
+          count: filledSlotCount(gameState),
+          playerNames: buildPlayerNames(gameState),
+          onlineStatus: buildOnlineStatus(gameState),
+        });
+        io.emit("playerOffline", { playerIndex: assignedIndex });
+      } else {
+        gameState.slots[assignedIndex] = null;
+        io.emit("updatePlayers", {
+          count: filledSlotCount(gameState),
+          playerNames: buildPlayerNames(gameState),
+          onlineStatus: buildOnlineStatus(gameState),
+        });
+      }
     });
   });
 }

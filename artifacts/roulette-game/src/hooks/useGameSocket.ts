@@ -8,6 +8,7 @@ export function useGameSocket() {
   const [myIndex, setMyIndex] = useState<number | null>(null);
   const [playerCount, setPlayerCount] = useState(0);
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
+  const [onlineStatus, setOnlineStatus] = useState<Record<string, boolean>>({});
   const [turn, setTurn] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [bulletPos, setBulletPos] = useState(-1);
@@ -20,7 +21,6 @@ export function useGameSocket() {
     pos: number;
   } | null>(null);
   const [myName, setMyName] = useState("");
-  const [opponentLeft, setOpponentLeft] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(Array.from({ length: MAX_PLAYERS }, (_, i) => [i, 0]))
@@ -33,9 +33,14 @@ export function useGameSocket() {
 
     s.on("assignedIndex", (index: number) => setMyIndex(index));
 
-    s.on("updatePlayers", ({ count, playerNames }: { count: number; playerNames: Record<string, string> }) => {
+    s.on("updatePlayers", ({ count, playerNames, onlineStatus }: {
+      count: number;
+      playerNames: Record<string, string>;
+      onlineStatus: Record<string, boolean>;
+    }) => {
       setPlayerCount(count);
       setPlayerNames(playerNames);
+      setOnlineStatus(onlineStatus);
     });
 
     s.on("sync", (state: any) => {
@@ -46,6 +51,8 @@ export function useGameSocket() {
       setGameOver(state.gameOver);
       setPlayerCount(state.playerCount);
       setRoundCount(state.roundCount);
+      if (state.playerNames) setPlayerNames(state.playerNames);
+      if (state.onlineStatus) setOnlineStatus(state.onlineStatus);
     });
 
     s.on("startSpin", () => {
@@ -77,22 +84,26 @@ export function useGameSocket() {
     s.on("nextTurn", ({ turn }: { turn: number }) => {
       setTurn(turn);
       setShotResult(null);
+      setHasSpun(false);
     });
 
-    s.on("rematch", () => {
+    s.on("rematch", (data?: { playerNames?: Record<string, string>; onlineStatus?: Record<string, boolean> }) => {
       setGameOver(false);
       setBulletPos(-1);
       setCurrentPos(0);
       setShotResult(null);
       setIsSpinning(false);
       setHasSpun(false);
+      if (data?.playerNames) setPlayerNames(data.playerNames);
+      if (data?.onlineStatus) setOnlineStatus(data.onlineStatus);
     });
 
-    s.on("opponentLeft", () => {
-      setOpponentLeft(true);
-      setGameOver(false);
-      setShotResult(null);
-      setHasSpun(false);
+    s.on("playerOffline", ({ playerIndex }: { playerIndex: number }) => {
+      setOnlineStatus((prev) => ({ ...prev, [String(playerIndex)]: false }));
+    });
+
+    s.on("playerOnline", ({ playerIndex }: { playerIndex: number }) => {
+      setOnlineStatus((prev) => ({ ...prev, [String(playerIndex)]: true }));
     });
 
     s.on("roomFull", () => setRoomFull(true));
@@ -116,11 +127,15 @@ export function useGameSocket() {
   const rematch = useCallback(() => {
     if (socket) socket.emit("rematch");
   }, [socket]);
-  
+
+  const allSlotsReady = playerCount === MAX_PLAYERS &&
+    Object.keys(playerNames).length === MAX_PLAYERS;
+
   return {
     myIndex,
     playerCount,
     playerNames,
+    onlineStatus,
     turn,
     isSpinning,
     bulletPos,
@@ -129,11 +144,11 @@ export function useGameSocket() {
     roundCount,
     shotResult,
     myName,
-    opponentLeft,
     roomFull,
     scores,
     hasSpun,
     maxPlayers: MAX_PLAYERS,
+    allSlotsReady,
     connectAndSetName,
     spin,
     shoot,

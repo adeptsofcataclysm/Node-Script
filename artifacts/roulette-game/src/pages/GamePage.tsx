@@ -43,6 +43,7 @@ export function GamePage() {
     myIndex,
     playerCount,
     playerNames,
+    onlineStatus,
     turn,
     isSpinning,
     bulletPos,
@@ -50,11 +51,11 @@ export function GamePage() {
     gameOver,
     shotResult,
     myName,
-    opponentLeft,
     roomFull,
     scores,
     hasSpun,
     maxPlayers,
+    allSlotsReady,
     connectAndSetName,
     spin,
     shoot,
@@ -83,7 +84,7 @@ export function GamePage() {
   const turnsSinceGhost = useRef(0);
   const prevTurn = useRef<number | null>(null);
 
-  const gameReady = playerCount === maxPlayers;
+  const gameReady = allSlotsReady;
   const isMyTurn = myIndex !== null && myIndex === turn && gameReady && !gameOver;
 
   // Detect turn changes and maybe trigger ghost
@@ -138,7 +139,7 @@ export function GamePage() {
     }
     const audio = musicRef.current;
 
-    if (gameReady && !opponentLeft) {
+    if (gameReady) {
       const tryPlay = () => audio.play().catch(() => {});
       tryPlay();
       // Browsers may block autoplay — retry on first user interaction
@@ -158,7 +159,7 @@ export function GamePage() {
       audio.pause();
       audio.currentTime = 0;
     }
-  }, [gameReady, opponentLeft]);
+  }, [gameReady]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,6 +277,7 @@ export function GamePage() {
             isActive={turn === i && gameReady && !gameOver}
             playerIndex={i}
             isEliminated={gameOver && !!shotResult?.isBang && shotResult.playerIndex === i}
+            isOffline={onlineStatus[String(i)] === false}
           />
         ))}
       </div>
@@ -285,11 +287,7 @@ export function GamePage() {
 
         {/* Turn announcer */}
         <div className="h-8 flex items-center justify-center">
-          {opponentLeft ? (
-            <p className="text-sm font-mono uppercase tracking-widest" style={{ color: "#e74c3c" }}>
-              A player left the table
-            </p>
-          ) : !gameReady ? (
+          {!gameReady ? (
             <motion.p
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 2, repeat: Infinity }}
