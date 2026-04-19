@@ -86,7 +86,7 @@ export function setupGame(io: Server) {
       setTimeout(() => {
         gameState.isSpinning = false;
         io.emit("stopSpin", { roundCount: gameState.roundCount });
-      }, 1900);
+      }, 1700);
     });
 
     socket.on("shoot", () => {
