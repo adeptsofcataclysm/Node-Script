@@ -42,6 +42,15 @@ export function GamePage() {
   const [showCestLaVie, setShowCestLaVie] = useState(false);
   const wasEliminatedRef = useRef(false);
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const mutedRef = useRef(false);
+  const [muted, setMuted] = useState(false);
+
+  const toggleMute = () => {
+    const next = !mutedRef.current;
+    mutedRef.current = next;
+    setMuted(next);
+    if (musicRef.current) musicRef.current.volume = next ? 0 : 0.45;
+  };
   const {
     myIndex,
     playerCount,
@@ -73,16 +82,16 @@ export function GamePage() {
   } = useGameSocket();
   // Звук кручения барабана
   useEffect(() => {
-    if (isSpinning) playSpinTicks();
+    if (isSpinning && !mutedRef.current) playSpinTicks();
   }, [isSpinning]);
 
   // Звук выстрела (результат)
   useEffect(() => {
     if (shotResult) {
       if (shotResult.isBang) {
-        playBangSound();
+        if (!mutedRef.current) playBangSound();
       } else {
-        playClickSound();
+        if (!mutedRef.current) playClickSound();
       }
     }
   }, [shotResult]);
@@ -131,7 +140,7 @@ export function GamePage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
-      playToasty();
+      if (!mutedRef.current) playToasty();
 
       setTimeout(() => setShowGhost(false), 3000);
     }
@@ -153,7 +162,7 @@ export function GamePage() {
       }
       if (musicRef.current) {
         musicRef.current.currentTime = 0;
-        musicRef.current.play().catch(() => {});
+        if (!mutedRef.current) musicRef.current.play().catch(() => {});
       }
     }
   }, [rematchTrigger]);
@@ -177,11 +186,11 @@ export function GamePage() {
     const audio = musicRef.current;
 
     if (gameReady) {
-      const tryPlay = () => audio.play().catch(() => {});
+      const tryPlay = () => { if (!mutedRef.current) audio.play().catch(() => {}); };
       tryPlay();
       // Browsers may block autoplay — retry on first user interaction
       const onInteract = () => {
-        audio.play().catch(() => {});
+        if (!mutedRef.current) audio.play().catch(() => {});
         document.removeEventListener("click", onInteract);
         document.removeEventListener("keydown", onInteract);
       };
@@ -281,6 +290,16 @@ export function GamePage() {
       {/* Background */}
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
+
+      {/* Mute button */}
+      <button
+        onClick={toggleMute}
+        className="fixed z-30"
+        style={{ top: 16, right: 16, background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
+        title={muted ? "Включить звук" : "Выключить звук"}
+      >
+        <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
+      </button>
 
       {/* BANG flash */}
       <AnimatePresence>

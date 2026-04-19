@@ -41,7 +41,17 @@ export function SpectatorPage() {
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const bangRef = useRef<HTMLAudioElement | null>(null);
+  const mutedRef = useRef(false);
+  const [muted, setMuted] = useState(false);
   const gameReady = allSlotsReady;
+
+  const toggleMute = () => {
+    const next = !mutedRef.current;
+    mutedRef.current = next;
+    setMuted(next);
+    if (musicRef.current) musicRef.current.volume = next ? 0 : 0.45;
+    if (bangRef.current) bangRef.current.volume = next ? 0 : 1;
+  };
 
   // Create music once on mount, play as soon as user interacts or gameReady
   useEffect(() => {
@@ -51,7 +61,7 @@ export function SpectatorPage() {
     musicRef.current = audio;
 
     const tryPlay = () => {
-      audio.play().catch(() => {});
+      if (!mutedRef.current) audio.play().catch(() => {});
       window.removeEventListener("click", tryPlay);
       window.removeEventListener("keydown", tryPlay);
     };
@@ -67,7 +77,7 @@ export function SpectatorPage() {
 
   // Start music when all players are ready
   useEffect(() => {
-    if (gameReady && musicRef.current) {
+    if (gameReady && musicRef.current && !mutedRef.current) {
       musicRef.current.currentTime = 0;
       musicRef.current.play().catch(() => {});
     }
@@ -75,7 +85,7 @@ export function SpectatorPage() {
 
   // Spin sound
   useEffect(() => {
-    if (isSpinning) playSpinTicks();
+    if (isSpinning && !mutedRef.current) playSpinTicks();
   }, [isSpinning]);
 
   // Shot sounds + stop music on BANG
@@ -89,11 +99,11 @@ export function SpectatorPage() {
       }
       // Play bang, keep reference so we can stop it on rematch
       const bang = new Audio("/bang.mp3");
-      bang.volume = 1;
+      bang.volume = mutedRef.current ? 0 : 1;
       bang.play().catch(() => {});
       bangRef.current = bang;
     } else {
-      playClickSound();
+      if (!mutedRef.current) playClickSound();
     }
   }, [shotResult]);
 
@@ -109,7 +119,7 @@ export function SpectatorPage() {
     // Restart main music
     if (musicRef.current) {
       musicRef.current.currentTime = 0;
-      musicRef.current.play().catch(() => {});
+      if (!mutedRef.current) musicRef.current.play().catch(() => {});
     }
   }, [rematchTrigger]);
 
@@ -138,7 +148,7 @@ export function SpectatorPage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
-      playToasty();
+      if (!mutedRef.current) playToasty();
       setTimeout(() => setShowGhost(false), 3100);
     }
   }, [turn, gameReady, gameOver]);
@@ -159,17 +169,26 @@ export function SpectatorPage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
-      {/* Spectator badge */}
-      <div
-        className="fixed top-4 right-5 z-20 px-3 py-1 font-mono text-xs uppercase tracking-[3px]"
-        style={{
-          border: "1px solid #9b59b6",
-          color: "#9b59b6",
-          background: "rgba(0,0,0,0.7)",
-          textShadow: "0 0 8px #9b59b6",
-        }}
-      >
-        Наблюдатель
+      {/* Top-right controls: spectator badge + mute */}
+      <div className="fixed top-4 right-4 z-30 flex items-center gap-3">
+        <button
+          onClick={toggleMute}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
+          title={muted ? "Включить звук" : "Выключить звук"}
+        >
+          <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
+        </button>
+        <div
+          className="px-3 py-1 font-mono text-xs uppercase tracking-[3px]"
+          style={{
+            border: "1px solid #9b59b6",
+            color: "#9b59b6",
+            background: "rgba(0,0,0,0.7)",
+            textShadow: "0 0 8px #9b59b6",
+          }}
+        >
+          Наблюдатель
+        </div>
       </div>
 
       {/* BANG flash */}
