@@ -323,7 +323,7 @@ export function GamePage() {
                Игрока {eliminatedName} поглатила тьма!
               </h1>
               <PandoraButton onClick={rematch} data-testid="button-rematch">
-                Заменить игрока за столом
+                🔄Заменить игрока за столом🔄
               </PandoraButton>
             </motion.div>
           </motion.div>
