@@ -133,7 +133,7 @@ export function GamePage() {
 
   // Stop music on any shot
   useEffect(() => {
-    if (shotResult && musicRef.current) {
+    if (shotResult?.isBang && musicRef.current) {
       musicRef.current.pause();
       musicRef.current.currentTime = 0;
     }
