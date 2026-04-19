@@ -82,7 +82,6 @@ export function useGameSocket() {
 
     s.on("nextTurn", ({ turn }: { turn: number }) => {
       setTurn(turn);
-      setHasSpun(false);
       setShotResult(null);
     });
 
