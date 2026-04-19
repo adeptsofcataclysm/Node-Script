@@ -320,10 +320,10 @@ export function GamePage() {
                 className="text-3xl font-bold uppercase tracking-widest"
                 style={{ color: "white", textShadow: "0 0 20px #9b59b6" }}
               >
-               Игрока {eliminatedName} поглатила тьма
+               Игрока {eliminatedName} поглатила тьма!
               </h1>
               <PandoraButton onClick={rematch} data-testid="button-rematch">
-                Начать заново
+                Заменить игрока за столом
               </PandoraButton>
             </motion.div>
           </motion.div>
