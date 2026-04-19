@@ -116,7 +116,7 @@ export function useGameSocket() {
   const rematch = useCallback(() => {
     if (socket) socket.emit("rematch");
   }, [socket]);
-
+  
   return {
     myIndex,
     playerCount,
