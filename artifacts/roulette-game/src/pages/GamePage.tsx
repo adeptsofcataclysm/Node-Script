@@ -36,6 +36,8 @@ function playToasty() {
   } catch (_) {}
 }
 
+import myArtifact from "../assets/my-image.png"
+
 {/* Картинка из локальной папки public */}
 <div style={{
     position: "fixed",
