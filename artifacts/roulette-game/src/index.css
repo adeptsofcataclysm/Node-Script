@@ -133,3 +133,20 @@
   border: 1px solid #9b59b6;
   box-shadow: 0 0 30px rgba(155, 89, 182, 0.15);
 }
+
+@keyframes corner-glow {
+  0%   { filter: drop-shadow(0 0 6px rgba(155, 89, 182, 0.5)) drop-shadow(0 0 14px rgba(155, 89, 182, 0.25)); }
+  50%  { filter: drop-shadow(0 0 18px rgba(185, 100, 220, 0.95)) drop-shadow(0 0 36px rgba(155, 89, 182, 0.55)); }
+  100% { filter: drop-shadow(0 0 6px rgba(155, 89, 182, 0.5)) drop-shadow(0 0 14px rgba(155, 89, 182, 0.25)); }
+}
+
+.corner-logo {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 10;
+  width: 11rem;
+  pointer-events: none;
+  user-select: none;
+  animation: corner-glow 2.6s ease-in-out infinite;
+}
