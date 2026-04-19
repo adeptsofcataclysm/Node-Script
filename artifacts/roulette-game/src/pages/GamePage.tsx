@@ -95,21 +95,33 @@ export function GamePage() {
   // Music: start when all players ready, stop when someone leaves
   useEffect(() => {
     if (!musicRef.current) {
-      const audio = new Audio("/music.m4a");
+      const audio = new Audio("/music.mp3");
       audio.loop = true;
       audio.volume = 0.45;
       musicRef.current = audio;
     }
     const audio = musicRef.current;
+
     if (gameReady && !opponentLeft) {
-      audio.play().catch(() => {});
+      const tryPlay = () => audio.play().catch(() => {});
+      tryPlay();
+      // Browsers may block autoplay — retry on first user interaction
+      const onInteract = () => {
+        audio.play().catch(() => {});
+        document.removeEventListener("click", onInteract);
+        document.removeEventListener("keydown", onInteract);
+      };
+      document.addEventListener("click", onInteract);
+      document.addEventListener("keydown", onInteract);
+      return () => {
+        document.removeEventListener("click", onInteract);
+        document.removeEventListener("keydown", onInteract);
+        audio.pause();
+      };
     } else {
       audio.pause();
       audio.currentTime = 0;
     }
-    return () => {
-      audio.pause();
-    };
   }, [gameReady, opponentLeft]);
 
   const handleJoin = (e: React.FormEvent) => {
