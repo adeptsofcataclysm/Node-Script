@@ -132,21 +132,31 @@ export function useGameSocket() {
     s.on("roomFull", () => setRoomFull(true));
 
     s.on("gameInProgress", (data: { playerNames: Record<string, string>; onlineStatus: Record<string, boolean> }) => {
-      setGameInProgress(true);
       setPlayerNames(data.playerNames);
       setOnlineStatus(data.onlineStatus);
+      // Auto-rejoin with saved name after reconnect
+      const savedName = sessionStorage.getItem("pandora_player_name");
+      if (savedName) {
+        s.emit("setName", savedName);
+      } else {
+        setGameInProgress(true);
+      }
     });
 
     s.on("slotReserved", () => {
       setSlotReserved(true);
       setNameBanned(false);
       setMyName("");
+      sessionStorage.removeItem("pandora_player_name");
+      setGameInProgress(true);
     });
 
     s.on("nameBanned", () => {
       setNameBanned(true);
       setSlotReserved(false);
       setMyName("");
+      sessionStorage.removeItem("pandora_player_name");
+      setGameInProgress(true);
     });
 
     return () => { s.disconnect(); };
@@ -156,6 +166,7 @@ export function useGameSocket() {
     setMyName(name);
     setSlotReserved(false);
     setNameBanned(false);
+    sessionStorage.setItem("pandora_player_name", name);
     if (socket) socket.emit("setName", name);
   }, [socket]);
 
