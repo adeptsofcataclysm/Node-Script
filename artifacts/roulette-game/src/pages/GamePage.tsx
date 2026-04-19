@@ -344,7 +344,7 @@ export function GamePage() {
           <PandoraButton onClick={spin} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-spin">
             Крутить
           </PandoraButton>
-          <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver || !hasSpun} data-testid="button-shoot">
+          <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-shoot">
             Испытать судьбу
           </PandoraButton>
         </div>
