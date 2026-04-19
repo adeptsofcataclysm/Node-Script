@@ -182,6 +182,7 @@ export function GamePage() {
     return (
       <div className="game-root flex items-center justify-center p-4">
         <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3) contrast(1.2)" }} />
+        <img src="/my-image.png" alt="" className="fixed bottom-0 left-0 z-10 w-48 select-none pointer-events-none" />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -224,6 +225,7 @@ export function GamePage() {
     <div className="game-root flex flex-col items-center relative overflow-hidden">
       {/* Background */}
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
+      <img src="/my-image.png" alt="" className="fixed bottom-0 left-0 z-10 w-48 select-none pointer-events-none" />
 
       {/* BANG flash */}
       <AnimatePresence>
