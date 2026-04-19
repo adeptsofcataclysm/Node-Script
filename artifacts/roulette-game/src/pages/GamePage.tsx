@@ -131,6 +131,14 @@ export function GamePage() {
     }
   }, [gameOver]);
 
+  // Stop music on any shot
+  useEffect(() => {
+    if (shotResult && musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current.currentTime = 0;
+    }
+  }, [shotResult]);
+
   // Music: start when all players ready, stop when someone leaves
   useEffect(() => {
     if (!musicRef.current) {
