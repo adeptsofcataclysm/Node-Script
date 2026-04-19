@@ -39,9 +39,10 @@ export function SpectatorPage() {
   } = useSpectatorSocket();
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const bangRef = useRef<HTMLAudioElement | null>(null);
   const gameReady = allSlotsReady;
 
-  // Music: autoplay on gameReady, fallback via first interaction
+  // Create music once on mount, play as soon as user interacts or gameReady
   useEffect(() => {
     const audio = new Audio("/music.mp3");
     audio.loop = true;
@@ -53,22 +54,22 @@ export function SpectatorPage() {
       window.removeEventListener("click", tryPlay);
       window.removeEventListener("keydown", tryPlay);
     };
-
-    if (gameReady) {
-      audio.play().catch(() => {
-        window.addEventListener("click", tryPlay);
-        window.addEventListener("keydown", tryPlay);
-      });
-    } else {
-      window.addEventListener("click", tryPlay);
-      window.addEventListener("keydown", tryPlay);
-    }
+    window.addEventListener("click", tryPlay);
+    window.addEventListener("keydown", tryPlay);
 
     return () => {
       audio.pause();
       window.removeEventListener("click", tryPlay);
       window.removeEventListener("keydown", tryPlay);
     };
+  }, []); // once on mount
+
+  // Start music when all players are ready
+  useEffect(() => {
+    if (gameReady && musicRef.current) {
+      musicRef.current.currentTime = 0;
+      musicRef.current.play().catch(() => {});
+    }
   }, [gameReady]);
 
   // Spin sound
@@ -76,28 +77,36 @@ export function SpectatorPage() {
     if (isSpinning) playSpinTicks();
   }, [isSpinning]);
 
-  // Shot sounds
+  // Shot sounds + stop music on BANG
   useEffect(() => {
-    if (shotResult) {
-      if (shotResult.isBang) {
-        playBangSound();
-      } else {
-        playClickSound();
+    if (!shotResult) return;
+    if (shotResult.isBang) {
+      // Stop main music
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current.currentTime = 0;
       }
+      // Play bang, keep reference so we can stop it on rematch
+      const bang = new Audio("/bang.mp3");
+      bang.volume = 1;
+      bang.play().catch(() => {});
+      bangRef.current = bang;
+    } else {
+      playClickSound();
     }
   }, [shotResult]);
 
-  // Stop music on BANG
+  // Restart music on rematch, stop lingering bang
   useEffect(() => {
-    if (shotResult?.isBang && musicRef.current) {
-      musicRef.current.pause();
-      musicRef.current.currentTime = 0;
+    if (rematchTrigger === 0) return;
+    // Kill bang sound if still playing
+    if (bangRef.current) {
+      bangRef.current.pause();
+      bangRef.current.currentTime = 0;
+      bangRef.current = null;
     }
-  }, [shotResult]);
-
-  // Restart music on rematch
-  useEffect(() => {
-    if (rematchTrigger > 0 && musicRef.current) {
+    // Restart main music
+    if (musicRef.current) {
       musicRef.current.currentTime = 0;
       musicRef.current.play().catch(() => {});
     }
