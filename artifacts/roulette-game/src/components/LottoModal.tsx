@@ -514,21 +514,21 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     return () => clearTimeout(t);
   }, [drumPhase]);
 
-  // GIF popups — spawn while drum is spinning
+  // GIF popups — spawn while drum is spinning (only after "Запустить барабан")
   useEffect(() => {
-    if (drumPhase !== "spinning") {
+    if (phase !== "drum" || drumPhase !== "spinning") {
       setGifPopups([]);
       return;
     }
 
     const spawnGif = () => {
-      // Pick a random screen zone, avoiding the center drum area (~25-75vw, 20-80vh)
+      // Pick a random screen zone with padding so GIFs don't clip at edges
       const zone = Math.floor(Math.random() * 4);
       let x: number, y: number;
-      if (zone === 0)      { x = Math.random() * 100; y = Math.random() * 18; }        // top strip
-      else if (zone === 1) { x = Math.random() * 100; y = 76 + Math.random() * 18; }   // bottom strip
-      else if (zone === 2) { x = Math.random() * 18;  y = 15 + Math.random() * 65; }   // left strip
-      else                 { x = 78 + Math.random() * 18; y = 15 + Math.random() * 65; } // right strip
+      if (zone === 0)      { x = 6 + Math.random() * 76; y = 6 + Math.random() * 10; }   // top strip
+      else if (zone === 1) { x = 6 + Math.random() * 76; y = 73 + Math.random() * 10; }  // bottom strip
+      else if (zone === 2) { x = 4 + Math.random() * 10; y = 12 + Math.random() * 60; }  // left strip
+      else                 { x = 78 + Math.random() * 10; y = 12 + Math.random() * 60; } // right strip
 
       const pool = LOTTO_GIFS.filter(g => g !== _lastGifSrc);
       const src = pool[Math.floor(Math.random() * pool.length)];
@@ -547,7 +547,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     spawnGif();
     const interval = setInterval(spawnGif, 2200 + Math.random() * 600);
     return () => clearInterval(interval);
-  }, [drumPhase]);
+  }, [phase, drumPhase]);
 
   // Lotto music (drum phase only)
   useEffect(() => {
