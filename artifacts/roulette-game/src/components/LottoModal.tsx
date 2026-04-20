@@ -16,6 +16,7 @@ const LOTTO_GIFS = [
 ];
 interface GifPopup { id: number; src: string; x: number; y: number; size: number; }
 let _gifId = 0;
+let _lastGifSrc = "";
 
 // ─── Pre-generated ambient particles ─────────────────────────────────────────
 const COINS = Array.from({ length: 12 }, (_, i) => ({
@@ -529,7 +530,9 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       else if (zone === 2) { x = Math.random() * 18;  y = 15 + Math.random() * 65; }   // left strip
       else                 { x = 78 + Math.random() * 18; y = 15 + Math.random() * 65; } // right strip
 
-      const src = LOTTO_GIFS[Math.floor(Math.random() * LOTTO_GIFS.length)];
+      const pool = LOTTO_GIFS.filter(g => g !== _lastGifSrc);
+      const src = pool[Math.floor(Math.random() * pool.length)];
+      _lastGifSrc = src;
       const size = 160 + Math.floor(Math.random() * 100); // 160–260 px height
       const id = ++_gifId;
 
