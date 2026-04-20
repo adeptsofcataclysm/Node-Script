@@ -169,25 +169,32 @@ export function SpectatorPage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
-      {/* Top-right controls: spectator badge + mute */}
-      <div className="fixed top-4 right-4 z-30 flex items-center gap-3">
+      {/* Top-right controls: mute + spectator badge + avatar */}
+      <div className="fixed top-4 right-4 z-30 flex items-start gap-3">
         <button
           onClick={toggleMute}
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55, marginTop: 2 }}
           title={muted ? "Включить звук" : "Выключить звук"}
         >
           <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
         </button>
-        <div
-          className="px-3 py-1 font-mono text-xs uppercase tracking-[3px]"
-          style={{
-            border: "1px solid #9b59b6",
-            color: "#9b59b6",
-            background: "rgba(0,0,0,0.7)",
-            textShadow: "0 0 8px #9b59b6",
-          }}
-        >
-          Наблюдатель
+        <div className="flex flex-col items-center gap-1" style={{ width: 110 }}>
+          <div
+            className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
+            style={{
+              border: "1px solid #9b59b6",
+              color: "#9b59b6",
+              background: "rgba(0,0,0,0.7)",
+              textShadow: "0 0 8px #9b59b6",
+            }}
+          >
+            Наблюдатель
+          </div>
+          <img
+            src="/spectator-avatar.png"
+            alt="spectator"
+            style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #9b59b6", boxShadow: "0 0 8px rgba(155,89,182,0.5)" }}
+          />
         </div>
       </div>
 
