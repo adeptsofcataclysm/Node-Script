@@ -55,6 +55,28 @@ const BURST = Array.from({ length: 40 }, (_, i) => {
   };
 });
 
+// ─── Full-screen confetti (pre-generated, deterministic) ─────────────────────
+const EXTRA_COLORS = ["#ffffff", "#ffe566", "#ff69b4", "#00e5ff"];
+const ALL_COLORS = [...BALL_COLORS, ...EXTRA_COLORS];
+
+const FULL_CONFETTI = Array.from({ length: 120 }, (_, i) => {
+  const angle = (i / 120) * Math.PI * 2 + ((i * 7) % 10) * 0.062;
+  const speed = 32 + ((i * 13) % 52);
+  const upBias = 18 + ((i * 9) % 28);
+  return {
+    id: i,
+    color: ALL_COLORS[(i * 3) % ALL_COLORS.length],
+    shape: i % 4 === 0 ? "circle" : i % 4 === 1 ? "diamond" : "rect",
+    w: 6 + ((i * 3) % 10),
+    h: i % 4 === 2 ? 4 + ((i * 2) % 6) : 6 + ((i * 3) % 10),
+    tx: `${(Math.cos(angle) * speed).toFixed(1)}vw`,
+    ty: `${(Math.sin(angle) * speed - upBias).toFixed(1)}vh`,
+    rot: ((i * 79) % 720) - 360,
+    delay: (i * 0.014) % 0.4,
+    dur: 1.6 + ((i * 0.023) % 0.9),
+  };
+});
+
 // ─── Ball physics data ────────────────────────────────────────────────────────
 interface BallData {
   x: number; y: number;   // position relative to drum center
@@ -67,6 +89,42 @@ interface BallData {
 
 const DRUM_R = 128; // physics radius
 const BALL_R = 22;  // ball radius
+
+// ─── Full-screen confetti blast ──────────────────────────────────────────────
+function FullScreenConfetti({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 55, overflow: "hidden" }}>
+      {FULL_CONFETTI.map(p => {
+        const br = p.shape === "circle" ? "50%" : "2px";
+        const extra = p.shape === "diamond" ? { transform: "rotate(45deg)" } : {};
+        return (
+          <motion.div
+            key={p.id}
+            style={{
+              position: "absolute",
+              left: "50%", top: "50%",
+              width: p.w, height: p.h,
+              marginLeft: -p.w / 2, marginTop: -p.h / 2,
+              background: p.color,
+              borderRadius: br,
+              boxShadow: `0 0 5px ${p.color}99`,
+              ...extra,
+            }}
+            initial={{ x: 0, y: 0, scale: 0, rotate: 0, opacity: 1 }}
+            animate={{
+              x: p.tx, y: p.ty,
+              scale: [0, 1.3, 1, 0.6, 0],
+              rotate: p.rot,
+              opacity: [0, 1, 1, 0.7, 0],
+            }}
+            transition={{ duration: p.dur, delay: p.delay, ease: "easeOut" }}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 // ─── Canvas drum with real physics ───────────────────────────────────────────
 const DrumCanvas = memo(function DrumCanvas({
@@ -484,6 +542,9 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
           </>
         )}
       </AnimatePresence>
+
+      {/* Full-screen confetti on reveal */}
+      <FullScreenConfetti active={phase === "drum" && drumPhase === "revealed"} />
 
       <AnimatePresence mode="wait">
         {/* ════ SETUP ════ */}
