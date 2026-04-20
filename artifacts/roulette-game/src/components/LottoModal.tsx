@@ -183,96 +183,6 @@ const DrumCanvas = memo(function DrumCanvas({
     const CX = canvas.width / 2;
     const CY = canvas.height / 2;
 
-    const R = 132; // sphere radius
-
-    // ── Spherical cage: back layer (drawn before balls) ──────────────────────
-    const drawCageBack = () => {
-      ctx.save();
-
-      // Dark interior — matches the game's dark Pandora theme
-      const bg = ctx.createRadialGradient(-18, -22, 0, 0, 0, R);
-      bg.addColorStop(0, "rgba(30,15,0,0.88)");
-      bg.addColorStop(0.65, "rgba(10,5,0,0.92)");
-      bg.addColorStop(1, "rgba(0,0,0,0.96)");
-      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
-      ctx.fillStyle = bg; ctx.fill();
-
-      // Back meridian rings — faint gold
-      ctx.strokeStyle = "rgba(241,196,15,0.13)";
-      ctx.lineWidth = 1.0;
-      [28, 48, 64, 76].forEach(deg => {
-        const rx = Math.cos(deg * Math.PI / 180) * R;
-        ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
-      });
-
-      // Back latitude rings — faint gold
-      [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
-        const y = lat * R;
-        const w = Math.sqrt(R * R - y * y);
-        ctx.beginPath(); ctx.ellipse(0, y, w, w * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
-      });
-
-      ctx.restore();
-    };
-
-    // ── Spherical cage: front layer (drawn after balls) ───────────────────────
-    const drawCageFront = (spinning: boolean) => {
-      ctx.save();
-
-      // Front meridian rings — gold, increasing opacity toward front
-      ctx.lineWidth = 1.3;
-      [28, 48, 64, 76].forEach((deg, i) => {
-        const rx = Math.cos(deg * Math.PI / 180) * R;
-        ctx.strokeStyle = `rgba(241,196,15,${0.38 - i * 0.06})`;
-        ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
-      });
-
-      // Front latitude rings — gold
-      ctx.strokeStyle = "rgba(241,196,15,0.28)";
-      ctx.lineWidth = 1.1;
-      [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
-        const y = lat * R;
-        const w = Math.sqrt(R * R - y * y);
-        ctx.beginPath(); ctx.ellipse(0, y, w, w * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
-      });
-
-      // Outer ring — gold, with purple glow when spinning
-      if (spinning) {
-        ctx.shadowColor = "rgba(155,89,182,0.55)";
-        ctx.shadowBlur = 28;
-      }
-      ctx.strokeStyle = "rgba(241,196,15,0.95)";
-      ctx.lineWidth = 3.5;
-      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Equatorial bar — gold
-      ctx.strokeStyle = "rgba(241,196,15,0.65)";
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.moveTo(-R, 0); ctx.lineTo(-15, 0);
-      ctx.moveTo(15, 0); ctx.lineTo(R, 0);
-      ctx.stroke();
-
-      // Vertical bar — gold
-      ctx.beginPath();
-      ctx.moveTo(0, -R); ctx.lineTo(0, -15);
-      ctx.moveTo(0, 15); ctx.lineTo(0, R);
-      ctx.stroke();
-
-      // Center hub — dark with gold border
-      const hubGr = ctx.createRadialGradient(-4, -4, 0, 0, 0, 15);
-      hubGr.addColorStop(0, "rgba(40,20,0,0.98)");
-      hubGr.addColorStop(0.6, "rgba(20,10,0,0.96)");
-      hubGr.addColorStop(1, "rgba(5,3,0,0.95)");
-      ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2);
-      ctx.fillStyle = hubGr; ctx.fill();
-      ctx.strokeStyle = "rgba(241,196,15,0.85)"; ctx.lineWidth = 1.8;
-      ctx.stroke();
-
-      ctx.restore();
-    };
-
     const drawBall = (b: BallData, scale = 1, extraGlow = false) => {
       const r = b.r * scale;
       ctx.save();
@@ -301,7 +211,8 @@ const DrumCanvas = memo(function DrumCanvas({
       ctx.restore();
     };
 
-    let simT = 0; // simulation time for rotating gravity
+    let simT = 0;          // simulation time
+    let drumAngle = 0;     // drum rotation angle (radians) — drives centrifugal force
 
     const tick = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -312,56 +223,76 @@ const DrumCanvas = memo(function DrumCanvas({
       const balls = ballsRef.current;
       const chosen = chosenRef.current;
 
-      // 1. Back cage layer
-      drawCageBack();
+      // ── Depth gradient overlay (drawn first, under balls) ──
+      // Simulates bottom of drum being in shadow, top lit — gives 3D depth
+      const depthGrad = ctx.createLinearGradient(0, -DRUM_R, 0, DRUM_R);
+      depthGrad.addColorStop(0, "rgba(255,255,255,0.04)");   // subtle top highlight
+      depthGrad.addColorStop(0.5, "rgba(0,0,0,0)");
+      depthGrad.addColorStop(1, "rgba(0,0,0,0.38)");          // strong bottom shadow
+      ctx.beginPath(); ctx.arc(0, 0, DRUM_R, 0, Math.PI * 2);
+      ctx.fillStyle = depthGrad; ctx.fill();
 
       // ── Physics update ──
       if (state === "spinning" || state === "rolling") {
         simT += 1 / 60;
 
-        // Rotating gravity — simulates a real tumbling lottery drum
-        // Two overlapping sine waves at different frequencies = chaotic direction
-        const gx = Math.sin(simT * 0.9) * 0.45 + Math.sin(simT * 2.3) * 0.18;
-        const gy = Math.cos(simT * 1.3) * 0.45 + Math.cos(simT * 1.7) * 0.18;
+        // Drum rotates at ~1.5 rev/s when spinning — centrifugal force pushes balls outward
+        const drumSpeed = state === "spinning" ? 9.4 : 0; // rad/s (9.4 ≈ 1.5 * 2π)
+        drumAngle += drumSpeed / 60;
+
+        // The centrifugal acceleration in the rotating frame: ω² × r
+        // We apply it as a radial outward force proportional to ball's distance from axis
+        const omega2 = (drumSpeed / 60) * (drumSpeed / 60) * 120; // scale for px units
+
+        // Real constant gravity (downward, feels natural)
+        const GRAVITY = 0.28;
 
         for (const b of balls) {
           if (state === "rolling" && b.idx === chosen) continue;
 
           if (state === "spinning") {
-            // Apply rotating gravity to pull balls across the whole drum interior
-            b.vx += gx;
-            b.vy += gy;
+            // Centrifugal force — pushes ball radially outward (away from drum center)
+            const bd = Math.sqrt(b.x * b.x + b.y * b.y);
+            if (bd > 0.1) {
+              b.vx += (b.x / bd) * omega2;
+              b.vy += (b.y / bd) * omega2;
+            }
 
-            // Strong random chaos kick every frame
-            b.vx += (Math.random() - 0.5) * 1.2;
-            b.vy += (Math.random() - 0.5) * 1.2;
+            // Real gravity — pulls down. At high spin it's overwhelmed by centrifugal
+            b.vy += GRAVITY;
+
+            // Slight tangential stir (drum drags balls along its rim)
+            const tang = 0.18;
+            b.vx += -b.y / (DRUM_R) * tang;
+            b.vy += b.x / (DRUM_R) * tang;
           }
 
           b.x += b.vx;
           b.y += b.vy;
 
-          // Circular wall bounce — high restitution to maintain energy
+          // Circular wall bounce — high restitution
           const d = Math.sqrt(b.x * b.x + b.y * b.y);
           const maxD = DRUM_R - b.r;
           if (d > maxD) {
             const nx = b.x / d, ny = b.y / d;
             const dot = b.vx * nx + b.vy * ny;
-            if (dot > 0) { b.vx -= 2 * dot * nx * 0.88; b.vy -= 2 * dot * ny * 0.88; }
+            if (dot > 0) { b.vx -= 2 * dot * nx * 0.82; b.vy -= 2 * dot * ny * 0.82; }
             b.x = nx * maxD; b.y = ny * maxD;
           }
 
-          // Speed clamp — keep chaos going, never stop
+          // Speed clamp during spinning — never stop
           if (state === "spinning") {
             const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-            if (spd < 2.0) { b.vx *= 2.0 / spd; b.vy *= 2.0 / spd; }
-            if (spd > 7.0) { b.vx *= 7.0 / spd; b.vy *= 7.0 / spd; }
+            if (spd < 2.5) { b.vx *= 2.5 / spd; b.vy *= 2.5 / spd; }
+            if (spd > 8.0) { b.vx *= 8.0 / spd; b.vy *= 8.0 / spd; }
           }
 
           if (state === "rolling") {
-            // Other balls slow and drift outward
-            b.vx *= 0.96; b.vy *= 0.96;
+            // Gravity pulls down, balls settle at bottom
+            b.vy += GRAVITY;
+            b.vx *= 0.94; b.vy *= 0.94;
             const bd = Math.sqrt(b.x * b.x + b.y * b.y);
-            if (bd < 55 && bd > 0) { b.vx += (b.x / bd) * 0.35; b.vy += (b.y / bd) * 0.35; }
+            if (bd < 55 && bd > 0) { b.vx += (b.x / bd) * 0.3; b.vy += (b.y / bd) * 0.3; }
           }
         }
 
@@ -424,9 +355,6 @@ const DrumCanvas = memo(function DrumCanvas({
         drawBall(balls[chosen], atCenter ? 1.25 : 1.05, atCenter);
       }
 
-      // 3. Front cage layer (over balls)
-      drawCageFront(state === "spinning");
-
       ctx.restore();
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -438,8 +366,8 @@ const DrumCanvas = memo(function DrumCanvas({
   return (
     <canvas
       ref={canvasRef}
-      width={300}
-      height={300}
+      width={290}
+      height={290}
       style={{
         position: "absolute",
         left: "50%", top: "50%",
@@ -716,55 +644,85 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
               Барабан Лото
             </motion.h2>
 
-            {/* ── Drum container (spherical cage drawn on canvas) ── */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div className="relative flex items-center justify-center" style={{ width: 310, height: 310 }}>
+            {/* ── Drum container ── */}
+            <div className="relative flex items-center justify-center" style={{ width: 320, height: 320 }}>
 
-                {/* Streamers */}
-                {isActive && STREAMERS_L.map(s => <Streamer key={s.id} {...s} originX={-8} originY={155} />)}
-                {isActive && STREAMERS_R.map(s => <Streamer key={s.id} {...s} originX={318} originY={155} />)}
+              {/* Party streamers */}
+              {isActive && STREAMERS_L.map(s => <Streamer key={s.id} {...s} originX={-8} originY={160} />)}
+              {isActive && STREAMERS_R.map(s => <Streamer key={s.id} {...s} originX={328} originY={160} />)}
 
-                {/* Canvas draws everything: cage back → balls → cage front */}
-                <DrumCanvas key={drumKey} names={names} drumPhase={drumPhase} onRollComplete={handleRollComplete} />
+              {/* Pulsing outer ring */}
+              <motion.div className="absolute rounded-full" style={{ width: 316, height: 316, border: "3px solid #f1c40f" }}
+                animate={isActive
+                  ? { boxShadow: ["0 0 30px rgba(241,196,15,0.3),inset 0 0 50px rgba(0,0,0,0.8)", "0 0 80px rgba(241,196,15,0.7),inset 0 0 50px rgba(0,0,0,0.8)", "0 0 30px rgba(241,196,15,0.3),inset 0 0 50px rgba(0,0,0,0.8)"], scale: [1, 1.015, 1] }
+                  : { boxShadow: "0 0 40px rgba(241,196,15,0.25),inset 0 0 60px rgba(0,0,0,0.85)", scale: 1 }}
+                transition={{ duration: 0.9, repeat: isActive ? Infinity : 0 }}
+              />
 
-                {/* Confetti burst */}
-                <AnimatePresence>
-                  {drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
-                </AnimatePresence>
+              {/* Background fill */}
+              <div className="absolute rounded-full" style={{ width: 310, height: 310, background: "radial-gradient(ellipse at center,rgba(30,15,0,0.85) 0%,rgba(0,0,0,0.96) 75%)", zIndex: 1 }} />
 
-                {/* Stars on reveal */}
-                <AnimatePresence>
-                  {drumPhase === "revealed" && STARS.map(s => (
-                    <motion.div key={s.id}
-                      style={{ position: "absolute", left: "50%", top: "50%", width: s.size, height: s.size, marginLeft: -s.size / 2, marginTop: -s.size / 2, background: s.color, clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)", zIndex: 31 }}
-                      initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                      animate={{ x: s.x, y: s.y, scale: [0, 1.4, 1, 0], opacity: [0, 1, 1, 0], rotate: [0, 180, 360] }}
-                      transition={{ duration: 1.4, delay: s.delay, ease: "easeOut" }}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
+              {/* Rotating cage — outer frame spins like a real lottery drum */}
+              <motion.svg className="absolute" width={296} height={296} style={{ zIndex: 5, transformOrigin: "148px 148px" }}
+                animate={isActive ? { rotate: 360, opacity: 0.18 } : { rotate: 0, opacity: 0.12 }}
+                transition={isActive
+                  ? { rotate: { duration: 4, repeat: Infinity, ease: "linear" }, opacity: { duration: 0 } }
+                  : { duration: 1.2, ease: "easeOut" }}>
+                {/* 8 meridian spokes */}
+                {Array.from({ length: 8 }, (_, i) => {
+                  const a = (i / 8) * Math.PI * 2;
+                  const x1 = 148 + Math.cos(a) * 30, y1 = 148 + Math.sin(a) * 30;
+                  const x2 = 148 + Math.cos(a) * 144, y2 = 148 + Math.sin(a) * 144;
+                  return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f1c40f" strokeWidth="1.2" />;
+                })}
+                {/* 3 latitude rings */}
+                <ellipse cx="148" cy="148" rx="148" ry="40" fill="none" stroke="#f1c40f" strokeWidth="1.0" />
+                <ellipse cx="148" cy="148" rx="100" ry="27" fill="none" stroke="#f1c40f" strokeWidth="0.8" />
+                <ellipse cx="148" cy="148" rx="42" ry="148" fill="none" stroke="#f1c40f" strokeWidth="0.8" />
+              </motion.svg>
 
-              {/* Tripod stand — gold to match Pandora theme */}
-              <svg width={260} height={90} style={{ display: "block", marginTop: -14 }} viewBox="0 0 260 90">
-                <defs>
-                  <linearGradient id="legGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="rgba(241,196,15,0.90)" />
-                    <stop offset="100%" stopColor="rgba(180,140,10,0.75)" />
-                  </linearGradient>
-                </defs>
-                {/* Left leg */}
-                <line x1="130" y1="8" x2="22" y2="82" stroke="url(#legGrad)" strokeWidth="7" strokeLinecap="round" />
-                {/* Right leg */}
-                <line x1="130" y1="8" x2="238" y2="82" stroke="url(#legGrad)" strokeWidth="7" strokeLinecap="round" />
-                {/* Cross-bar */}
-                <line x1="30" y1="68" x2="230" y2="68" stroke="rgba(241,196,15,0.55)" strokeWidth="5" strokeLinecap="round" />
-                {/* Feet */}
-                <ellipse cx="22" cy="82" rx="18" ry="5" fill="rgba(180,140,10,0.70)" />
-                <ellipse cx="238" cy="82" rx="18" ry="5" fill="rgba(180,140,10,0.70)" />
-                {/* Top join cap */}
-                <circle cx="130" cy="8" r="8" fill="rgba(241,196,15,0.90)" />
-              </svg>
+              {/* Counter-rotating inner ring — spins opposite direction */}
+              <motion.svg className="absolute" width={230} height={230} style={{ zIndex: 5, left: 45, top: 45, transformOrigin: "115px 115px" }}
+                animate={{ rotate: isActive ? -360 : 0 }}
+                transition={{ duration: 2.8, repeat: isActive ? Infinity : 0, ease: "linear" }}>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const a = (i / 12) * Math.PI * 2;
+                  return <line key={i} x1={115 + Math.cos(a) * 38} y1={115 + Math.sin(a) * 38} x2={115 + Math.cos(a) * 108} y2={115 + Math.sin(a) * 108} stroke="#f1c40f" strokeWidth="0.7" opacity={0.22} />;
+                })}
+                <circle cx="115" cy="115" r="38" fill="none" stroke="#f1c40f" strokeWidth="0.9" opacity={0.20} />
+                <circle cx="115" cy="115" r="108" fill="none" stroke="#f1c40f" strokeWidth="0.9" opacity={0.14} />
+              </motion.svg>
+
+              {/* Canvas physics drum */}
+              <DrumCanvas key={drumKey} names={names} drumPhase={drumPhase} onRollComplete={handleRollComplete} />
+
+              {/* Center hub — fades when ball rolls in */}
+              <motion.div className="absolute z-20 rounded-full flex items-center justify-center"
+                style={{ width: 56, height: 56, background: "#0a0a0a", border: "2px solid #f1c40f", color: "#f1c40f", fontSize: 10, fontFamily: "monospace", letterSpacing: "1px", textAlign: "center", zIndex: 11 }}
+                animate={{
+                  opacity: drumPhase === "rolling" || drumPhase === "revealed" ? 0 : 1,
+                  boxShadow: isActive ? ["0 0 8px rgba(241,196,15,0.2)", "0 0 24px rgba(241,196,15,0.7)", "0 0 8px rgba(241,196,15,0.2)"] : "0 0 12px rgba(241,196,15,0.3)",
+                }}
+                transition={{ duration: isActive ? 0.9 : 0.4, repeat: isActive ? Infinity : 0 }}>
+                ЛОТО
+              </motion.div>
+
+              {/* Confetti burst */}
+              <AnimatePresence>
+                {drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
+              </AnimatePresence>
+
+              {/* Stars on reveal */}
+              <AnimatePresence>
+                {drumPhase === "revealed" && STARS.map(s => (
+                  <motion.div key={s.id}
+                    style={{ position: "absolute", left: "50%", top: "50%", width: s.size, height: s.size, marginLeft: -s.size / 2, marginTop: -s.size / 2, background: s.color, clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)", zIndex: 31 }}
+                    initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                    animate={{ x: s.x, y: s.y, scale: [0, 1.4, 1, 0], opacity: [0, 1, 1, 0], rotate: [0, 180, 360] }}
+                    transition={{ duration: 1.4, delay: s.delay, ease: "easeOut" }}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
 
             {/* ── Controls ── */}
