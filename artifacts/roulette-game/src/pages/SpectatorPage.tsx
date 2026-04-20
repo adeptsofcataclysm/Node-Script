@@ -197,7 +197,7 @@ export function SpectatorPage() {
           />
           <div
             className="font-mono text-center"
-            style={{ fontSize: 18, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
+            style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
           >
             "Ненавижу, ебучее програмирование!"(с)
           </div>
