@@ -178,7 +178,7 @@ export function SpectatorPage() {
         >
           <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
         </button>
-        <div className="flex flex-col items-center gap-1" style={{ width: 110 }}>
+        <div className="flex flex-col items-center gap-1" style={{ width: 148 }}>
           <div
             className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
             style={{
