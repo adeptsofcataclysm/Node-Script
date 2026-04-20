@@ -58,22 +58,7 @@ export function LottoModal({
   const rotate = useMotionValue(0);
   const absRot = useRef(0);
   const rafRef = useRef<number>(0);
-  const musicRef = useRef<HTMLAudioElement | null>(null);
 
-  // Lotto music starts only when drum is spinning — avoids interrupting bang.mp3
-  useEffect(() => {
-    if (phase !== "drum") return;
-    try {
-      const audio = new Audio("/lotto-music.mp3");
-      audio.loop = true;
-      audio.volume = 0.45;
-      audio.play().catch(() => {});
-      musicRef.current = audio;
-    } catch (_) {}
-    return () => {
-      if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
-    };
-  }, [phase]);
 
   useEffect(() => {
     if (!isSpinning) { cancelAnimationFrame(rafRef.current); return; }
@@ -121,15 +106,9 @@ export function LottoModal({
     setIsSpinning(true);
   };
 
-  const confirmChoice = () => {
-    if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
-    onConfirm();
-  };
+  const confirmChoice = () => onConfirm();
 
-  const closeModal = () => {
-    if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
-    onClose();
-  };
+  const closeModal = () => onClose();
 
   const n = names.length;
   const chosenName = chosenIdx !== null ? names[chosenIdx] : null;
