@@ -535,28 +535,31 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     }
 
     const spawnGif = () => {
-      // Pick a random screen zone with padding so GIFs don't clip at edges
-      const zone = Math.floor(Math.random() * 4);
+      // 6 zones with generous insets so nothing clips at edges
+      // Center of screen (28–72vw × 20–80vh) is excluded — that's where the drum is
+      const zone = Math.floor(Math.random() * 6);
       let x: number, y: number;
-      if (zone === 0)      { x = 6 + Math.random() * 76; y = 6 + Math.random() * 10; }   // top strip
-      else if (zone === 1) { x = 6 + Math.random() * 76; y = 73 + Math.random() * 10; }  // bottom strip
-      else if (zone === 2) { x = 4 + Math.random() * 10; y = 12 + Math.random() * 60; }  // left strip
-      else                 { x = 78 + Math.random() * 10; y = 12 + Math.random() * 60; } // right strip
+      if      (zone === 0) { x = 8 + Math.random() * 78;  y = 8  + Math.random() * 14; } // top band
+      else if (zone === 1) { x = 8 + Math.random() * 78;  y = 70 + Math.random() * 14; } // bottom band
+      else if (zone === 2) { x = 5 + Math.random() * 18;  y = 18 + Math.random() * 58; } // left band
+      else if (zone === 3) { x = 74 + Math.random() * 14; y = 18 + Math.random() * 58; } // right band
+      else if (zone === 4) { x = 5 + Math.random() * 18;  y = 8  + Math.random() * 14; } // top-left corner
+      else                 { x = 74 + Math.random() * 14; y = 8  + Math.random() * 14; } // top-right corner
 
       const src = _nextGif();
-      const size = 220 + Math.floor(Math.random() * 100); // 220–320 px height
+      const size = 198 + Math.floor(Math.random() * 92); // 198–290 px height (−10%)
       const id = ++_gifId;
 
-      setGifPopups(prev => prev.length >= 1 ? prev : [...prev, { id, src, x, y, size }]);
+      setGifPopups(prev => prev.length >= 3 ? prev : [...prev, { id, src, x, y, size }]);
 
       // Auto-remove after 2.5–4s
       const lifetime = 2500 + Math.random() * 1500;
       setTimeout(() => setGifPopups(prev => prev.filter(p => p.id !== id)), lifetime);
     };
 
-    // Spawn first one immediately, then every 2.2–2.8s (one at a time)
+    // Spawn first one immediately, then randomly every 1.2–2.2s
     spawnGif();
-    const interval = setInterval(spawnGif, 2200 + Math.random() * 600);
+    const interval = setInterval(spawnGif, 1200 + Math.random() * 1000);
     return () => clearInterval(interval);
   }, [phase, drumPhase]);
 
