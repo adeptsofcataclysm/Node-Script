@@ -530,19 +530,19 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       else                 { x = 78 + Math.random() * 18; y = 15 + Math.random() * 65; } // right strip
 
       const src = LOTTO_GIFS[Math.floor(Math.random() * LOTTO_GIFS.length)];
-      const size = 90 + Math.floor(Math.random() * 80); // 90–170 px height
+      const size = 160 + Math.floor(Math.random() * 100); // 160–260 px height
       const id = ++_gifId;
 
-      setGifPopups(prev => prev.length >= 6 ? prev : [...prev, { id, src, x, y, size }]);
+      setGifPopups(prev => prev.length >= 1 ? prev : [...prev, { id, src, x, y, size }]);
 
-      // Auto-remove after 1.8–2.8s
-      const lifetime = 1800 + Math.random() * 1000;
+      // Auto-remove after 1.8–2.4s
+      const lifetime = 1800 + Math.random() * 600;
       setTimeout(() => setGifPopups(prev => prev.filter(p => p.id !== id)), lifetime);
     };
 
-    // Spawn first one immediately, then every 600–1100ms
+    // Spawn first one immediately, then every 2.2–2.8s (one at a time)
     spawnGif();
-    const interval = setInterval(spawnGif, 600 + Math.random() * 500);
+    const interval = setInterval(spawnGif, 2200 + Math.random() * 600);
     return () => clearInterval(interval);
   }, [drumPhase]);
 
