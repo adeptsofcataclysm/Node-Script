@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSpectatorSocket } from "../hooks/useSpectatorSocket";
 import { Cylinder } from "../components/Cylinder";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
+import { LottoModal } from "../components/LottoModal";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
@@ -43,6 +44,7 @@ export function SpectatorPage() {
   const bangRef = useRef<HTMLAudioElement | null>(null);
   const mutedRef = useRef(false);
   const [muted, setMuted] = useState(false);
+  const [showLotto, setShowLotto] = useState(false);
   const gameReady = allSlotsReady;
 
   const toggleMute = () => {
@@ -362,7 +364,7 @@ export function SpectatorPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.0 }}
-                onClick={rematch}
+                onClick={() => setShowLotto(true)}
                 className="w-full py-3 font-mono text-xs uppercase tracking-[3px] transition-all duration-200"
                 style={{
                   background: "transparent",
@@ -377,6 +379,16 @@ export function SpectatorPage() {
               </motion.button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lotto modal */}
+      <AnimatePresence>
+        {showLotto && (
+          <LottoModal
+            onClose={() => setShowLotto(false)}
+            onConfirm={() => { setShowLotto(false); rematch(); }}
+          />
         )}
       </AnimatePresence>
     </div>
