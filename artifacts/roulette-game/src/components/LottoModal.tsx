@@ -494,11 +494,11 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
-  // Homer runs across the bottom the moment the drum stops spinning
+  // Homer runs across the bottom when drum starts spinning
   useEffect(() => {
-    if (drumPhase !== "rolling") return;
+    if (drumPhase !== "spinning") return;
     setShowHomer(true);
-    const t = setTimeout(() => setShowHomer(false), 3200);
+    const t = setTimeout(() => setShowHomer(false), 6400);
     return () => clearTimeout(t);
   }, [drumPhase]);
 
@@ -600,7 +600,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
             initial={{ x: "-140px" }}
             animate={{ x: "calc(100vw + 20px)" }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 3.0, ease: "linear" }}
+            transition={{ duration: 6.0, ease: "linear" }}
             style={{
               position: "fixed",
               bottom: 28,
