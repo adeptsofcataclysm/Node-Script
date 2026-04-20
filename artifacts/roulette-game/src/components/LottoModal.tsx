@@ -183,6 +183,93 @@ const DrumCanvas = memo(function DrumCanvas({
     const CX = canvas.width / 2;
     const CY = canvas.height / 2;
 
+    const R = 132; // sphere radius
+
+    // ── Spherical cage: back layer (drawn before balls) ──────────────────────
+    const drawCageBack = () => {
+      ctx.save();
+
+      // Interior background gradient
+      const bg = ctx.createRadialGradient(-18, -22, 0, 0, 0, R);
+      bg.addColorStop(0, "rgba(240,238,255,0.10)");
+      bg.addColorStop(0.6, "rgba(200,195,230,0.05)");
+      bg.addColorStop(1, "rgba(140,130,180,0.12)");
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.fillStyle = bg; ctx.fill();
+
+      // Back meridian rings (faint)
+      ctx.strokeStyle = "rgba(190,200,230,0.22)";
+      ctx.lineWidth = 1.0;
+      [28, 48, 64, 76].forEach(deg => {
+        const rx = Math.cos(deg * Math.PI / 180) * R;
+        ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
+      });
+
+      // Back latitude rings
+      [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
+        const y = lat * R;
+        const w = Math.sqrt(R * R - y * y);
+        ctx.beginPath(); ctx.ellipse(0, y, w, w * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
+      });
+
+      ctx.restore();
+    };
+
+    // ── Spherical cage: front layer (drawn after balls) ───────────────────────
+    const drawCageFront = (spinning: boolean) => {
+      ctx.save();
+
+      // Front meridian rings
+      ctx.lineWidth = 1.4;
+      [28, 48, 64, 76].forEach((deg, i) => {
+        const rx = Math.cos(deg * Math.PI / 180) * R;
+        ctx.strokeStyle = `rgba(210,220,245,${0.48 - i * 0.07})`;
+        ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
+      });
+
+      // Front latitude rings
+      ctx.strokeStyle = "rgba(210,220,245,0.36)";
+      ctx.lineWidth = 1.2;
+      [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
+        const y = lat * R;
+        const w = Math.sqrt(R * R - y * y);
+        ctx.beginPath(); ctx.ellipse(0, y, w, w * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
+      });
+
+      // Outer ring — main frame
+      if (spinning) { ctx.shadowColor = "rgba(160,130,255,0.45)"; ctx.shadowBlur = 22; }
+      ctx.strokeStyle = "rgba(222,228,248,0.96)";
+      ctx.lineWidth = 3.8;
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Equatorial bar (horizontal)
+      ctx.strokeStyle = "rgba(215,222,248,0.75)";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-R, 0); ctx.lineTo(-15, 0);
+      ctx.moveTo(15, 0); ctx.lineTo(R, 0);
+      ctx.stroke();
+
+      // Vertical bar
+      ctx.beginPath();
+      ctx.moveTo(0, -R); ctx.lineTo(0, -15);
+      ctx.moveTo(0, 15); ctx.lineTo(0, R);
+      ctx.stroke();
+
+      // Center hub (3D sphere look)
+      const hubGr = ctx.createRadialGradient(-5, -5, 0, 0, 0, 15);
+      hubGr.addColorStop(0, "rgba(252,254,255,0.98)");
+      hubGr.addColorStop(0.55, "rgba(195,205,235,0.95)");
+      hubGr.addColorStop(1, "rgba(130,145,185,0.90)");
+      ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fillStyle = hubGr; ctx.fill();
+      ctx.strokeStyle = "rgba(165,178,220,0.85)"; ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+    };
+
     const drawBall = (b: BallData, scale = 1, extraGlow = false) => {
       const r = b.r * scale;
       ctx.save();
@@ -221,6 +308,9 @@ const DrumCanvas = memo(function DrumCanvas({
       const state = phaseRef.current;
       const balls = ballsRef.current;
       const chosen = chosenRef.current;
+
+      // 1. Back cage layer
+      drawCageBack();
 
       // ── Physics update ──
       if (state === "spinning" || state === "rolling") {
@@ -331,6 +421,9 @@ const DrumCanvas = memo(function DrumCanvas({
         drawBall(balls[chosen], atCenter ? 1.25 : 1.05, atCenter);
       }
 
+      // 3. Front cage layer (over balls)
+      drawCageFront(state === "spinning");
+
       ctx.restore();
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -342,8 +435,8 @@ const DrumCanvas = memo(function DrumCanvas({
   return (
     <canvas
       ref={canvasRef}
-      width={290}
-      height={290}
+      width={300}
+      height={300}
       style={{
         position: "absolute",
         left: "50%", top: "50%",
@@ -620,78 +713,49 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
               Барабан Лото
             </motion.h2>
 
-            {/* ── Drum container ── */}
-            <div className="relative flex items-center justify-center" style={{ width: 320, height: 320 }}>
+            {/* ── Drum container (spherical cage drawn on canvas) ── */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div className="relative flex items-center justify-center" style={{ width: 310, height: 310 }}>
 
-              {/* Party streamers */}
-              {isActive && STREAMERS_L.map(s => <Streamer key={s.id} {...s} originX={-8} originY={160} />)}
-              {isActive && STREAMERS_R.map(s => <Streamer key={s.id} {...s} originX={328} originY={160} />)}
+                {/* Streamers */}
+                {isActive && STREAMERS_L.map(s => <Streamer key={s.id} {...s} originX={-8} originY={155} />)}
+                {isActive && STREAMERS_R.map(s => <Streamer key={s.id} {...s} originX={318} originY={155} />)}
 
-              {/* Pulsing outer ring */}
-              <motion.div className="absolute rounded-full" style={{ width: 316, height: 316, border: "3px solid #f1c40f" }}
-                animate={isActive
-                  ? { boxShadow: ["0 0 30px rgba(241,196,15,0.3),inset 0 0 50px rgba(0,0,0,0.8)", "0 0 80px rgba(241,196,15,0.7),inset 0 0 50px rgba(0,0,0,0.8)", "0 0 30px rgba(241,196,15,0.3),inset 0 0 50px rgba(0,0,0,0.8)"], scale: [1, 1.015, 1] }
-                  : { boxShadow: "0 0 40px rgba(241,196,15,0.25),inset 0 0 60px rgba(0,0,0,0.85)", scale: 1 }}
-                transition={{ duration: 0.9, repeat: isActive ? Infinity : 0 }}
-              />
+                {/* Canvas draws everything: cage back → balls → cage front */}
+                <DrumCanvas key={drumKey} names={names} drumPhase={drumPhase} onRollComplete={handleRollComplete} />
 
-              {/* Background fill */}
-              <div className="absolute rounded-full" style={{ width: 310, height: 310, background: "radial-gradient(ellipse at center,rgba(30,15,0,0.85) 0%,rgba(0,0,0,0.96) 75%)", zIndex: 1 }} />
+                {/* Confetti burst */}
+                <AnimatePresence>
+                  {drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
+                </AnimatePresence>
 
-              {/* SVG cage */}
-              <motion.svg className="absolute" width={296} height={296} style={{ zIndex: 5 }}
-                animate={isActive ? { opacity: [0.12, 0.22, 0.12] } : { opacity: 0.12 }}
-                transition={{ duration: 0.9, repeat: isActive ? Infinity : 0 }}>
-                <line x1="148" y1="0" x2="148" y2="296" stroke="#f1c40f" strokeWidth="1" />
-                <line x1="0" y1="148" x2="296" y2="148" stroke="#f1c40f" strokeWidth="1" />
-                <line x1="42" y1="42" x2="254" y2="254" stroke="#f1c40f" strokeWidth="1" />
-                <line x1="254" y1="42" x2="42" y2="254" stroke="#f1c40f" strokeWidth="1" />
-                <ellipse cx="148" cy="148" rx="148" ry="52" fill="none" stroke="#f1c40f" strokeWidth="1" />
-                <ellipse cx="148" cy="148" rx="52" ry="148" fill="none" stroke="#f1c40f" strokeWidth="1" />
-              </motion.svg>
+                {/* Stars on reveal */}
+                <AnimatePresence>
+                  {drumPhase === "revealed" && STARS.map(s => (
+                    <motion.div key={s.id}
+                      style={{ position: "absolute", left: "50%", top: "50%", width: s.size, height: s.size, marginLeft: -s.size / 2, marginTop: -s.size / 2, background: s.color, clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)", zIndex: 31 }}
+                      initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                      animate={{ x: s.x, y: s.y, scale: [0, 1.4, 1, 0], opacity: [0, 1, 1, 0], rotate: [0, 180, 360] }}
+                      transition={{ duration: 1.4, delay: s.delay, ease: "easeOut" }}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
 
-              {/* Counter-rotating inner ring */}
-              <motion.svg className="absolute" width={230} height={230} style={{ zIndex: 5, left: 45, top: 45 }}
-                animate={{ rotate: isActive ? -360 : 0 }}
-                transition={{ duration: 6, repeat: isActive ? Infinity : 0, ease: "linear" }}>
-                {Array.from({ length: 8 }, (_, i) => {
-                  const a = (i / 8) * Math.PI * 2;
-                  return <line key={i} x1={115 + Math.cos(a) * 50} y1={115 + Math.sin(a) * 50} x2={115 + Math.cos(a) * 110} y2={115 + Math.sin(a) * 110} stroke="#f1c40f" strokeWidth="0.8" opacity={0.18} />;
-                })}
-                <circle cx="115" cy="115" r="50" fill="none" stroke="#f1c40f" strokeWidth="0.8" opacity={0.15} />
-                <circle cx="115" cy="115" r="110" fill="none" stroke="#f1c40f" strokeWidth="0.8" opacity={0.1} />
-              </motion.svg>
-
-              {/* Canvas physics drum */}
-              <DrumCanvas key={drumKey} names={names} drumPhase={drumPhase} onRollComplete={handleRollComplete} />
-
-              {/* Center hub — fades when ball rolls in */}
-              <motion.div className="absolute z-20 rounded-full flex items-center justify-center"
-                style={{ width: 56, height: 56, background: "#0a0a0a", border: "2px solid #f1c40f", color: "#f1c40f", fontSize: 10, fontFamily: "monospace", letterSpacing: "1px", textAlign: "center", zIndex: 11 }}
-                animate={{
-                  opacity: drumPhase === "rolling" || drumPhase === "revealed" ? 0 : 1,
-                  boxShadow: isActive ? ["0 0 8px rgba(241,196,15,0.2)", "0 0 24px rgba(241,196,15,0.7)", "0 0 8px rgba(241,196,15,0.2)"] : "0 0 12px rgba(241,196,15,0.3)",
-                }}
-                transition={{ duration: isActive ? 0.9 : 0.4, repeat: isActive ? Infinity : 0 }}>
-                ЛОТО
-              </motion.div>
-
-              {/* Confetti burst */}
-              <AnimatePresence>
-                {drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
-              </AnimatePresence>
-
-              {/* Stars on reveal */}
-              <AnimatePresence>
-                {drumPhase === "revealed" && STARS.map(s => (
-                  <motion.div key={s.id}
-                    style={{ position: "absolute", left: "50%", top: "50%", width: s.size, height: s.size, marginLeft: -s.size / 2, marginTop: -s.size / 2, background: s.color, clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)", zIndex: 31 }}
-                    initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
-                    animate={{ x: s.x, y: s.y, scale: [0, 1.4, 1, 0], opacity: [0, 1, 1, 0], rotate: [0, 180, 360] }}
-                    transition={{ duration: 1.4, delay: s.delay, ease: "easeOut" }}
-                  />
-                ))}
-              </AnimatePresence>
+              {/* Tripod stand */}
+              <svg width={260} height={90} style={{ display: "block", marginTop: -14 }} viewBox="0 0 260 90">
+                {/* Left leg */}
+                <line x1="130" y1="8" x2="22" y2="82" stroke="rgba(195,205,230,0.88)" strokeWidth="8" strokeLinecap="round" />
+                {/* Right leg */}
+                <line x1="130" y1="8" x2="238" y2="82" stroke="rgba(195,205,230,0.88)" strokeWidth="8" strokeLinecap="round" />
+                {/* Cross-bar */}
+                <line x1="30" y1="68" x2="230" y2="68" stroke="rgba(185,195,225,0.70)" strokeWidth="6" strokeLinecap="round" />
+                {/* Feet */}
+                <ellipse cx="22" cy="82" rx="18" ry="6" fill="rgba(175,185,215,0.80)" />
+                <ellipse cx="238" cy="82" rx="18" ry="6" fill="rgba(175,185,215,0.80)" />
+                {/* Top join cap */}
+                <circle cx="130" cy="8" r="9" fill="rgba(205,215,240,0.92)" />
+              </svg>
             </div>
 
             {/* ── Controls ── */}
