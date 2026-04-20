@@ -490,8 +490,17 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
   const [drumPhase, setDrumPhase] = useState<"spinning" | "rolling" | "revealed">("spinning");
   const [chosenIdx, setChosenIdx] = useState<number | null>(null);
   const [drumKey, setDrumKey] = useState(0);
+  const [showHomer, setShowHomer] = useState(false);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
+
+  // Homer runs across the bottom the moment the drum stops spinning
+  useEffect(() => {
+    if (drumPhase !== "rolling") return;
+    setShowHomer(true);
+    const t = setTimeout(() => setShowHomer(false), 3200);
+    return () => clearTimeout(t);
+  }, [drumPhase]);
 
   // Lotto music (drum phase only)
   useEffect(() => {
@@ -580,6 +589,30 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
       {/* Full-screen confetti on reveal */}
       <FullScreenConfetti active={phase === "drum" && drumPhase === "revealed"} />
+
+      {/* Homer runs left-to-right across the bottom on drum stop */}
+      <AnimatePresence>
+        {showHomer && (
+          <motion.img
+            key="homer-run"
+            src="/homer.gif"
+            alt=""
+            initial={{ x: "-140px" }}
+            animate={{ x: "calc(100vw + 20px)" }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 3.0, ease: "linear" }}
+            style={{
+              position: "fixed",
+              bottom: 28,
+              left: 0,
+              height: 120,
+              zIndex: 60,
+              pointerEvents: "none",
+              imageRendering: "auto",
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {/* ════ SETUP ════ */}
