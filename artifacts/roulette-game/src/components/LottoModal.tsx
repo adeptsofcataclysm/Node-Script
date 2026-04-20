@@ -538,8 +538,8 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
       setGifPopups(prev => prev.length >= 1 ? prev : [...prev, { id, src, x, y, size }]);
 
-      // Auto-remove after 1.8–2.4s
-      const lifetime = 1800 + Math.random() * 600;
+      // Auto-remove after 2.5–4s
+      const lifetime = 2500 + Math.random() * 1500;
       setTimeout(() => setGifPopups(prev => prev.filter(p => p.id !== id)), lifetime);
     };
 
