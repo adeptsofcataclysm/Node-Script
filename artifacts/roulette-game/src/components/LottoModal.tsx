@@ -481,8 +481,35 @@ export function LottoModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 overflow-hidden"
-      style={{ background: "rgba(0,0,0,0.97)" }}
+      style={{ background: "rgba(0,0,0,0.0)" }}
     >
+      {/* ── Video background ── */}
+      <video
+        src="/lotto-bg.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+          opacity: 0.55,
+        }}
+      />
+      {/* Dark overlay so UI stays readable */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.72)",
+          zIndex: 1,
+        }}
+      />
+
       {/* ── Walking girl ── */}
       <WalkingGirl active={phase === "drum"} />
 
