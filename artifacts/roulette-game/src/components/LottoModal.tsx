@@ -189,23 +189,23 @@ const DrumCanvas = memo(function DrumCanvas({
     const drawCageBack = () => {
       ctx.save();
 
-      // Interior background gradient
+      // Dark interior — matches the game's dark Pandora theme
       const bg = ctx.createRadialGradient(-18, -22, 0, 0, 0, R);
-      bg.addColorStop(0, "rgba(240,238,255,0.10)");
-      bg.addColorStop(0.6, "rgba(200,195,230,0.05)");
-      bg.addColorStop(1, "rgba(140,130,180,0.12)");
+      bg.addColorStop(0, "rgba(30,15,0,0.88)");
+      bg.addColorStop(0.65, "rgba(10,5,0,0.92)");
+      bg.addColorStop(1, "rgba(0,0,0,0.96)");
       ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
       ctx.fillStyle = bg; ctx.fill();
 
-      // Back meridian rings (faint)
-      ctx.strokeStyle = "rgba(190,200,230,0.22)";
+      // Back meridian rings — faint gold
+      ctx.strokeStyle = "rgba(241,196,15,0.13)";
       ctx.lineWidth = 1.0;
       [28, 48, 64, 76].forEach(deg => {
         const rx = Math.cos(deg * Math.PI / 180) * R;
         ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
       });
 
-      // Back latitude rings
+      // Back latitude rings — faint gold
       [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
         const y = lat * R;
         const w = Math.sqrt(R * R - y * y);
@@ -219,52 +219,55 @@ const DrumCanvas = memo(function DrumCanvas({
     const drawCageFront = (spinning: boolean) => {
       ctx.save();
 
-      // Front meridian rings
-      ctx.lineWidth = 1.4;
+      // Front meridian rings — gold, increasing opacity toward front
+      ctx.lineWidth = 1.3;
       [28, 48, 64, 76].forEach((deg, i) => {
         const rx = Math.cos(deg * Math.PI / 180) * R;
-        ctx.strokeStyle = `rgba(210,220,245,${0.48 - i * 0.07})`;
+        ctx.strokeStyle = `rgba(241,196,15,${0.38 - i * 0.06})`;
         ctx.beginPath(); ctx.ellipse(0, 0, rx, R, 0, 0, Math.PI * 2); ctx.stroke();
       });
 
-      // Front latitude rings
-      ctx.strokeStyle = "rgba(210,220,245,0.36)";
-      ctx.lineWidth = 1.2;
+      // Front latitude rings — gold
+      ctx.strokeStyle = "rgba(241,196,15,0.28)";
+      ctx.lineWidth = 1.1;
       [-0.55, -0.27, 0.27, 0.55].forEach(lat => {
         const y = lat * R;
         const w = Math.sqrt(R * R - y * y);
         ctx.beginPath(); ctx.ellipse(0, y, w, w * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
       });
 
-      // Outer ring — main frame
-      if (spinning) { ctx.shadowColor = "rgba(160,130,255,0.45)"; ctx.shadowBlur = 22; }
-      ctx.strokeStyle = "rgba(222,228,248,0.96)";
-      ctx.lineWidth = 3.8;
+      // Outer ring — gold, with purple glow when spinning
+      if (spinning) {
+        ctx.shadowColor = "rgba(155,89,182,0.55)";
+        ctx.shadowBlur = 28;
+      }
+      ctx.strokeStyle = "rgba(241,196,15,0.95)";
+      ctx.lineWidth = 3.5;
       ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Equatorial bar (horizontal)
-      ctx.strokeStyle = "rgba(215,222,248,0.75)";
-      ctx.lineWidth = 2.5;
+      // Equatorial bar — gold
+      ctx.strokeStyle = "rgba(241,196,15,0.65)";
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.moveTo(-R, 0); ctx.lineTo(-15, 0);
       ctx.moveTo(15, 0); ctx.lineTo(R, 0);
       ctx.stroke();
 
-      // Vertical bar
+      // Vertical bar — gold
       ctx.beginPath();
       ctx.moveTo(0, -R); ctx.lineTo(0, -15);
       ctx.moveTo(0, 15); ctx.lineTo(0, R);
       ctx.stroke();
 
-      // Center hub (3D sphere look)
-      const hubGr = ctx.createRadialGradient(-5, -5, 0, 0, 0, 15);
-      hubGr.addColorStop(0, "rgba(252,254,255,0.98)");
-      hubGr.addColorStop(0.55, "rgba(195,205,235,0.95)");
-      hubGr.addColorStop(1, "rgba(130,145,185,0.90)");
+      // Center hub — dark with gold border
+      const hubGr = ctx.createRadialGradient(-4, -4, 0, 0, 0, 15);
+      hubGr.addColorStop(0, "rgba(40,20,0,0.98)");
+      hubGr.addColorStop(0.6, "rgba(20,10,0,0.96)");
+      hubGr.addColorStop(1, "rgba(5,3,0,0.95)");
       ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2);
       ctx.fillStyle = hubGr; ctx.fill();
-      ctx.strokeStyle = "rgba(165,178,220,0.85)"; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(241,196,15,0.85)"; ctx.lineWidth = 1.8;
       ctx.stroke();
 
       ctx.restore();
@@ -742,19 +745,25 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
                 </AnimatePresence>
               </div>
 
-              {/* Tripod stand */}
+              {/* Tripod stand — gold to match Pandora theme */}
               <svg width={260} height={90} style={{ display: "block", marginTop: -14 }} viewBox="0 0 260 90">
+                <defs>
+                  <linearGradient id="legGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(241,196,15,0.90)" />
+                    <stop offset="100%" stopColor="rgba(180,140,10,0.75)" />
+                  </linearGradient>
+                </defs>
                 {/* Left leg */}
-                <line x1="130" y1="8" x2="22" y2="82" stroke="rgba(195,205,230,0.88)" strokeWidth="8" strokeLinecap="round" />
+                <line x1="130" y1="8" x2="22" y2="82" stroke="url(#legGrad)" strokeWidth="7" strokeLinecap="round" />
                 {/* Right leg */}
-                <line x1="130" y1="8" x2="238" y2="82" stroke="rgba(195,205,230,0.88)" strokeWidth="8" strokeLinecap="round" />
+                <line x1="130" y1="8" x2="238" y2="82" stroke="url(#legGrad)" strokeWidth="7" strokeLinecap="round" />
                 {/* Cross-bar */}
-                <line x1="30" y1="68" x2="230" y2="68" stroke="rgba(185,195,225,0.70)" strokeWidth="6" strokeLinecap="round" />
+                <line x1="30" y1="68" x2="230" y2="68" stroke="rgba(241,196,15,0.55)" strokeWidth="5" strokeLinecap="round" />
                 {/* Feet */}
-                <ellipse cx="22" cy="82" rx="18" ry="6" fill="rgba(175,185,215,0.80)" />
-                <ellipse cx="238" cy="82" rx="18" ry="6" fill="rgba(175,185,215,0.80)" />
+                <ellipse cx="22" cy="82" rx="18" ry="5" fill="rgba(180,140,10,0.70)" />
+                <ellipse cx="238" cy="82" rx="18" ry="5" fill="rgba(180,140,10,0.70)" />
                 {/* Top join cap */}
-                <circle cx="130" cy="8" r="9" fill="rgba(205,215,240,0.92)" />
+                <circle cx="130" cy="8" r="8" fill="rgba(241,196,15,0.90)" />
               </svg>
             </div>
 
