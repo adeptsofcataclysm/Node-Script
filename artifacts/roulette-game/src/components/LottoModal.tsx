@@ -7,6 +7,16 @@ const BALL_COLORS = [
   "#d35400", "#2980b9", "#7d3c98", "#1e8449",
 ];
 
+// ─── GIF popups during drum spin ─────────────────────────────────────────────
+const LOTTO_GIFS = [
+  "/gif_owl.gif", "/gif_duck_morning.gif", "/gif_cat.gif",
+  "/gif_1.gif", "/gif_lunacat.gif", "/gif_dux.gif",
+  "/gif_crunchycat.gif", "/gif_shock.gif", "/gif_duck2.gif",
+  "/gif_duck_dance.gif", "/gif_ducks.gif",
+];
+interface GifPopup { id: number; src: string; x: number; y: number; size: number; }
+let _gifId = 0;
+
 // ─── Pre-generated ambient particles ─────────────────────────────────────────
 const COINS = Array.from({ length: 12 }, (_, i) => ({
   id: i,
@@ -491,6 +501,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
   const [chosenIdx, setChosenIdx] = useState<number | null>(null);
   const [drumKey, setDrumKey] = useState(0);
   const [showHomer, setShowHomer] = useState(false);
+  const [gifPopups, setGifPopups] = useState<GifPopup[]>([]);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
@@ -500,6 +511,39 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     setShowHomer(true);
     const t = setTimeout(() => setShowHomer(false), 6400);
     return () => clearTimeout(t);
+  }, [drumPhase]);
+
+  // GIF popups — spawn while drum is spinning
+  useEffect(() => {
+    if (drumPhase !== "spinning") {
+      setGifPopups([]);
+      return;
+    }
+
+    const spawnGif = () => {
+      // Pick a random screen zone, avoiding the center drum area (~25-75vw, 20-80vh)
+      const zone = Math.floor(Math.random() * 4);
+      let x: number, y: number;
+      if (zone === 0)      { x = Math.random() * 100; y = Math.random() * 18; }        // top strip
+      else if (zone === 1) { x = Math.random() * 100; y = 76 + Math.random() * 18; }   // bottom strip
+      else if (zone === 2) { x = Math.random() * 18;  y = 15 + Math.random() * 65; }   // left strip
+      else                 { x = 78 + Math.random() * 18; y = 15 + Math.random() * 65; } // right strip
+
+      const src = LOTTO_GIFS[Math.floor(Math.random() * LOTTO_GIFS.length)];
+      const size = 90 + Math.floor(Math.random() * 80); // 90–170 px height
+      const id = ++_gifId;
+
+      setGifPopups(prev => prev.length >= 6 ? prev : [...prev, { id, src, x, y, size }]);
+
+      // Auto-remove after 1.8–2.8s
+      const lifetime = 1800 + Math.random() * 1000;
+      setTimeout(() => setGifPopups(prev => prev.filter(p => p.id !== id)), lifetime);
+    };
+
+    // Spawn first one immediately, then every 600–1100ms
+    spawnGif();
+    const interval = setInterval(spawnGif, 600 + Math.random() * 500);
+    return () => clearInterval(interval);
   }, [drumPhase]);
 
   // Lotto music (drum phase only)
@@ -589,6 +633,32 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
       {/* Full-screen confetti on reveal */}
       <FullScreenConfetti active={phase === "drum" && drumPhase === "revealed"} />
+
+      {/* GIF popups — random positions while drum spins */}
+      <AnimatePresence>
+        {gifPopups.map(p => (
+          <motion.img
+            key={p.id}
+            src={p.src}
+            alt=""
+            initial={{ scale: 0, opacity: 0, rotate: (Math.random() - 0.5) * 30 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: "backOut" }}
+            style={{
+              position: "fixed",
+              left: `${p.x}vw`,
+              top: `${p.y}vh`,
+              height: p.size,
+              width: "auto",
+              zIndex: 58,
+              pointerEvents: "none",
+              borderRadius: 8,
+              boxShadow: "0 4px 24px rgba(0,0,0,0.7)",
+            }}
+          />
+        ))}
+      </AnimatePresence>
 
       {/* Homer runs left-to-right across the bottom on drum stop */}
       <AnimatePresence>
