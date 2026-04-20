@@ -211,6 +211,8 @@ const DrumCanvas = memo(function DrumCanvas({
       ctx.restore();
     };
 
+    let simT = 0; // simulation time for rotating gravity
+
     const tick = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
@@ -222,31 +224,46 @@ const DrumCanvas = memo(function DrumCanvas({
 
       // ── Physics update ──
       if (state === "spinning" || state === "rolling") {
+        simT += 1 / 60;
+
+        // Rotating gravity — simulates a real tumbling lottery drum
+        // Two overlapping sine waves at different frequencies = chaotic direction
+        const gx = Math.sin(simT * 0.9) * 0.45 + Math.sin(simT * 2.3) * 0.18;
+        const gy = Math.cos(simT * 1.3) * 0.45 + Math.cos(simT * 1.7) * 0.18;
+
         for (const b of balls) {
           if (state === "rolling" && b.idx === chosen) continue;
+
+          if (state === "spinning") {
+            // Apply rotating gravity to pull balls across the whole drum interior
+            b.vx += gx;
+            b.vy += gy;
+
+            // Strong random chaos kick every frame
+            b.vx += (Math.random() - 0.5) * 1.2;
+            b.vy += (Math.random() - 0.5) * 1.2;
+          }
 
           b.x += b.vx;
           b.y += b.vy;
 
-          // Circular wall bounce
+          // Circular wall bounce — high restitution to maintain energy
           const d = Math.sqrt(b.x * b.x + b.y * b.y);
           const maxD = DRUM_R - b.r;
           if (d > maxD) {
             const nx = b.x / d, ny = b.y / d;
             const dot = b.vx * nx + b.vy * ny;
-            if (dot > 0) { b.vx -= 2 * dot * nx * 0.80; b.vy -= 2 * dot * ny * 0.80; }
+            if (dot > 0) { b.vx -= 2 * dot * nx * 0.88; b.vy -= 2 * dot * ny * 0.88; }
             b.x = nx * maxD; b.y = ny * maxD;
           }
 
-          // Speed clamping + chaos kick (spinning only)
+          // Speed clamp — keep chaos going, never stop
           if (state === "spinning") {
-            // Random perturbation to prevent ordered patterns
-            b.vx += (Math.random() - 0.5) * 0.5;
-            b.vy += (Math.random() - 0.5) * 0.5;
             const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-            if (spd < 1.6) { b.vx *= 1.6 / spd; b.vy *= 1.6 / spd; }
-            if (spd > 5.5) { b.vx *= 5.5 / spd; b.vy *= 5.5 / spd; }
+            if (spd < 2.0) { b.vx *= 2.0 / spd; b.vy *= 2.0 / spd; }
+            if (spd > 7.0) { b.vx *= 7.0 / spd; b.vy *= 7.0 / spd; }
           }
+
           if (state === "rolling") {
             // Other balls slow and drift outward
             b.vx *= 0.96; b.vy *= 0.96;
@@ -255,7 +272,7 @@ const DrumCanvas = memo(function DrumCanvas({
           }
         }
 
-        // Ball–ball collisions
+        // Ball–ball collisions — strong push-apart so they constantly jostle
         for (let i = 0; i < balls.length; i++) {
           for (let j = i + 1; j < balls.length; j++) {
             const a = balls[i], bb = balls[j];
@@ -266,13 +283,13 @@ const DrumCanvas = memo(function DrumCanvas({
             if (d2 < minD * minD && d2 > 0.001) {
               const d = Math.sqrt(d2);
               const nx = dx / d, ny = dy / d;
-              const ov = (minD - d) * 0.52;
+              const ov = (minD - d) * 0.55;
               a.x -= nx * ov; a.y -= ny * ov;
               bb.x += nx * ov; bb.y += ny * ov;
               const rvx = bb.vx - a.vx, rvy = bb.vy - a.vy;
               const dot = rvx * nx + rvy * ny;
               if (dot < 0) {
-                const imp = dot * 0.82;
+                const imp = dot * 0.88; // high restitution = bouncy collisions
                 a.vx += imp * nx; a.vy += imp * ny;
                 bb.vx -= imp * nx; bb.vy -= imp * ny;
               }
@@ -517,19 +534,13 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 overflow-hidden"
       style={{ background: phase === "setup" ? "rgba(0,0,0,0.97)" : "rgba(0,0,0,0)" }}
     >
-      {/* Video background */}
+      {/* Video background — no overlay */}
       <AnimatePresence>
         {phase === "drum" && (
-          <>
-            <motion.video key="lotto-video" src="/lotto-bg.mp4" autoPlay muted loop playsInline
-              initial={{ opacity: 0 }} animate={{ opacity: 0.55 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
-            />
-            <motion.div key="lotto-overlay"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 1 }}
-            />
-          </>
+          <motion.video key="lotto-video" src="/lotto-bg.mp4" autoPlay muted loop playsInline
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
+          />
         )}
       </AnimatePresence>
 
