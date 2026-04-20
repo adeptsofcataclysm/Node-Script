@@ -544,7 +544,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       else                 { x = 78 + Math.random() * 10; y = 12 + Math.random() * 60; } // right strip
 
       const src = _nextGif();
-      const size = 160 + Math.floor(Math.random() * 100); // 160–260 px height
+      const size = 220 + Math.floor(Math.random() * 100); // 220–320 px height
       const id = ++_gifId;
 
       setGifPopups(prev => prev.length >= 1 ? prev : [...prev, { id, src, x, y, size }]);
