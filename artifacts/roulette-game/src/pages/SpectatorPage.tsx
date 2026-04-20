@@ -199,7 +199,7 @@ export function SpectatorPage() {
             className="font-mono text-center"
             style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
           >
-            "Ненавижу, ебучее програмирование!"(с)
+            {"\"Ненавижу, ебучее програмирование!\"\u00A0(с)"}
           </div>
         </div>
       </div>
