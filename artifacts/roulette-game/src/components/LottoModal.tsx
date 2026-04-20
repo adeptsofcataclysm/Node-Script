@@ -60,7 +60,9 @@ export function LottoModal({
   const rafRef = useRef<number>(0);
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
+  // Lotto music starts only when drum is spinning — avoids interrupting bang.mp3
   useEffect(() => {
+    if (phase !== "drum") return;
     try {
       const audio = new Audio("/lotto-music.mp3");
       audio.loop = true;
@@ -71,7 +73,7 @@ export function LottoModal({
     return () => {
       if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
     };
-  }, []);
+  }, [phase]);
 
   useEffect(() => {
     if (!isSpinning) { cancelAnimationFrame(rafRef.current); return; }
