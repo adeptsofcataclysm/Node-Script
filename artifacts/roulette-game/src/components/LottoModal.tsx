@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 
 const BALL_COLORS = [
@@ -10,16 +10,64 @@ const BALL_COLORS = [
 const BALL_ORBIT = 100;
 const BALL_SIZE = 46;
 
+// ─── Pre-generated ambient particles (stable — no re-render on mount) ────────
+const COINS = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  x: 3 + ((i * 8.1) % 94),
+  delay: (i * 0.31) % 3.8,
+  dur: 2.4 + ((i * 0.17) % 1.6),
+  size: 18 + ((i * 4) % 14),
+  rot: i % 2 === 0 ? 540 : -540,
+  drift: ((i * 23) % 60) - 30,
+}));
+
+const DOLLARS = Array.from({ length: 8 }, (_, i) => ({
+  id: i,
+  x: 5 + ((i * 12.3) % 88),
+  delay: 0.5 + ((i * 0.45) % 3.2),
+  dur: 2.8 + ((i * 0.22) % 1.4),
+  w: 44 + ((i * 6) % 20),
+  h: 22 + ((i * 3) % 10),
+  tilt: ((i * 17) % 30) - 15,
+  drift: ((i * 31) % 70) - 35,
+}));
+
+const STREAMERS_L = Array.from({ length: 10 }, (_, i) => ({
+  id: i,
+  angle: -30 + i * 15,
+  len: 40 + ((i * 7) % 30),
+  color: BALL_COLORS[i % BALL_COLORS.length],
+  delay: (i * 0.12) % 1.4,
+  dur: 0.8 + ((i * 0.09) % 0.6),
+}));
+
+const STREAMERS_R = STREAMERS_L.map(s => ({
+  ...s, angle: 180 + 30 - s.angle + 60,
+}));
+
+// ─── Burst confetti (40 particles in all directions) ────────────────────────
+const BURST = Array.from({ length: 40 }, (_, i) => {
+  const angle = (i / 40) * 360;
+  const rad = (angle * Math.PI) / 180;
+  const dist = 120 + ((i * 17) % 100);
+  return {
+    id: i,
+    tx: Math.cos(rad) * dist,
+    ty: Math.sin(rad) * dist,
+    color: BALL_COLORS[i % BALL_COLORS.length],
+    shape: i % 3 === 0 ? "circle" : i % 3 === 1 ? "rect" : "diamond",
+    size: 8 + ((i * 3) % 10),
+    rot: ((i * 47) % 360),
+    delay: (i * 0.018) % 0.25,
+  };
+});
+
+// ─── Small helper components ─────────────────────────────────────────────────
+
 function PandoraBtn({
-  onClick,
-  disabled,
-  children,
-  accent = "#f1c40f",
+  onClick, disabled, children, accent = "#f1c40f",
 }: {
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-  accent?: string;
+  onClick: () => void; disabled?: boolean; children: React.ReactNode; accent?: string;
 }) {
   return (
     <button
@@ -39,6 +87,117 @@ function PandoraBtn({
     </button>
   );
 }
+
+function CoinParticle({ x, delay, dur, size, rot, drift }: typeof COINS[0]) {
+  return (
+    <motion.div
+      style={{ position: "absolute", left: `${x}%`, top: 0, zIndex: 2, pointerEvents: "none" }}
+      initial={{ y: "100vh", rotate: 0, opacity: 0, x: 0 }}
+      animate={{ y: "-15vh", rotate: rot, opacity: [0, 1, 1, 0], x: drift }}
+      transition={{ duration: dur, delay, repeat: Infinity, ease: "easeOut" }}
+    >
+      <div
+        style={{
+          width: size, height: size,
+          borderRadius: "50%",
+          background: `radial-gradient(circle at 35% 30%, #ffe566, #c8870f)`,
+          border: "2px solid #b07010",
+          boxShadow: "0 0 10px rgba(241,196,15,0.9), inset 0 2px 4px rgba(255,255,255,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: size * 0.38, fontWeight: 900, color: "#7a4e00",
+        }}
+      >
+        $
+      </div>
+    </motion.div>
+  );
+}
+
+function DollarParticle({ x, delay, dur, w, h, tilt, drift }: typeof DOLLARS[0]) {
+  return (
+    <motion.div
+      style={{ position: "absolute", left: `${x}%`, top: 0, zIndex: 2, pointerEvents: "none" }}
+      initial={{ y: "100vh", rotate: tilt, opacity: 0, x: 0 }}
+      animate={{ y: "-15vh", rotate: [tilt, -tilt, tilt * 0.6], opacity: [0, 1, 1, 0], x: drift }}
+      transition={{ duration: dur, delay, repeat: Infinity, ease: "easeOut" }}
+    >
+      <div
+        style={{
+          width: w, height: h,
+          background: "linear-gradient(135deg, #2ecc71, #1a7a3c)",
+          border: "1.5px solid #1a6632",
+          borderRadius: 3,
+          boxShadow: "0 0 10px rgba(46,204,113,0.6), inset 0 1px 3px rgba(255,255,255,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: h * 0.55, fontWeight: 900, color: "rgba(255,255,255,0.95)",
+          textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+          fontFamily: "monospace", letterSpacing: "-1px",
+        }}
+      >
+        $ 100
+      </div>
+    </motion.div>
+  );
+}
+
+function Streamer({ angle, len, color, delay, dur, originX, originY }: {
+  angle: number; len: number; color: string; delay: number; dur: number;
+  originX: number; originY: number;
+}) {
+  const rad = (angle * Math.PI) / 180;
+  const tx = Math.cos(rad) * len;
+  const ty = Math.sin(rad) * len;
+  return (
+    <motion.div
+      style={{
+        position: "absolute",
+        left: originX, top: originY,
+        width: 3, height: len,
+        background: color,
+        borderRadius: 2,
+        transformOrigin: "top center",
+        zIndex: 6, pointerEvents: "none",
+      }}
+      initial={{ scaleY: 0, opacity: 0, x: 0, y: 0, rotate: angle - 90 }}
+      animate={{
+        scaleY: [0, 1, 0.8, 0],
+        opacity: [0, 1, 0.8, 0],
+        x: [0, tx * 0.5, tx],
+        y: [0, ty * 0.5, ty],
+      }}
+      transition={{ duration: dur, delay, repeat: Infinity, repeatDelay: 0.4, ease: "easeOut" }}
+    />
+  );
+}
+
+function BurstParticle({ tx, ty, color, shape, size, rot, delay }: typeof BURST[0]) {
+  const borderRadius = shape === "circle" ? "50%" : shape === "diamond" ? "2px" : "2px";
+  const transform = shape === "diamond" ? "rotate(45deg)" : undefined;
+  return (
+    <motion.div
+      style={{
+        position: "absolute", left: "50%", top: "50%",
+        width: size, height: size,
+        marginLeft: -size / 2, marginTop: -size / 2,
+        background: color,
+        borderRadius,
+        transform,
+        zIndex: 8, pointerEvents: "none",
+        boxShadow: `0 0 6px ${color}88`,
+      }}
+      initial={{ x: 0, y: 0, scale: 0, rotate: 0, opacity: 1 }}
+      animate={{
+        x: tx, y: ty,
+        scale: [0, 1.2, 0.8, 0],
+        rotate: rot,
+        opacity: [1, 1, 0.6, 0],
+      }}
+      transition={{ duration: 1.2, delay, ease: "easeOut" }}
+    />
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function LottoModal({
   onClose,
@@ -60,7 +219,7 @@ export function LottoModal({
   const rafRef = useRef<number>(0);
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
-  // Lotto music starts only when drum is spinning — avoids interrupting bang.mp3
+  // Lotto music — only when drum is spinning
   useEffect(() => {
     if (phase !== "drum") return;
     try {
@@ -75,6 +234,7 @@ export function LottoModal({
     };
   }, [phase]);
 
+  // RAF spin loop
   useEffect(() => {
     if (!isSpinning) { cancelAnimationFrame(rafRef.current); return; }
     let last = performance.now();
@@ -135,22 +295,52 @@ export function LottoModal({
   const chosenName = chosenIdx !== null ? names[chosenIdx] : null;
   const chosenColor = chosenIdx !== null ? BALL_COLORS[chosenIdx % BALL_COLORS.length] : "#f1c40f";
 
+  // Popper origins (relative to drum container center 155,155)
+  const popperL = { x: -168, y: 0 };
+  const popperR = { x: 168, y: 0 };
+
+  // Star sparkles around revealed name
+  const STARS = useMemo(() => Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * 360;
+    const r = 90 + ((i * 11) % 40);
+    return {
+      id: i,
+      x: Math.cos((a * Math.PI) / 180) * r,
+      y: Math.sin((a * Math.PI) / 180) * r,
+      size: 4 + ((i * 3) % 6),
+      color: BALL_COLORS[i % BALL_COLORS.length],
+      delay: i * 0.07,
+    };
+  }), []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 overflow-hidden"
       style={{ background: "rgba(0,0,0,0.97)" }}
     >
+      {/* ── Ambient floating particles (drum phase only) ── */}
+      <AnimatePresence>
+        {phase === "drum" && !revealed && (
+          <>
+            {COINS.map(p => <CoinParticle key={p.id} {...p} />)}
+            {DOLLARS.map(p => <DollarParticle key={p.id} {...p} />)}
+          </>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {phase === "setup" ? (
+          /* ════════════ SETUP PHASE ════════════ */
           <motion.div
             key="setup"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="flex flex-col items-center gap-5 w-full max-w-sm"
+            style={{ position: "relative", zIndex: 10 }}
           >
             <h2
               className="text-3xl font-bold uppercase tracking-[4px] text-center"
@@ -162,10 +352,7 @@ export function LottoModal({
               Добавьте участников (мин. 2, макс. 12)
             </p>
 
-            <form
-              className="flex gap-2 w-full"
-              onSubmit={(e) => { e.preventDefault(); addName(); }}
-            >
+            <form className="flex gap-2 w-full" onSubmit={(e) => { e.preventDefault(); addName(); }}>
               <input
                 type="text"
                 value={nameInput}
@@ -173,22 +360,12 @@ export function LottoModal({
                 maxLength={16}
                 placeholder="Имя участника"
                 className="flex-1 px-3 py-2 font-mono text-sm uppercase tracking-wider outline-none"
-                style={{
-                  background: "rgba(0,0,0,0.6)",
-                  border: "1px solid #f1c40f44",
-                  color: "white",
-                }}
+                style={{ background: "rgba(0,0,0,0.6)", border: "1px solid #f1c40f44", color: "white" }}
               />
               <button
                 type="submit"
                 className="px-4 py-2 font-mono text-lg font-bold"
-                style={{
-                  background: "transparent",
-                  border: "1px solid #f1c40f",
-                  color: "#f1c40f",
-                  cursor: "pointer",
-                  textShadow: "0 0 8px #f1c40f",
-                }}
+                style={{ background: "transparent", border: "1px solid #f1c40f", color: "#f1c40f", cursor: "pointer", textShadow: "0 0 8px #f1c40f" }}
               >
                 +
               </button>
@@ -209,21 +386,12 @@ export function LottoModal({
                   }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
-                        background: BALL_COLORS[i % BALL_COLORS.length],
-                        color: "white",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        flexShrink: 0,
-                      }}
-                    >
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
+                      width: 22, height: 22, borderRadius: "50%",
+                      background: BALL_COLORS[i % BALL_COLORS.length],
+                      color: "white", fontSize: 11, fontWeight: 900, flexShrink: 0,
+                    }}>
                       {i + 1}
                     </span>
                     {name}
@@ -237,56 +405,85 @@ export function LottoModal({
                 </motion.div>
               ))}
               {names.length === 0 && (
-                <p className="text-center font-mono text-xs py-4" style={{ color: "#333" }}>
-                  Список пуст
-                </p>
+                <p className="text-center font-mono text-xs py-4" style={{ color: "#333" }}>Список пуст</p>
               )}
             </div>
 
             <div className="flex gap-3 w-full">
-              <PandoraBtn onClick={closeModal} accent="#555">
-                Отмена
-              </PandoraBtn>
+              <PandoraBtn onClick={closeModal} accent="#555">Отмена</PandoraBtn>
               <PandoraBtn onClick={startDrum} disabled={names.length < 2} accent="#f1c40f">
                 Запустить барабан
               </PandoraBtn>
             </div>
           </motion.div>
+
         ) : (
+          /* ════════════ DRUM PHASE ════════════ */
           <motion.div
             key="drum"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            exit={{ opacity: 0, scale: 0.85 }}
             className="flex flex-col items-center gap-5"
+            style={{ position: "relative", zIndex: 10 }}
           >
-            <h2
+            {/* Title pulses when spinning */}
+            <motion.h2
               className="text-2xl font-bold uppercase tracking-[4px]"
-              style={{ color: "#f1c40f", textShadow: "0 0 24px rgba(241,196,15,0.5)" }}
+              style={{ color: "#f1c40f" }}
+              animate={isSpinning
+                ? { textShadow: ["0 0 12px #f1c40f88", "0 0 40px #f1c40fff", "0 0 12px #f1c40f88"] }
+                : { textShadow: "0 0 20px #f1c40f44" }}
+              transition={{ duration: 1.2, repeat: isSpinning ? Infinity : 0 }}
             >
               Барабан Лото
-            </h2>
+            </motion.h2>
 
-            {/* Drum */}
-            <div className="relative flex items-center justify-center" style={{ width: 310, height: 310 }}>
+            {/* ── Drum container ── */}
+            <div className="relative flex items-center justify-center" style={{ width: 320, height: 320 }}>
+
+              {/* Party streamers from left */}
+              {isSpinning && STREAMERS_L.map(s => (
+                <Streamer key={s.id} {...s} originX={popperL.x + 160} originY={popperL.y + 160} />
+              ))}
+              {isSpinning && STREAMERS_R.map(s => (
+                <Streamer key={s.id} {...s} originX={popperR.x + 160} originY={popperR.y + 160} />
+              ))}
+
+              {/* Outer pulsing glow ring */}
+              <motion.div
+                className="absolute rounded-full"
+                style={{ width: 316, height: 316, border: "3px solid #f1c40f" }}
+                animate={isSpinning
+                  ? {
+                    boxShadow: [
+                      "0 0 30px rgba(241,196,15,0.3), inset 0 0 50px rgba(0,0,0,0.8)",
+                      "0 0 80px rgba(241,196,15,0.7), inset 0 0 50px rgba(0,0,0,0.8)",
+                      "0 0 30px rgba(241,196,15,0.3), inset 0 0 50px rgba(0,0,0,0.8)",
+                    ],
+                    scale: [1, 1.015, 1],
+                  }
+                  : { boxShadow: "0 0 40px rgba(241,196,15,0.25), inset 0 0 60px rgba(0,0,0,0.85)", scale: 1 }}
+                transition={{ duration: 0.9, repeat: isSpinning ? Infinity : 0 }}
+              />
+
+              {/* Background fill */}
               <div
                 className="absolute rounded-full"
                 style={{
-                  width: 306,
-                  height: 306,
-                  border: "3px solid #f1c40f",
-                  boxShadow:
-                    "0 0 50px rgba(241,196,15,0.35), 0 0 100px rgba(241,196,15,0.1), inset 0 0 70px rgba(0,0,0,0.8)",
-                  background:
-                    "radial-gradient(ellipse at center, rgba(30,15,0,0.85) 0%, rgba(0,0,0,0.96) 75%)",
+                  width: 310, height: 310,
+                  background: "radial-gradient(ellipse at center, rgba(30,15,0,0.85) 0%, rgba(0,0,0,0.96) 75%)",
+                  zIndex: 1,
                 }}
               />
 
-              <svg
+              {/* SVG cage lines */}
+              <motion.svg
                 className="absolute"
-                width={296}
-                height={296}
-                style={{ zIndex: 5, opacity: 0.12 }}
+                width={296} height={296}
+                style={{ zIndex: 5 }}
+                animate={isSpinning ? { opacity: [0.12, 0.22, 0.12] } : { opacity: 0.12 }}
+                transition={{ duration: 0.9, repeat: isSpinning ? Infinity : 0 }}
               >
                 <line x1="148" y1="0" x2="148" y2="296" stroke="#f1c40f" strokeWidth="1" />
                 <line x1="0" y1="148" x2="296" y2="148" stroke="#f1c40f" strokeWidth="1" />
@@ -294,60 +491,129 @@ export function LottoModal({
                 <line x1="254" y1="42" x2="42" y2="254" stroke="#f1c40f" strokeWidth="1" />
                 <ellipse cx="148" cy="148" rx="148" ry="52" fill="none" stroke="#f1c40f" strokeWidth="1" />
                 <ellipse cx="148" cy="148" rx="52" ry="148" fill="none" stroke="#f1c40f" strokeWidth="1" />
-              </svg>
+              </motion.svg>
 
+              {/* Counter-rotating inner ring */}
+              <motion.svg
+                className="absolute"
+                width={230} height={230}
+                style={{ zIndex: 5, left: 45, top: 45 }}
+                animate={{ rotate: isSpinning ? -360 : 0 }}
+                transition={{ duration: 6, repeat: isSpinning ? Infinity : 0, ease: "linear" }}
+              >
+                {Array.from({ length: 8 }, (_, i) => {
+                  const a = (i / 8) * 360;
+                  const r = (a * Math.PI) / 180;
+                  const x1 = 115 + Math.cos(r) * 50;
+                  const y1 = 115 + Math.sin(r) * 50;
+                  const x2 = 115 + Math.cos(r) * 110;
+                  const y2 = 115 + Math.sin(r) * 110;
+                  return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f1c40f" strokeWidth="0.8" opacity={0.18} />;
+                })}
+                <circle cx="115" cy="115" r="50" fill="none" stroke="#f1c40f" strokeWidth="0.8" opacity={0.15} />
+                <circle cx="115" cy="115" r="110" fill="none" stroke="#f1c40f" strokeWidth="0.8" opacity={0.1} />
+              </motion.svg>
+
+              {/* Drum shake when spinning */}
               <motion.div
                 className="absolute"
                 style={{ width: 270, height: 270, rotate, zIndex: 10 }}
+                animate={isSpinning ? { x: [-1, 1, -0.5, 0.5, 0] } : { x: 0 }}
+                transition={isSpinning ? { duration: 0.15, repeat: Infinity } : undefined}
               >
                 {names.map((_, i) => {
                   const angle = (i / n) * 360;
                   const rad = (angle * Math.PI) / 180;
-                  const x = Math.sin(rad) * BALL_ORBIT + 135 - BALL_SIZE / 2;
-                  const y = -Math.cos(rad) * BALL_ORBIT + 135 - BALL_SIZE / 2;
+                  const bx = Math.sin(rad) * BALL_ORBIT + 135 - BALL_SIZE / 2;
+                  const by = -Math.cos(rad) * BALL_ORBIT + 135 - BALL_SIZE / 2;
                   const color = BALL_COLORS[i % BALL_COLORS.length];
                   return (
-                    <div
+                    <motion.div
                       key={i}
                       className="absolute rounded-full flex items-center justify-center"
                       style={{
-                        width: BALL_SIZE,
-                        height: BALL_SIZE,
-                        left: x,
-                        top: y,
+                        width: BALL_SIZE, height: BALL_SIZE,
+                        left: bx, top: by,
                         background: `radial-gradient(circle at 35% 30%, ${color}ff, ${color}88)`,
-                        boxShadow: `0 0 14px ${color}99, inset 0 4px 10px rgba(255,255,255,0.55), inset 0 -4px 8px rgba(0,0,0,0.45)`,
-                        color: "white",
-                        fontSize: 15,
-                        fontWeight: 900,
+                        color: "white", fontSize: 15, fontWeight: 900,
                         textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+                      }}
+                      animate={isSpinning
+                        ? {
+                          boxShadow: [
+                            `0 0 10px ${color}66, inset 0 4px 10px rgba(255,255,255,0.5)`,
+                            `0 0 28px ${color}cc, inset 0 4px 10px rgba(255,255,255,0.6)`,
+                            `0 0 10px ${color}66, inset 0 4px 10px rgba(255,255,255,0.5)`,
+                          ],
+                          scale: [1, 1.07, 1],
+                        }
+                        : {
+                          boxShadow: `0 0 14px ${color}99, inset 0 4px 10px rgba(255,255,255,0.55), inset 0 -4px 8px rgba(0,0,0,0.45)`,
+                          scale: 1,
+                        }}
+                      transition={{
+                        duration: 0.7 + (i * 0.08) % 0.4,
+                        delay: (i * 0.06) % 0.4,
+                        repeat: isSpinning ? Infinity : 0,
                       }}
                     >
                       {i + 1}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </motion.div>
 
-              <div
+              {/* Center hub */}
+              <motion.div
                 className="absolute z-20 rounded-full flex items-center justify-center"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 56, height: 56,
                   background: "#0a0a0a",
                   border: "2px solid #f1c40f",
                   color: "#f1c40f",
-                  fontSize: 10,
-                  fontFamily: "monospace",
-                  letterSpacing: "1px",
-                  textAlign: "center",
-                  boxShadow: "0 0 12px rgba(241,196,15,0.3)",
+                  fontSize: 10, fontFamily: "monospace", letterSpacing: "1px", textAlign: "center",
                 }}
+                animate={isSpinning
+                  ? { boxShadow: ["0 0 8px rgba(241,196,15,0.2)", "0 0 24px rgba(241,196,15,0.7)", "0 0 8px rgba(241,196,15,0.2)"] }
+                  : { boxShadow: "0 0 12px rgba(241,196,15,0.3)" }}
+                transition={{ duration: 0.9, repeat: isSpinning ? Infinity : 0 }}
               >
                 ЛОТО
-              </div>
+              </motion.div>
+
+              {/* Confetti burst on reveal */}
+              <AnimatePresence>
+                {revealed && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
+              </AnimatePresence>
+
+              {/* Star sparkles on reveal */}
+              <AnimatePresence>
+                {revealed && STARS.map(s => (
+                  <motion.div
+                    key={s.id}
+                    style={{
+                      position: "absolute",
+                      left: "50%", top: "50%",
+                      width: s.size, height: s.size,
+                      marginLeft: -s.size / 2, marginTop: -s.size / 2,
+                      background: s.color,
+                      clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                      zIndex: 9,
+                    }}
+                    initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                    animate={{
+                      x: s.x, y: s.y,
+                      scale: [0, 1.4, 1, 0],
+                      opacity: [0, 1, 1, 0],
+                      rotate: [0, 180, 360],
+                    }}
+                    transition={{ duration: 1.4, delay: s.delay, ease: "easeOut" }}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
 
+            {/* ── Controls / Reveal ── */}
             <AnimatePresence>
               {!revealed ? (
                 <motion.div
@@ -372,22 +638,29 @@ export function LottoModal({
                   transition={{ type: "spring", stiffness: 200, damping: 18 }}
                   className="flex flex-col items-center gap-4"
                 >
+                  {/* Big revealed ball */}
                   <motion.div
                     className="rounded-full flex items-center justify-center"
                     style={{
-                      width: 130,
-                      height: 130,
+                      width: 130, height: 130,
                       background: `radial-gradient(circle at 35% 30%, ${chosenColor}ff, ${chosenColor}88)`,
-                      boxShadow: `0 0 60px ${chosenColor}88, 0 0 120px ${chosenColor}33, inset 0 8px 24px rgba(255,255,255,0.55), inset 0 -8px 16px rgba(0,0,0,0.45)`,
-                      color: "white",
-                      fontSize: 28,
-                      fontWeight: 900,
+                      color: "white", fontSize: 28, fontWeight: 900,
                       textShadow: "0 2px 8px rgba(0,0,0,0.8)",
                     }}
+                    animate={{
+                      boxShadow: [
+                        `0 0 40px ${chosenColor}88, 0 0 80px ${chosenColor}33, inset 0 8px 24px rgba(255,255,255,0.55)`,
+                        `0 0 80px ${chosenColor}cc, 0 0 140px ${chosenColor}55, inset 0 8px 24px rgba(255,255,255,0.7)`,
+                        `0 0 40px ${chosenColor}88, 0 0 80px ${chosenColor}33, inset 0 8px 24px rgba(255,255,255,0.55)`,
+                      ],
+                      scale: [1, 1.04, 1],
+                    }}
+                    transition={{ duration: 1.2, repeat: Infinity }}
                   >
                     {(chosenIdx ?? 0) + 1}
                   </motion.div>
 
+                  {/* Name */}
                   <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -397,21 +670,50 @@ export function LottoModal({
                     <p className="font-mono text-xs uppercase tracking-[4px]" style={{ color: "#666" }}>
                       Счастливчик
                     </p>
-                    <p
+                    <motion.p
                       className="text-4xl font-bold uppercase tracking-[3px]"
-                      style={{ color: chosenColor, textShadow: `0 0 30px ${chosenColor}` }}
+                      style={{ color: chosenColor }}
+                      animate={{
+                        textShadow: [
+                          `0 0 20px ${chosenColor}88`,
+                          `0 0 50px ${chosenColor}ff`,
+                          `0 0 20px ${chosenColor}88`,
+                        ],
+                      }}
+                      transition={{ duration: 1.4, repeat: Infinity }}
                     >
                       {chosenName}
-                    </p>
+                    </motion.p>
                   </motion.div>
 
+                  {/* Celebrate coins burst */}
+                  <AnimatePresence>
+                    {revealed && COINS.slice(0, 8).map((p, i) => (
+                      <motion.div
+                        key={`rc-${i}`}
+                        style={{
+                          position: "absolute", left: `${20 + i * 9}%`, top: 0, zIndex: 2, pointerEvents: "none",
+                        }}
+                        initial={{ y: "80vh", rotate: 0, opacity: 0 }}
+                        animate={{ y: "-10vh", rotate: p.rot, opacity: [0, 1, 1, 0] }}
+                        transition={{ duration: 1.8, delay: i * 0.15, repeat: Infinity, ease: "easeOut" }}
+                      >
+                        <div style={{
+                          width: p.size + 6, height: p.size + 6,
+                          borderRadius: "50%",
+                          background: `radial-gradient(circle at 35% 30%, #ffe566, #c8870f)`,
+                          border: "2px solid #b07010",
+                          boxShadow: "0 0 12px rgba(241,196,15,1)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: (p.size + 6) * 0.38, fontWeight: 900, color: "#7a4e00",
+                        }}>$</div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
                   <div className="flex gap-3 mt-1">
-                    <PandoraBtn onClick={respin} accent="#555">
-                      Перекрутить
-                    </PandoraBtn>
-                    <PandoraBtn onClick={confirmChoice} accent={chosenColor}>
-                      Подтвердить замену
-                    </PandoraBtn>
+                    <PandoraBtn onClick={respin} accent="#555">Перекрутить</PandoraBtn>
+                    <PandoraBtn onClick={confirmChoice} accent={chosenColor}>Подтвердить замену</PandoraBtn>
                   </div>
                 </motion.div>
               )}
