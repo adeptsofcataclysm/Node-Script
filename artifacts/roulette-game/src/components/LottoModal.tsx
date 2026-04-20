@@ -16,7 +16,20 @@ const LOTTO_GIFS = [
 ];
 interface GifPopup { id: number; src: string; x: number; y: number; size: number; }
 let _gifId = 0;
-let _lastGifSrc = "";
+let _gifQueue: string[] = [];
+
+function _nextGif(): string {
+  if (_gifQueue.length === 0) {
+    // Shuffle a fresh copy of all GIFs
+    const arr = [...LOTTO_GIFS];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    _gifQueue = arr;
+  }
+  return _gifQueue.pop()!;
+}
 
 // ─── Pre-generated ambient particles ─────────────────────────────────────────
 const COINS = Array.from({ length: 12 }, (_, i) => ({
@@ -530,9 +543,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       else if (zone === 2) { x = 4 + Math.random() * 10; y = 12 + Math.random() * 60; }  // left strip
       else                 { x = 78 + Math.random() * 10; y = 12 + Math.random() * 60; } // right strip
 
-      const pool = LOTTO_GIFS.filter(g => g !== _lastGifSrc);
-      const src = pool[Math.floor(Math.random() * pool.length)];
-      _lastGifSrc = src;
+      const src = _nextGif();
       const size = 160 + Math.floor(Math.random() * 100); // 160–260 px height
       const id = ++_gifId;
 
