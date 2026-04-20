@@ -45,6 +45,20 @@ export function SpectatorPage() {
   const mutedRef = useRef(false);
   const [muted, setMuted] = useState(false);
   const [showLotto, setShowLotto] = useState(false);
+
+  // Pause background music while lotto modal is open; resume only if game is running
+  useEffect(() => {
+    if (!musicRef.current) return;
+    if (showLotto) {
+      musicRef.current.pause();
+    } else {
+      // Only resume if game is actively running (not on game-over screen)
+      if (!mutedRef.current && allSlotsReady && !gameOver) {
+        musicRef.current.play().catch(() => {});
+      }
+    }
+  }, [showLotto]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const gameReady = allSlotsReady;
 
   const toggleMute = () => {
