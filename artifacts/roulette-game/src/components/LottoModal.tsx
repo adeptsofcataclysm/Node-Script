@@ -180,10 +180,13 @@ const DrumCanvas = memo(function DrumCanvas({
             b.x = nx * maxD; b.y = ny * maxD;
           }
 
-          // Speed clamping
-          const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+          // Speed clamping + chaos kick (spinning only)
           if (state === "spinning") {
-            if (spd < 1.4) { b.vx *= 1.4 / spd; b.vy *= 1.4 / spd; }
+            // Random perturbation to prevent ordered patterns
+            b.vx += (Math.random() - 0.5) * 0.5;
+            b.vy += (Math.random() - 0.5) * 0.5;
+            const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+            if (spd < 1.6) { b.vx *= 1.6 / spd; b.vy *= 1.6 / spd; }
             if (spd > 5.5) { b.vx *= 5.5 / spd; b.vy *= 5.5 / spd; }
           }
           if (state === "rolling") {

@@ -321,7 +321,7 @@ export function SpectatorPage() {
 
       {/* Game over overlay */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && (
+        {gameOver && shotResult?.isBang && !showLotto && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
