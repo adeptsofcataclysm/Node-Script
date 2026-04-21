@@ -22,6 +22,27 @@ export function AdeptsHostPage() {
         Ведущий Адептов
       </div>
 
+      {/* Bottom-right: link to roulette host */}
+      <a
+        href="https://node-script--gg22last.replit.app/spectate"
+        style={{
+          position: "fixed", bottom: 18, right: 18, zIndex: 30,
+          padding: "9px 20px",
+          border: "1px solid #9b59b6",
+          background: "rgba(0,0,0,0.75)",
+          color: "#c39bd3",
+          fontFamily: "monospace", fontSize: 12,
+          textTransform: "uppercase", letterSpacing: "3px",
+          textDecoration: "none",
+          textShadow: "0 0 10px rgba(155,89,182,0.6)",
+          boxShadow: "0 0 14px rgba(155,89,182,0.15)",
+          borderRadius: 4,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Рулетка
+      </a>
+
       {/* Connection indicator */}
       <div style={{ position: "fixed", top: 20, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: connected ? "#2ecc71" : "#e74c3c" }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#2ecc71" : "#e74c3c", boxShadow: connected ? "0 0 8px #2ecc71" : "0 0 8px #e74c3c" }} />
