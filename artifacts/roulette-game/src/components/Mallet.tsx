@@ -11,6 +11,32 @@ interface MalletProps {
 
 const PULL_THRESHOLD = 90;
 
+const SHIMMER_STYLE = `
+@keyframes mallet-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.mallet-title {
+  background: linear-gradient(90deg, #f1c40f, #c39bd3, #5dade2, #2ecc71, #f39c12, #9b59b6, #f1c40f);
+  background-size: 300% 300%;
+  animation: mallet-shimmer 3s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-align: center;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+`;
+
+/* Lightning bolt path: 10×22px, classic Z-shape */
+const BOLT = "M 4,0 L 10,0 L 6,11 L 10,11 L 6,22 L 0,22 L 4,11 L 0,11 Z";
+
 export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: MalletProps) {
   const [swinging, setSwinging] = useState(false);
   const [ready, setReady] = useState(false);
@@ -44,9 +70,10 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", userSelect: "none" }}>
+      <style>{SHIMMER_STYLE}</style>
 
       {/* Pull-down hint arrows */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, marginBottom: 12, visibility: hideHints ? "hidden" : "visible" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, marginBottom: 8, visibility: hideHints ? "hidden" : "visible" }}>
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
@@ -72,19 +99,8 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
         ))}
       </div>
 
-      {/* Title */}
-      <div style={{
-        fontFamily: "monospace",
-        fontSize: 11,
-        textTransform: "uppercase",
-        letterSpacing: "3px",
-        color: "rgba(255,255,255,0.55)",
-        textAlign: "center",
-        marginBottom: 10,
-        whiteSpace: "nowrap",
-      }}>
-        Молот Кадгара
-      </div>
+      {/* Shimmering title — closer to mallet */}
+      <div className="mallet-title">Молот Кадгара</div>
 
       {/* Draggable wrapper — handles Y drag */}
       <motion.div
@@ -128,6 +144,9 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
               <filter id="mallet-glow">
                 <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#f1c40f" floodOpacity="0.9" />
               </filter>
+              <filter id="bolt-glow">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#ffe066" floodOpacity="1" />
+              </filter>
             </defs>
 
             {/* Handle */}
@@ -146,6 +165,16 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
             <path d="M10 80 L10 88 Q10 90 14 90 L112 90 Q118 90 118 84 L118 80 Z" fill="#707070" />
             <path d="M116 16 L124 22 L124 86 L118 80 L118 16 Z" fill="#888" opacity="0.6" />
             <rect x="12" y="20" width="100" height="8" rx="3" fill="rgba(255,255,255,0.4)" />
+
+            {/* Lightning bolts on head — 3 bolts */}
+            <g filter="url(#bolt-glow)" opacity="0.92">
+              {/* Left bolt */}
+              <path d={BOLT} transform="translate(20, 23)" fill="#ffe066" />
+              {/* Middle bolt */}
+              <path d={BOLT} transform="translate(55, 23)" fill="#ffe066" />
+              {/* Right bolt */}
+              <path d={BOLT} transform="translate(90, 23)" fill="#ffe066" />
+            </g>
 
             {/* Purple accent band */}
             <rect x="8" y="55" width="108" height="12" rx="2" fill={ready ? "#f1c40f" : "#8e44ad"} />
