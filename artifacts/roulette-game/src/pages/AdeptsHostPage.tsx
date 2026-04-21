@@ -22,10 +22,10 @@ export function AdeptsHostPage() {
         <div
           className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
           style={{
-            border: "1px solid #e67e22",
-            color: "#e67e22",
+            border: "1px solid #9b59b6",
+            color: "#9b59b6",
             background: "rgba(0,0,0,0.7)",
-            textShadow: "0 0 8px #e67e22",
+            textShadow: "0 0 8px #9b59b6",
           }}
         >
           Ведущий Адептов
@@ -33,11 +33,11 @@ export function AdeptsHostPage() {
         <img
           src="/adepts-logo.png"
           alt="adepts host"
-          style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #e67e22", boxShadow: "0 0 8px rgba(230,126,34,0.5)" }}
+          style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #9b59b6", boxShadow: "0 0 8px rgba(155,89,182,0.5)" }}
         />
         <div
           className="font-mono text-center"
-          style={{ fontSize: 13, color: "#e67e22", lineHeight: 1.3, marginTop: 2 }}
+          style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
         >
           Ведущий Adepts Games
         </div>
