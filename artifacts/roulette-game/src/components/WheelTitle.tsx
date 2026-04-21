@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
 
 export function WheelTitle() {
-  const line1 = "КОЛЕСО";
-  const line2 = "АДЕПТОВ";
+  const text = "КОЛЕСО АДЕПТОВ";
 
   const container = {
     hidden: {},
-    visible: { transition: { staggerChildren: 0.055, delayChildren: 0.1 } },
+    visible: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
   };
 
   const letter = {
@@ -29,57 +28,28 @@ export function WheelTitle() {
       transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       style={{ textAlign: "center", marginBottom: 16, userSelect: "none" }}
     >
-      {/* Line 1 */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="visible"
-        style={{ display: "flex", justifyContent: "center", gap: 2 }}
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, flexWrap: "nowrap" }}
       >
-        {line1.split("").map((ch, i) => (
+        {text.split("").map((ch, i) => (
           <motion.span
-            key={`l1-${i}`}
+            key={i}
             variants={letter}
             style={{
               fontFamily: "monospace",
-              fontSize: "clamp(22px, 3.8vw, 46px)",
+              fontSize: "clamp(20px, 3.2vw, 42px)",
               fontWeight: "bold",
-              color: "#f1c40f",
-              letterSpacing: "6px",
+              color: ch === " " ? "transparent" : "#f1c40f",
+              letterSpacing: ch === " " ? "0px" : "4px",
+              width: ch === " " ? "clamp(8px, 1.2vw, 18px)" : undefined,
               display: "inline-block",
               willChange: "transform",
             }}
           >
-            {ch}
-          </motion.span>
-        ))}
-      </motion.div>
-
-      {/* Line 2 — slightly delayed */}
-      <motion.div
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.055, delayChildren: 0.45 } },
-        }}
-        initial="hidden"
-        animate="visible"
-        style={{ display: "flex", justifyContent: "center", gap: 2 }}
-      >
-        {line2.split("").map((ch, i) => (
-          <motion.span
-            key={`l2-${i}`}
-            variants={letter}
-            style={{
-              fontFamily: "monospace",
-              fontSize: "clamp(22px, 3.8vw, 46px)",
-              fontWeight: "bold",
-              color: "#f1c40f",
-              letterSpacing: "6px",
-              display: "inline-block",
-              willChange: "transform",
-            }}
-          >
-            {ch}
+            {ch === " " ? "\u00A0" : ch}
           </motion.span>
         ))}
       </motion.div>

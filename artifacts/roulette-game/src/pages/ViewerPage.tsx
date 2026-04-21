@@ -31,7 +31,7 @@ export function ViewerPage() {
         style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
         <WheelTitle />
-        <div style={{ width: "clamp(300px, 52vw, 580px)", aspectRatio: "1" }}>
+        <div style={{ width: "clamp(360px, 62vw, 696px)", aspectRatio: "1" }}>
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
       </motion.div>
