@@ -188,7 +188,7 @@ export function SpectatorPage() {
 
       {/* Bottom-right: Host (wheel) button */}
       <a
-        href="https://node-script--gg22last.replit.app/"
+        href="https://node-script--gg22last.replit.app/adepts"
         style={{
           position: "fixed", bottom: 18, right: 18, zIndex: 30,
           padding: "9px 20px",
