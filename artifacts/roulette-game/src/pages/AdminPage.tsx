@@ -28,7 +28,7 @@ export function AdminPage() {
       border: "#f1c40f",
       items: [
         { label: "Счастливчик", desc: "управление колесом", href: `${base}/`, trackKey: "host" },
-        { label: "Адепты", desc: "ведущий колеса адептов", href: `${base}/adepts`, trackKey: "adepts" },
+        { label: "Ведущий", desc: "Ведущий Adepts Games", href: `${base}/adepts`, trackKey: "adepts" },
         { label: "Зрители", desc: "наблюдение за колесом", href: `${base}/watch`, trackKey: "watch" },
       ],
     },
@@ -39,7 +39,7 @@ export function AdminPage() {
       border: "#9b59b6",
       items: [
         { label: "Игроки", desc: "участники рулетки", href: `${base}/game`, trackKey: "game" },
-        { label: "Наблюдатель", desc: "зрительный режим", href: `${base}/spectate`, trackKey: "spectate" },
+        { label: "Ведущий", desc: "Ведущий Adepts Games", href: `${base}/spectate`, trackKey: "spectate" },
       ],
     },
   ];
