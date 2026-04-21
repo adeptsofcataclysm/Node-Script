@@ -3,6 +3,7 @@ import { Server as SocketIOServer } from "socket.io";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { setupGame } from "./game";
+import { setupWheel } from "./wheel";
 
 const rawPort = process.env["PORT"];
 
@@ -31,6 +32,7 @@ const io = new SocketIOServer(server, {
 });
 
 setupGame(io);
+setupWheel(io);
 
 server.listen(port, () => {
   logger.info({ port }, "Server listening");
