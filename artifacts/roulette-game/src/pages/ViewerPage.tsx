@@ -56,7 +56,7 @@ export function ViewerPage() {
         transition={{ duration: 0.5, delay: 0.3 }}
         style={{
           position: "absolute",
-          right: "clamp(16px, 2vw, 40px)",
+          left: "calc(50% + clamp(155px, 25vw, 305px) + 8px)",
           top: "50%",
           transform: "translateY(-60%)",
           zIndex: 20,
