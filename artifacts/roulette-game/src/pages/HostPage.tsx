@@ -35,6 +35,18 @@ export function HostPage() {
         <div style={{ width: "100%", aspectRatio: "1" }}>
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
+
+        {/* Spinning hint below wheel */}
+        <motion.div
+          animate={isSpinning
+            ? { opacity: [0.5, 1, 0.5], color: "#f1c40f" }
+            : { opacity: 0 }
+          }
+          transition={{ duration: 1, repeat: isSpinning ? Infinity : 0 }}
+          style={{ fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "5px", marginTop: 14 }}
+        >
+          ⟳ Вращается...
+        </motion.div>
       </motion.div>
 
       {/* Mallet — positioned separately to the right */}

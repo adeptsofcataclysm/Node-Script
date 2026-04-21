@@ -149,15 +149,12 @@ export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
         textTransform: "uppercase",
         letterSpacing: "3px",
         marginTop: 6,
-        transition: "color 0.2s",
-        color: disabled
-          ? "rgba(255,255,255,0.2)"
-          : ready
-            ? "#f1c40f"
-            : "rgba(255,255,255,0.45)",
+        color: ready ? "#f1c40f" : "rgba(255,255,255,0.45)",
         textShadow: ready ? "0 0 10px #f1c40f" : "none",
+        opacity: disabled ? 0 : 1,
+        transition: "opacity 0.3s, color 0.2s",
       }}>
-        {disabled ? "Вращается..." : ready ? "Отпустить!" : "Потяни вниз"}
+        {ready ? "Отпустить!" : "Потяни вниз"}
       </div>
     </div>
   );
