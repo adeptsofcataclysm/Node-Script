@@ -145,7 +145,12 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
                 <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#f1c40f" floodOpacity="0.9" />
               </filter>
               <filter id="bolt-glow">
-                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#ffe066" floodOpacity="1" />
+                <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
               </filter>
             </defs>
 
@@ -166,15 +171,29 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
             <path d="M116 16 L124 22 L124 86 L118 80 L118 16 Z" fill="#888" opacity="0.6" />
             <rect x="12" y="20" width="100" height="8" rx="3" fill="rgba(255,255,255,0.4)" />
 
-            {/* Lightning bolts on head — 3 bolts */}
-            <g filter="url(#bolt-glow)" opacity="0.92">
-              {/* Left bolt */}
-              <path d={BOLT} transform="translate(20, 23)" fill="#ffe066" />
-              {/* Middle bolt */}
-              <path d={BOLT} transform="translate(55, 23)" fill="#ffe066" />
-              {/* Right bolt */}
-              <path d={BOLT} transform="translate(90, 23)" fill="#ffe066" />
-            </g>
+            {/* Animated lightning bolts on head */}
+            {[
+              { x: 20, delay: 0,    dur: 1.9 },
+              { x: 55, delay: 0.38, dur: 2.3 },
+              { x: 90, delay: 0.71, dur: 1.6 },
+            ].map(({ x, delay, dur }) => (
+              <motion.path
+                key={x}
+                d={BOLT}
+                transform={`translate(${x}, 23)`}
+                filter="url(#bolt-glow)"
+                animate={{
+                  fill:    ["#ffe066", "#ffffff", "#7ecfff", "#dd99ff", "#ffe530", "#ffffff", "#ffe066"],
+                  opacity: [0.65,      1,         0.2,       1,         0.5,       0.9,       0.65],
+                }}
+                transition={{
+                  duration: dur,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay,
+                }}
+              />
+            ))}
 
             {/* Purple accent band */}
             <rect x="8" y="55" width="108" height="12" rx="2" fill={ready ? "#f1c40f" : "#8e44ad"} />
