@@ -206,28 +206,60 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   {result.label}
                 </motion.h2>
 
+                {/* Jackpot 1500+ score */}
+                {isJackpot && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                    animate={{
+                      opacity: 1, scale: 1, y: 0,
+                      textShadow: [
+                        "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
+                        "0 0 40px #f1c40f, 0 0 80px #f1c40f, 0 0 120px #f1c40f88",
+                        "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
+                      ],
+                    }}
+                    transition={{
+                      opacity: { delay: 0.3, duration: 0.4 },
+                      scale: { delay: 0.3, type: "spring", damping: 10, stiffness: 200 },
+                      y: { delay: 0.3, duration: 0.4 },
+                      textShadow: { delay: 0.7, duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "clamp(28px, 5vw, 56px)",
+                      fontWeight: "bold",
+                      color: "#f1c40f",
+                      letterSpacing: "6px",
+                      position: "relative",
+                      zIndex: 2,
+                    }}
+                  >
+                    1500+
+                  </motion.div>
+                )}
+
                 {/* Win / Loss badge */}
-                {(isPositive || isNegative) && (
+                {(isPositive || isNegative || isJackpot) && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0, rotate: -12 }}
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.25, type: "spring", damping: 10, stiffness: 220 }}
+                    transition={{ delay: 0.35, type: "spring", damping: 10, stiffness: 220 }}
                     style={{
                       position: "absolute",
                       bottom: 12, right: 12,
                       padding: "6px 16px",
                       border: `2px solid ${accentColor}`,
                       borderRadius: 20,
-                      background: isPositive ? "rgba(46,204,113,0.15)" : "rgba(231,76,60,0.15)",
+                      background: isNegative ? "rgba(231,76,60,0.15)" : "rgba(46,204,113,0.15)",
                       fontFamily: "monospace",
-                      fontSize: 13,
+                      fontSize: isJackpot ? 15 : 13,
                       color: accentColor,
                       letterSpacing: "2px",
                       fontWeight: "bold",
                       zIndex: 3,
                     }}
                   >
-                    {isPositive ? "▲ ПОБЕДА" : "▼ ПОТЕРЯ"}
+                    {isNegative ? "▼ ПОТЕРЯ" : "▲ ПОБЕДА"}
                   </motion.div>
                 )}
 

@@ -271,6 +271,43 @@ export function WinAnimation({ label }: { label: string }) {
       )}
 
 
+      {/* ══ JACKPOT spotlights (zIndex 51 — above backdrop, sides of card) ══ */}
+      {type === "jackpot" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 51, pointerEvents: "none", overflow: "hidden" }}>
+          {[
+            { side: "left",  color: "#f1c40f", angle: -28, delay: 0.0, dur: 3.2 },
+            { side: "left",  color: "#9b59b6", angle: -12, delay: 0.6, dur: 3.8 },
+            { side: "left",  color: "#e74c3c", angle:   4, delay: 1.2, dur: 2.9 },
+            { side: "right", color: "#3498db", angle:  28, delay: 0.3, dur: 3.4 },
+            { side: "right", color: "#2ecc71", angle:  12, delay: 0.9, dur: 3.1 },
+            { side: "right", color: "#e67e22", angle:  -4, delay: 1.5, dur: 2.8 },
+          ].map((b, i) => (
+            <motion.div
+              key={`spot-${i}`}
+              animate={{
+                rotate: [b.angle - 10, b.angle + 10, b.angle - 10],
+                opacity: [0.18, 0.48, 0.18],
+              }}
+              transition={{ duration: b.dur, delay: b.delay, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute",
+                left: b.side === "left" ? 0 : undefined,
+                right: b.side === "right" ? 0 : undefined,
+                top: "50%",
+                transformOrigin: b.side === "left" ? "0% 50%" : "100% 50%",
+                width: "46vw",
+                height: 55,
+                marginTop: -27,
+                background: b.side === "left"
+                  ? `linear-gradient(to right, ${b.color}cc, ${b.color}44 50%, transparent)`
+                  : `linear-gradient(to left,  ${b.color}cc, ${b.color}44 50%, transparent)`,
+                filter: `blur(6px)`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ══ JACKPOT foreground layer (zIndex 56 — above card) ══════ */}
       {type === "jackpot" && (
         <div style={{ position: "fixed", inset: 0, zIndex: 56, pointerEvents: "none", overflow: "hidden" }}>
