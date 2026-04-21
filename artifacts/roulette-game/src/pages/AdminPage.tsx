@@ -54,7 +54,7 @@ export function AdminPage() {
   }
 
   const resetLabel = {
-    idle: "↺  Обновить ящик пандоры",
+    idle: "↺  Закрыть ящик пандоры",
     loading: "Сброс...",
     done: "✓  Сброшено",
     error: "✗  Ошибка",
