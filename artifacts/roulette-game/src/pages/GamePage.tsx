@@ -297,6 +297,12 @@ export function GamePage() {
 
       {/* Top-right: mute + online indicator */}
       <div className="fixed z-30 flex flex-col items-end gap-2" style={{ top: 16, right: 16 }}>
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: connected ? "#2ecc71" : "#e74c3c" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#2ecc71" : "#e74c3c", boxShadow: connected ? "0 0 8px #2ecc71" : "0 0 8px #e74c3c" }} />
+            {connected ? "Онлайн" : "Подключение..."}
+          </div>
+        )}
         <button
           onClick={toggleMute}
           style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
@@ -304,12 +310,6 @@ export function GamePage() {
         >
           <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
         </button>
-        {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: connected ? "#2ecc71" : "#e74c3c" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#2ecc71" : "#e74c3c", boxShadow: connected ? "0 0 8px #2ecc71" : "0 0 8px #e74c3c" }} />
-            {connected ? "Онлайн" : "Подключение..."}
-          </div>
-        )}
       </div>
 
       {/* BANG flash */}
