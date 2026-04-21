@@ -185,6 +185,27 @@ export function SpectatorPage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
+      {/* Bottom-right: Wheel button */}
+      <a
+        href="/watch"
+        style={{
+          position: "fixed", bottom: 18, right: 18, zIndex: 30,
+          padding: "9px 20px",
+          border: "1px solid #f1c40f",
+          background: "rgba(0,0,0,0.75)",
+          color: "#f1c40f",
+          fontFamily: "monospace", fontSize: 12,
+          textTransform: "uppercase", letterSpacing: "3px",
+          textDecoration: "none",
+          textShadow: "0 0 10px rgba(241,196,15,0.6)",
+          boxShadow: "0 0 14px rgba(241,196,15,0.15)",
+          borderRadius: 4,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Колесо Адептов
+      </a>
+
       {/* Top-left: Fortune Wheel links */}
       <div className="fixed top-4 left-4 z-30 flex flex-col gap-2">
         <a

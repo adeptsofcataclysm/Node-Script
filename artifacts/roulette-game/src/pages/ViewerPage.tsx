@@ -49,6 +49,27 @@ export function ViewerPage() {
         {isSpinning ? "⟳  Вращается..." : "— только наблюдение —"}
       </motion.div>
 
+      {/* Bottom-right: back to Roulette button */}
+      <a
+        href="https://node-script--gg22last.replit.app/spectate"
+        style={{
+          position: "absolute", bottom: 18, right: 18, zIndex: 30,
+          padding: "9px 20px",
+          border: "1px solid #9b59b6",
+          background: "rgba(0,0,0,0.75)",
+          color: "#c39bd3",
+          fontFamily: "monospace", fontSize: 12,
+          textTransform: "uppercase", letterSpacing: "3px",
+          textDecoration: "none",
+          textShadow: "0 0 10px rgba(155,89,182,0.6)",
+          boxShadow: "0 0 14px rgba(155,89,182,0.15)",
+          borderRadius: 4,
+          whiteSpace: "nowrap",
+        }}
+      >
+        ← Рулетка
+      </a>
+
       <ResultOverlay result={result} onDismiss={dismissResult} />
     </div>
   );
