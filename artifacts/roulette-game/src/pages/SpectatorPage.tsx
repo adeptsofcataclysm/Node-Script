@@ -207,15 +207,8 @@ export function SpectatorPage() {
         Колесо Адептов
       </a>
 
-      {/* Top-right controls: mute + spectator badge + avatar */}
+      {/* Top-right controls: spectator badge + avatar + mute */}
       <div className="fixed top-4 right-4 z-30 flex items-start gap-3">
-        <button
-          onClick={toggleMute}
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55, marginTop: 2 }}
-          title={muted ? "Включить звук" : "Выключить звук"}
-        >
-          <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
-        </button>
         <div className="flex flex-col items-center gap-1" style={{ width: 148 }}>
           <div
             className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
@@ -240,6 +233,13 @@ export function SpectatorPage() {
             {"\"Ненавижу, ебучее програмирование!\"\u00A0(с)"}
           </div>
         </div>
+        <button
+          onClick={toggleMute}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55, marginTop: 2 }}
+          title={muted ? "Включить звук" : "Выключить звук"}
+        >
+          <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
+        </button>
       </div>
 
       {/* BANG flash */}
