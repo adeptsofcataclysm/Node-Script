@@ -25,9 +25,9 @@ const SHIMMER_STYLE = `
   background-clip: text;
   color: transparent;
   font-family: monospace;
-  font-size: 13px;
+  font-size: 16px;
   text-transform: uppercase;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   text-align: center;
   white-space: nowrap;
   margin-bottom: 2px;
@@ -100,7 +100,7 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
       </div>
 
       {/* Shimmering title — closer to mallet */}
-      <div className="mallet-title">Молот Кадгара</div>
+      <div className="mallet-title">ᛗᛟᛚᛟᛏ ᚲᚨᛞᚷᚨᚱᚨ</div>
 
       {/* Draggable wrapper — handles Y drag */}
       <motion.div
