@@ -28,7 +28,7 @@ export function AdeptsHostPage() {
             textShadow: "0 0 8px #9b59b6",
           }}
         >
-          Ведущий Адептов
+          Наблюдатель
         </div>
         <img
           src="/spectator-avatar.png"
