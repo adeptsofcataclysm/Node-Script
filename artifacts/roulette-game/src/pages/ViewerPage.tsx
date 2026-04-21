@@ -51,14 +51,13 @@ export function ViewerPage() {
 
       {/* Mallet — visible but fully non-interactive */}
       <motion.div
-        initial={{ opacity: 0, x: 40 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, x: 40, y: -91 }}
+        animate={{ opacity: 1, x: 0, y: -91 }}
         transition={{ duration: 0.5, delay: 0.3 }}
         style={{
           position: "absolute",
           left: "calc(50% + clamp(155px, 25vw, 305px) + 8px)",
           top: "50%",
-          transform: "translateY(-60%)",
           zIndex: 20,
           pointerEvents: "none",
           userSelect: "none",
