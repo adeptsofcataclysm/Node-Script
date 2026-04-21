@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { FortuneWheel } from "../components/FortuneWheel";
 import { Mallet } from "../components/Mallet";
@@ -10,16 +9,6 @@ import { useWheelSounds } from "../hooks/useWheelSounds";
 export function HostPage() {
   const { connected, isSpinning, spinData, result, initialRotation, spin, dismissResult } = useWheelSocket(false);
   const { playMalletGrab, playMalletSwing } = useWheelSounds(isSpinning, result);
-  const [copied, setCopied] = useState<"watch" | null>(null);
-
-  const watchUrl = window.location.origin + "/watch";
-
-  const copyUrl = (url: string, key: "watch") => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(key);
-      setTimeout(() => setCopied(null), 2000);
-    });
-  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
@@ -53,38 +42,10 @@ export function HostPage() {
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        style={{ position: "absolute", right: "clamp(40px, 6vw, 100px)", top: "50%", transform: "translateY(-60%)", zIndex: 20 }}
+        style={{ position: "absolute", right: "clamp(16px, 2vw, 40px)", top: "50%", transform: "translateY(-60%)", zIndex: 20 }}
       >
         <Mallet onClick={spin} disabled={isSpinning || !connected} onGrab={playMalletGrab} onSwing={playMalletSwing} />
       </motion.div>
-
-      {/* Viewer URL block — absolute bottom center */}
-      <div style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-        <div style={{ fontFamily: "monospace", fontSize: 10, color: "#aaa", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 2 }}>
-          Ссылка для зрителей
-        </div>
-        <button
-          onClick={() => copyUrl(watchUrl, "watch")}
-          title="Нажмите, чтобы скопировать"
-          style={{
-            background: "rgba(0,0,0,0.7)",
-            border: "1px solid rgba(52,152,219,0.7)",
-            borderRadius: 4,
-            padding: "8px 18px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <span style={{ fontFamily: "monospace", fontSize: 13, color: "#3498db", letterSpacing: "1px", wordBreak: "break-all" }}>
-            {watchUrl}
-          </span>
-          <span style={{ fontFamily: "monospace", fontSize: 10, color: copied === "watch" ? "#2ecc71" : "#888", letterSpacing: "1px", flexShrink: 0, minWidth: 60, transition: "color 0.2s" }}>
-            {copied === "watch" ? "✓ скопировано" : "копировать"}
-          </span>
-        </button>
-      </div>
 
       <ResultOverlay result={result} onDismiss={dismissResult} />
     </div>

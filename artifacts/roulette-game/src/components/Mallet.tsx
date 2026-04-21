@@ -132,8 +132,8 @@ export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
             <path d="M116 16 L124 22 L124 86 L118 80 L118 16 Z" fill="#888" opacity="0.6" />
             <rect x="12" y="20" width="100" height="8" rx="3" fill="rgba(255,255,255,0.4)" />
 
-            {/* Red accent band */}
-            <rect x="8" y="55" width="108" height="12" rx="2" fill={ready ? "#f1c40f" : "#c0392b"} />
+            {/* Purple accent band */}
+            <rect x="8" y="55" width="108" height="12" rx="2" fill={ready ? "#f1c40f" : "#8e44ad"} />
             <rect x="8" y="57" width="108" height="4" fill="rgba(255,255,255,0.2)" />
 
             {/* Handle bottom cap */}
