@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SEGMENTS } from "../wheelSegments";
 import { WinAnimation } from "./WinAnimation";
 import type { WheelResultData } from "../hooks/useWheelSocket";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 const BASE_URL = import.meta.env.BASE_URL as string;
 
@@ -11,6 +12,7 @@ interface ResultOverlayProps {
 }
 
 export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
+  const isMobile = useIsMobile();
   if (!result) return null;
 
   const seg = SEGMENTS[result.segmentIndex];
@@ -246,7 +248,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                     transition={{ delay: 0.35, type: "spring", damping: 10, stiffness: 220 }}
                     style={{
                       position: "absolute",
-                      top: 12, right: 12,
+                      ...(isMobile ? { top: 12 } : { bottom: 12 }), right: 12,
                       padding: "6px 16px",
                       border: `2px solid ${accentColor}`,
                       borderRadius: 20,
