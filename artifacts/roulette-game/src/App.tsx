@@ -6,6 +6,7 @@ import { ViewerPage } from "@/pages/ViewerPage";
 import { GamePage } from "@/pages/GamePage";
 import { SpectatorPage } from "@/pages/SpectatorPage";
 import { AdminGuard } from "@/pages/AdminGuard";
+import { AdeptsHostPage } from "@/pages/AdeptsHostPage";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +15,14 @@ const isWatch = path.endsWith("/watch") || path.endsWith("/watch/");
 const isSpectator = path.endsWith("/spectate") || path.endsWith("/spectate/");
 const isOldGame = path.endsWith("/game") || path.endsWith("/game/");
 const isAdmin = path.endsWith("/admin") || path.endsWith("/admin/");
+const isAdepts = path.endsWith("/adepts") || path.endsWith("/adepts/");
 
 function App() {
   let page;
   if (isAdmin) {
     page = <AdminGuard />;
+  } else if (isAdepts) {
+    page = <AdeptsHostPage />;
   } else if (isWatch) {
     page = <ViewerPage />;
   } else if (isSpectator) {
