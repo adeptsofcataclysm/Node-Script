@@ -62,7 +62,6 @@ export function ViewerPage() {
           zIndex: 20,
           pointerEvents: "none",
           userSelect: "none",
-          filter: "brightness(0.6) saturate(0.7)",
         }}
       >
         <Mallet onClick={() => {}} disabled={true} />
