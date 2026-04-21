@@ -207,32 +207,34 @@ export function SpectatorPage() {
         Колесо Адептов
       </a>
 
-      {/* Top-right controls: spectator badge + avatar + mute */}
-      <div className="fixed top-4 right-4 z-30 flex items-start gap-3">
-        <div className="flex flex-col items-center gap-1" style={{ width: 148 }}>
-          <div
-            className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
-            style={{
-              border: "1px solid #9b59b6",
-              color: "#9b59b6",
-              background: "rgba(0,0,0,0.7)",
-              textShadow: "0 0 8px #9b59b6",
-            }}
-          >
-            Наблюдатель
-          </div>
-          <img
-            src="/spectator-avatar.png"
-            alt="spectator"
-            style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #9b59b6", boxShadow: "0 0 8px rgba(155,89,182,0.5)" }}
-          />
-          <div
-            className="font-mono text-center"
-            style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
-          >
-            {"\"Ненавижу, ебучее програмирование!\"\u00A0(с)"}
-          </div>
+      {/* Top-left: spectator badge + avatar + text */}
+      <div className="fixed top-4 left-4 z-30 flex flex-col items-center gap-1" style={{ width: 148 }}>
+        <div
+          className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
+          style={{
+            border: "1px solid #9b59b6",
+            color: "#9b59b6",
+            background: "rgba(0,0,0,0.7)",
+            textShadow: "0 0 8px #9b59b6",
+          }}
+        >
+          Наблюдатель
         </div>
+        <img
+          src="/spectator-avatar.png"
+          alt="spectator"
+          style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #9b59b6", boxShadow: "0 0 8px rgba(155,89,182,0.5)" }}
+        />
+        <div
+          className="font-mono text-center"
+          style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
+        >
+          {"\"Ненавижу, ебучее програмирование!\"\u00A0(с)"}
+        </div>
+      </div>
+
+      {/* Top-right: mute button */}
+      <div className="fixed top-4 right-4 z-30">
         <button
           onClick={toggleMute}
           style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55, marginTop: 2 }}
