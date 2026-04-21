@@ -19,7 +19,7 @@ export function AdminPage() {
       glow: "rgba(241,196,15,0.25)",
       border: "#f1c40f",
       items: [
-        { label: "Ведущий", desc: "управление колесом", href: `${base}/` },
+        { label: "Счастливчик", desc: "управление колесом", href: `${base}/` },
         { label: "Зрители", desc: "наблюдение за колесом", href: `${base}/watch` },
       ],
     },
