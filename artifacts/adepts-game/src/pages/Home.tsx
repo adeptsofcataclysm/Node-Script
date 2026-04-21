@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col text-foreground">
+    <div className="min-h-screen flex flex-col text-foreground">
       <div className="fixed top-0 left-0 right-0 z-10">
         <Scoreboard
           players={state.players}
