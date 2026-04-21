@@ -159,7 +159,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   transition={{ delay: 0.25, type: "spring", damping: 10, stiffness: 220 }}
                   style={{
                     position: "absolute",
-                    top: 12, right: 12,
+                    bottom: 12, right: 12,
                     padding: "6px 16px",
                     border: `2px solid ${accentColor}`,
                     borderRadius: 20,
