@@ -206,38 +206,6 @@ export function SpectatorPage() {
         Колесо Адептов
       </a>
 
-      {/* Top-left: Fortune Wheel links */}
-      <div className="fixed top-4 left-4 z-30 flex flex-col gap-2">
-        <a
-          href="/"
-          style={{
-            display: "block", padding: "6px 14px",
-            border: "1px solid #f1c40f", background: "rgba(0,0,0,0.65)",
-            color: "#f1c40f", fontFamily: "monospace", fontSize: 11,
-            textTransform: "uppercase", letterSpacing: "2px",
-            textDecoration: "none", textAlign: "center",
-            textShadow: "0 0 8px rgba(241,196,15,0.6)",
-            boxShadow: "0 0 10px rgba(241,196,15,0.15)",
-          }}
-        >
-          Колесо — Ведущий
-        </a>
-        <a
-          href="/watch"
-          style={{
-            display: "block", padding: "6px 14px",
-            border: "1px solid #3498db", background: "rgba(0,0,0,0.65)",
-            color: "#3498db", fontFamily: "monospace", fontSize: 11,
-            textTransform: "uppercase", letterSpacing: "2px",
-            textDecoration: "none", textAlign: "center",
-            textShadow: "0 0 8px rgba(52,152,219,0.6)",
-            boxShadow: "0 0 10px rgba(52,152,219,0.15)",
-          }}
-        >
-          Колесо — Зрители
-        </a>
-      </div>
-
       {/* Top-right controls: mute + spectator badge + avatar */}
       <div className="fixed top-4 right-4 z-30 flex items-start gap-3">
         <button
