@@ -9,7 +9,7 @@ export function AdminPage() {
   useEffect(() => {
     const load = () => fetch("/api/admin/visit-counts").then(r => r.json()).then(setVisitCounts).catch(() => {});
     load();
-    const id = setInterval(load, 15000);
+    const id = setInterval(load, 1000);
     return () => clearInterval(id);
   }, []);
 
