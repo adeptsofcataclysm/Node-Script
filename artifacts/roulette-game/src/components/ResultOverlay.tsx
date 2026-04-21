@@ -254,35 +254,42 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
 
                 {/* Close button */}
                 <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                    boxShadow: [
+                      "0 0 8px rgba(241,196,15,0.3), inset 0 0 0px rgba(241,196,15,0)",
+                      "0 0 22px rgba(241,196,15,0.7), inset 0 0 12px rgba(241,196,15,0.12)",
+                      "0 0 8px rgba(241,196,15,0.3), inset 0 0 0px rgba(241,196,15,0)",
+                    ],
+                  }}
+                  transition={{
+                    opacity: { delay: 0.4, duration: 0.3 },
+                    scale: { delay: 0.4, type: "spring", damping: 10, stiffness: 260 },
+                    boxShadow: { delay: 0.7, duration: 1.8, repeat: Infinity, ease: "easeInOut" },
+                  }}
+                  whileHover={{
+                    scale: 1.08,
+                    boxShadow: "0 0 32px rgba(241,196,15,0.9), inset 0 0 18px rgba(241,196,15,0.2)",
+                  }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={onDismiss}
                   style={{
                     marginTop: 4,
                     fontFamily: "monospace",
-                    fontSize: 11,
+                    fontSize: 12,
                     textTransform: "uppercase",
-                    letterSpacing: "3px",
-                    color: "#888",
-                    background: "transparent",
-                    border: "1px solid #444",
-                    padding: "10px 32px",
-                    borderRadius: 4,
+                    letterSpacing: "4px",
+                    color: "#f1c40f",
+                    background: "rgba(241,196,15,0.07)",
+                    border: "2px solid #f1c40f",
+                    padding: "11px 36px",
+                    borderRadius: 6,
                     cursor: "pointer",
-                    transition: "border-color 0.15s, color 0.15s",
                     position: "relative",
                     zIndex: 2,
-                  }}
-                  onMouseEnter={(e) => {
-                    const btn = e.target as HTMLButtonElement;
-                    btn.style.borderColor = "#aaa";
-                    btn.style.color = "#ccc";
-                  }}
-                  onMouseLeave={(e) => {
-                    const btn = e.target as HTMLButtonElement;
-                    btn.style.borderColor = "#444";
-                    btn.style.color = "#888";
+                    fontWeight: "bold",
                   }}
                 >
                   Отлично!
