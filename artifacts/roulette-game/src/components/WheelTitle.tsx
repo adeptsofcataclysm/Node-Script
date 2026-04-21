@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export function WheelTitle() {
+export function WheelTitle({ compact = false }: { compact?: boolean }) {
   const text = "КОЛЕСО АДЕПТОВ";
 
   const container = {
@@ -26,13 +26,13 @@ export function WheelTitle() {
         ],
       }}
       transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-      style={{ width: "100%", textAlign: "center", marginBottom: 16, userSelect: "none" }}
+      style={{ width: "100%", textAlign: "center", marginBottom: compact ? 8 : 16, userSelect: "none" }}
     >
       <motion.div
         variants={container}
         initial="hidden"
         animate="visible"
-        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, flexWrap: "nowrap" }}
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: compact ? 1 : 2, flexWrap: "nowrap" }}
       >
         {text.split("").map((ch, i) => (
           <motion.span
@@ -40,11 +40,11 @@ export function WheelTitle() {
             variants={letter}
             style={{
               fontFamily: "monospace",
-              fontSize: "clamp(20px, 3.2vw, 42px)",
+              fontSize: compact ? "clamp(13px, 4.5vw, 22px)" : "clamp(20px, 3.2vw, 42px)",
               fontWeight: "bold",
               color: ch === " " ? "transparent" : "#f1c40f",
-              letterSpacing: ch === " " ? "0px" : "4px",
-              width: ch === " " ? "clamp(8px, 1.2vw, 18px)" : undefined,
+              letterSpacing: ch === " " ? "0px" : compact ? "1px" : "4px",
+              width: ch === " " ? (compact ? "6px" : "clamp(8px, 1.2vw, 18px)") : undefined,
               display: "inline-block",
               willChange: "transform",
             }}

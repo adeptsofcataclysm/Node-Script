@@ -77,7 +77,7 @@ export function FortuneWheel({ spinData, isSpinning, initialRotation = 0 }: Fort
   const pointerH = 14;
 
   return (
-    <svg width="600" height="600" viewBox="0 0 600 600" style={{ display: "block" }}>
+    <svg width="100%" height="100%" viewBox="0 0 600 600" style={{ display: "block" }}>
       <defs>
         <filter id="wheel-shadow" x="-10%" y="-10%" width="130%" height="130%">
           <feDropShadow dx="0" dy="0" stdDeviation="14" floodColor="#000" floodOpacity="0.65" />

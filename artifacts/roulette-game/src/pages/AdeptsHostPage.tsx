@@ -6,14 +6,16 @@ import { ResultOverlay } from "../components/ResultOverlay";
 import { WheelTitle } from "../components/WheelTitle";
 import { useWheelSocket } from "../hooks/useWheelSocket";
 import { useWheelSounds } from "../hooks/useWheelSounds";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 export function AdeptsHostPage() {
   const { connected, isSpinning, spinData, result, initialRotation, dismissResult } = useWheelSocket(true);
   useWheelSounds(isSpinning, result);
   useEffect(() => { fetch("/api/track/adepts", { method: "POST" }).catch(() => {}); }, []);
+  const isMobile = useIsMobile();
 
   return (
-    <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflowX: "hidden" }}>
 
       {/* Mode badge */}
       <div style={{ position: "fixed", top: 16, left: 16, zIndex: 30, padding: "6px 18px", border: "1px solid #e67e22", background: "rgba(0,0,0,0.6)", borderRadius: 4, fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "4px", color: "#e67e22", textShadow: "0 0 12px rgba(230,126,34,0.7)" }}>
@@ -26,14 +28,18 @@ export function AdeptsHostPage() {
         {connected ? "Онлайн" : "Подключение..."}
       </div>
 
-      {/* Wheel centered — same layout as ViewerPage */}
+      {/* Wheel centered */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(320px, 52vw, 620px)" }}
+        style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          width: isMobile ? "min(90vw, 420px)" : "clamp(320px, 52vw, 620px)",
+          paddingTop: isMobile ? 56 : 0,
+        }}
       >
-        <WheelTitle />
+        <WheelTitle compact={isMobile} />
         <div style={{ width: "100%", aspectRatio: "1" }}>
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
@@ -51,22 +57,24 @@ export function AdeptsHostPage() {
         </motion.div>
       </motion.div>
 
-      {/* Mallet — visible but fully non-interactive */}
-      <motion.div
-        initial={{ opacity: 0, x: 40, y: -115 }}
-        animate={{ opacity: 1, x: 0, y: -115 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        style={{
-          position: "absolute",
-          left: "calc(50% + clamp(155px, 25vw, 305px) + 8px)",
-          top: "50%",
-          zIndex: 20,
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-      >
-        <Mallet onClick={() => {}} disabled={true} hideHints={true} />
-      </motion.div>
+      {/* Mallet — hidden on mobile */}
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity: 0, x: 40, y: -115 }}
+          animate={{ opacity: 1, x: 0, y: -115 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          style={{
+            position: "absolute",
+            left: "calc(50% + clamp(155px, 25vw, 305px) + 8px)",
+            top: "50%",
+            zIndex: 20,
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          <Mallet onClick={() => {}} disabled={true} hideHints={true} />
+        </motion.div>
+      )}
 
       {/* Back link */}
       <a
