@@ -40,7 +40,7 @@ export function AdeptsHostPage() {
           whiteSpace: "nowrap",
         }}
       >
-        Рулетка
+        Ящик Пандоры
       </a>
 
       {/* Connection indicator */}

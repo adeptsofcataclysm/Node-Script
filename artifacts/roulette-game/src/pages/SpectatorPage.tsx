@@ -204,7 +204,7 @@ export function SpectatorPage() {
           whiteSpace: "nowrap",
         }}
       >
-        Ведущий
+        Колесо Адептов
       </a>
 
       {/* Top-right controls: mute + spectator badge + avatar */}
