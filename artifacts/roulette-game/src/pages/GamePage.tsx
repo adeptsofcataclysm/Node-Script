@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameSocket } from "../hooks/useGameSocket";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { Cylinder } from "../components/Cylinder";
 import { DefeatScreen } from "../components/DefeatScreen";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
@@ -39,6 +40,7 @@ function playToasty() {
 
 export function GamePage() {
   useEffect(() => { fetch("/api/track/game", { method: "POST" }).catch(() => {}); }, []);
+  const isMobile = useIsMobile();
   const [nameInput, setNameInput] = useState("");
   const [showCestLaVie, setShowCestLaVie] = useState(false);
   const wasEliminatedRef = useRef(false);
@@ -74,6 +76,7 @@ export function GamePage() {
     maxPlayers,
     allSlotsReady,
     gameStarted,
+    connected,
     connectAndSetName,
     spin,
     shoot,
@@ -292,15 +295,22 @@ export function GamePage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
-      {/* Mute button */}
-      <button
-        onClick={toggleMute}
-        className="fixed z-30"
-        style={{ top: 16, right: 16, background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
-        title={muted ? "Включить звук" : "Выключить звук"}
-      >
-        <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
-      </button>
+      {/* Top-right: mute + online indicator */}
+      <div className="fixed z-30 flex flex-col items-end gap-2" style={{ top: 16, right: 16 }}>
+        <button
+          onClick={toggleMute}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
+          title={muted ? "Включить звук" : "Выключить звук"}
+        >
+          <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
+        </button>
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: connected ? "#2ecc71" : "#e74c3c" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#2ecc71" : "#e74c3c", boxShadow: connected ? "0 0 8px #2ecc71" : "0 0 8px #e74c3c" }} />
+            {connected ? "Онлайн" : "Подключение..."}
+          </div>
+        )}
+      </div>
 
       {/* BANG flash */}
       <AnimatePresence>

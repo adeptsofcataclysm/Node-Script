@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSpectatorSocket } from "../hooks/useSpectatorSocket";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { Cylinder } from "../components/Cylinder";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { LottoModal } from "../components/LottoModal";
@@ -23,6 +24,7 @@ function playToasty() {
 
 export function SpectatorPage() {
   useEffect(() => { fetch("/api/track/spectate", { method: "POST" }).catch(() => {}); }, []);
+  const isMobile = useIsMobile();
   const {
     playerCount,
     playerNames,
@@ -38,6 +40,7 @@ export function SpectatorPage() {
     fateAnnounced,
     maxPlayers,
     allSlotsReady,
+    connected,
     rematch,
   } = useSpectatorSocket();
 
@@ -233,15 +236,21 @@ export function SpectatorPage() {
         </div>
       </div>
 
-      {/* Top-right: mute button */}
-      <div className="fixed top-4 right-4 z-30">
+      {/* Top-right: mute button + online indicator */}
+      <div className="fixed top-4 right-4 z-30 flex flex-col items-end gap-2">
         <button
           onClick={toggleMute}
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55, marginTop: 2 }}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", opacity: muted ? 1 : 0.55 }}
           title={muted ? "Включить звук" : "Выключить звук"}
         >
           <img src="/mute.png" alt="mute" style={{ width: 38, height: 38, display: "block" }} />
         </button>
+        {!isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: connected ? "#2ecc71" : "#e74c3c" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#2ecc71" : "#e74c3c", boxShadow: connected ? "0 0 8px #2ecc71" : "0 0 8px #e74c3c" }} />
+            {connected ? "Онлайн" : "Подключение..."}
+          </div>
+        )}
       </div>
 
       {/* BANG flash */}

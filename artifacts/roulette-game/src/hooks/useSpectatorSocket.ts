@@ -24,10 +24,13 @@ export function useSpectatorSocket() {
   const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
   const [hasSpun, setHasSpun] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [connected, setConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     const s = io({ path: "/socket.io", query: { spectator: "1" } });
+    s.on("connect", () => setConnected(true));
+    s.on("disconnect", () => setConnected(false));
     socketRef.current = s;
 
     s.on("updatePlayers", ({ count, playerNames, onlineStatus }: {
@@ -148,6 +151,7 @@ export function useSpectatorSocket() {
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
     gameStarted,
+    connected,
     rematch,
   };
 }

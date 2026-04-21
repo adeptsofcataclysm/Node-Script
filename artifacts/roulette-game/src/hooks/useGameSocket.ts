@@ -33,9 +33,13 @@ export function useGameSocket() {
   const [fateAnnounced, setFateAnnounced] = useState<{ name: string; text: string } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
 
+  const [connected, setConnected] = useState(false);
+
   useEffect(() => {
     const s = io({ path: "/socket.io" });
     setSocket(s);
+    s.on("connect", () => setConnected(true));
+    s.on("disconnect", () => setConnected(false));
 
     s.on("assignedIndex", (index: number) => setMyIndex(index));
 
@@ -217,6 +221,7 @@ export function useGameSocket() {
     maxPlayers: MAX_PLAYERS,
     allSlotsReady,
     gameStarted,
+    connected,
     connectAndSetName,
     spin,
     shoot,
