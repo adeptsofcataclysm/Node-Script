@@ -186,9 +186,9 @@ export function SpectatorPage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
-      {/* Bottom-right: Wheel button */}
+      {/* Bottom-right: Host (wheel) button */}
       <a
-        href="/watch"
+        href="https://node-script--gg22last.replit.app/"
         style={{
           position: "fixed", bottom: 18, right: 18, zIndex: 30,
           padding: "9px 20px",
@@ -204,7 +204,7 @@ export function SpectatorPage() {
           whiteSpace: "nowrap",
         }}
       >
-        Колесо Адептов
+        Ведущий
       </a>
 
       {/* Top-right controls: mute + spectator badge + avatar */}
