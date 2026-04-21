@@ -2,6 +2,92 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AdminPage } from "./AdminPage";
 
+const OK_TEXT = "★  Ладно, заходи!";
+const FAIL_TEXT = "✖  Иди нахуй отсюда!";
+
+function OkAnimation() {
+  return (
+    <motion.div
+      style={{ display: "flex", justifyContent: "center", gap: 0, overflow: "visible" }}
+    >
+      {OK_TEXT.split("").map((ch, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: -40, scale: 1.6 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            delay: i * 0.06,
+            type: "spring",
+            stiffness: 280,
+            damping: 14,
+          }}
+          style={{
+            display: "inline-block",
+            color: "#2ecc71",
+            fontFamily: "monospace",
+            fontWeight: 700,
+            fontSize: "clamp(18px, 3vw, 26px)",
+            textShadow: "0 0 16px #2ecc71, 0 0 32px rgba(46,204,113,0.6)",
+            whiteSpace: "pre",
+          }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
+
+function FailAnimation() {
+  const shakeX = [0, -14, 18, -22, 16, -10, 20, -16, 8, -6, 0];
+  const shakeY = [0, 4, -4, 3, -5, 4, -3, 5, -2, 3, 0];
+
+  return (
+    <motion.div
+      initial={{ scale: 0, rotate: -8 }}
+      animate={{
+        scale: [0, 1.35, 1],
+        rotate: [-8, 4, 0],
+        x: shakeX,
+        y: shakeY,
+      }}
+      transition={{
+        scale: { duration: 0.25, times: [0, 0.5, 1] },
+        rotate: { duration: 0.25 },
+        x: { delay: 0.3, duration: 0.9, ease: "easeOut" },
+        y: { delay: 0.3, duration: 0.9, ease: "easeOut" },
+      }}
+      style={{ display: "flex", justifyContent: "center", overflow: "visible" }}
+    >
+      {FAIL_TEXT.split("").map((ch, i) => (
+        <motion.span
+          key={i}
+          animate={{
+            opacity: [1, 0.3, 1, 0.6, 1],
+            color: ["#e74c3c", "#ff6b6b", "#e74c3c", "#c0392b", "#e74c3c"],
+          }}
+          transition={{
+            delay: 0.25 + i * 0.03,
+            duration: 0.4,
+            repeat: 2,
+            repeatType: "reverse",
+          }}
+          style={{
+            display: "inline-block",
+            fontFamily: "monospace",
+            fontWeight: 700,
+            fontSize: "clamp(18px, 3vw, 26px)",
+            textShadow: "0 0 16px #e74c3c, 0 0 32px rgba(231,76,60,0.7)",
+            whiteSpace: "pre",
+          }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
+
 export function AdminGuard() {
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<"idle" | "ok" | "fail">("idle");
@@ -15,14 +101,14 @@ export function AdminGuard() {
 
     if (val.toLowerCase() === "да") {
       setStatus("ok");
-      setTimeout(() => setGranted(true), 2400);
+      setTimeout(() => setGranted(true), 2600);
     } else {
       setStatus("fail");
       setTimeout(() => {
         setStatus("idle");
         setInput("");
         inputRef.current?.focus();
-      }, 2400);
+      }, 2600);
     }
   }
 
@@ -114,47 +200,11 @@ export function AdminGuard() {
         </button>
       </motion.form>
 
-      {/* Ticker response */}
-      <div style={{ marginTop: 32, height: 32, overflow: "hidden", width: "100%", maxWidth: 420 }}>
+      {/* Animated response */}
+      <div style={{ marginTop: 40, height: 48, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", width: "100%" }}>
         <AnimatePresence mode="wait">
-          {status === "ok" && (
-            <motion.div
-              key="ok"
-              initial={{ x: "100%" }}
-              animate={{ x: "-100%" }}
-              transition={{ duration: 2.2, ease: "linear" }}
-              style={{
-                whiteSpace: "nowrap",
-                color: "#2ecc71",
-                fontSize: 18,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                textShadow: "0 0 12px #2ecc71",
-                letterSpacing: "3px",
-              }}
-            >
-              ★ Ладно, заходи! ★ Ладно, заходи! ★ Ладно, заходи! ★
-            </motion.div>
-          )}
-          {status === "fail" && (
-            <motion.div
-              key="fail"
-              initial={{ x: "100%" }}
-              animate={{ x: "-100%" }}
-              transition={{ duration: 2.2, ease: "linear" }}
-              style={{
-                whiteSpace: "nowrap",
-                color: "#e74c3c",
-                fontSize: 18,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                textShadow: "0 0 12px #e74c3c",
-                letterSpacing: "3px",
-              }}
-            >
-              ✖ Иди нахуй отсюда! ✖ Иди нахуй отсюда! ✖ Иди нахуй отсюда! ✖
-            </motion.div>
-          )}
+          {status === "ok" && <OkAnimation key="ok" />}
+          {status === "fail" && <FailAnimation key="fail" />}
         </AnimatePresence>
       </div>
     </div>
