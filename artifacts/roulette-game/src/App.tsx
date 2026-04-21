@@ -5,7 +5,7 @@ import { HostPage } from "@/pages/HostPage";
 import { ViewerPage } from "@/pages/ViewerPage";
 import { GamePage } from "@/pages/GamePage";
 import { SpectatorPage } from "@/pages/SpectatorPage";
-import { AdminPage } from "@/pages/AdminPage";
+import { AdminGuard } from "@/pages/AdminGuard";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +18,7 @@ const isAdmin = path.endsWith("/admin") || path.endsWith("/admin/");
 function App() {
   let page;
   if (isAdmin) {
-    page = <AdminPage />;
+    page = <AdminGuard />;
   } else if (isWatch) {
     page = <ViewerPage />;
   } else if (isSpectator) {
