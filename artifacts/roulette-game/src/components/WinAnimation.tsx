@@ -107,17 +107,17 @@ interface FireworkData { id: number; x: number; y: number; delay: number; color:
 function makeFireworks(count: number): FireworkData[] {
   return Array.from({ length: count }, (_, i) => {
     const color = FW_COLORS[i % FW_COLORS.length];
-    const x = 4 + Math.random() * 92;
-    const y = 3 + Math.random() * 55;
-    const sparkN = 18 + Math.floor(Math.random() * 14);
+    const x = 5 + Math.random() * 90;
+    const y = 5 + Math.random() * 60;
+    const sparkN = 22 + Math.floor(Math.random() * 14);
     return {
       id: i, x, y,
-      delay: (i / count) * 7 + Math.random() * 0.3,   // spread across 7 s, then repeat
+      delay: (i / count) * 5 + Math.random() * 0.3,   // spread across 5 s, then repeat
       color,
       sparks: Array.from({ length: sparkN }, (_, j) => ({
-        angle: (j / sparkN) * 360 + (Math.random() - 0.5) * 12,
-        dist: 55 + Math.random() * 110,
-        size: 3.5 + Math.random() * 5,
+        angle: (j / sparkN) * 360 + (Math.random() - 0.5) * 10,
+        dist: 70 + Math.random() * 130,
+        size: 6 + Math.random() * 8,
         color: Math.random() > 0.3 ? color : "#fff",
       })),
     };
@@ -129,17 +129,17 @@ function FireworkBurst({ fw }: { fw: FireworkData }) {
     <>
       <motion.div
         initial={{ scaleY: 0, opacity: 0 }}
-        animate={{ scaleY: [0, 1, 1, 0], opacity: [0, 0.9, 0.9, 0] }}
+        animate={{ scaleY: [0, 1, 1, 0], opacity: [0, 1, 1, 0] }}
         transition={{
-          duration: 0.35, delay: Math.max(0, fw.delay - 0.32),
-          times: [0, 0.25, 0.75, 1],
-          repeat: Infinity, repeatDelay: 6.65,
+          duration: 0.4, delay: Math.max(0, fw.delay - 0.35),
+          times: [0, 0.2, 0.75, 1],
+          repeat: Infinity, repeatDelay: 4.6,
         }}
         style={{
           position: "fixed", left: `${fw.x}vw`, top: `${fw.y}vh`,
-          width: 2, height: 55, transformOrigin: "bottom",
+          width: 4, height: 80, transformOrigin: "bottom",
           background: `linear-gradient(to top, transparent, ${fw.color})`,
-          filter: `drop-shadow(0 0 3px ${fw.color})`,
+          filter: `drop-shadow(0 0 6px ${fw.color}) drop-shadow(0 0 12px ${fw.color})`,
         }}
       />
       {fw.sparks.map((sp, j) => {
@@ -150,21 +150,21 @@ function FireworkBurst({ fw }: { fw: FireworkData }) {
             initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
             animate={{
               x: Math.cos(rad) * sp.dist,
-              y: Math.sin(rad) * sp.dist + sp.dist * 0.35,
-              scale: [0, 1.4, 0.9, 0],
-              opacity: [0, 1, 0.8, 0],
+              y: Math.sin(rad) * sp.dist + sp.dist * 0.3,
+              scale: [0, 1.6, 1.0, 0],
+              opacity: [0, 1, 0.9, 0],
             }}
             transition={{
-              duration: 0.9 + Math.random() * 0.3,
+              duration: 1.1,
               delay: fw.delay,
               ease: "easeOut",
-              opacity: { times: [0, 0.08, 0.6, 1] },
-              repeat: Infinity, repeatDelay: 6.1,
+              repeat: Infinity, repeatDelay: 3.9,
             }}
             style={{
               position: "fixed", left: `${fw.x}vw`, top: `${fw.y}vh`,
               width: sp.size, height: sp.size, borderRadius: "50%",
-              background: sp.color, boxShadow: `0 0 ${sp.size * 2}px ${sp.color}`,
+              background: sp.color,
+              boxShadow: `0 0 ${sp.size * 2}px ${sp.color}, 0 0 ${sp.size * 4}px ${sp.color}88`,
               transform: "translate(-50%, -50%)",
             }}
           />
@@ -275,14 +275,18 @@ export function WinAnimation({ label }: { label: string }) {
       {type === "jackpot" && (
         <div style={{ position: "fixed", inset: 0, zIndex: 56, pointerEvents: "none", overflow: "hidden" }}>
 
-          {/* Repeating burst from center */}
+          {/* Repeating burst from upper-left and upper-right corners of card */}
           {jackBurst.map((p) => {
-            const tx = Math.cos(p.angle) * p.spread;
-            const ty = Math.sin(p.angle) * p.spread;
+            const isLeft = p.id < 30;
+            const ox = isLeft ? "18%" : "82%";
+            const oy = "22%";
+            const spread = 80 + Math.random() * 130;
+            const tx = Math.cos(p.angle) * spread;
+            const ty = Math.sin(p.angle) * spread;
             return (
               <motion.div
                 key={p.id}
-                initial={{ left: "50%", top: "47%", x: "-50%", y: "-50%", scale: 0, opacity: 0, rotate: 0 }}
+                initial={{ left: ox, top: oy, x: "-50%", y: "-50%", scale: 0, opacity: 0, rotate: 0 }}
                 animate={{
                   x: `calc(-50% + ${tx}px)`,
                   y: `calc(-50% + ${ty}px)`,
@@ -298,10 +302,10 @@ export function WinAnimation({ label }: { label: string }) {
                   repeatDelay: 2.5,
                 }}
                 style={{
-                  position: "absolute", left: "50%", top: "47%",
+                  position: "absolute", left: ox, top: oy,
                   width: p.size, height: p.size,
                   borderRadius: p.borderRadius, background: p.color,
-                  boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+                  boxShadow: `0 0 ${p.size * 2.5}px ${p.color}`,
                 }}
               />
             );
