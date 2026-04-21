@@ -51,8 +51,8 @@ export function HostPage() {
 
       {/* Mallet — positioned separately to the right */}
       <motion.div
-        initial={{ opacity: 0, x: 40, y: -91 }}
-        animate={{ opacity: 1, x: 0, y: -91 }}
+        initial={{ opacity: 0, x: 40, y: -115 }}
+        animate={{ opacity: 1, x: 0, y: -115 }}
         transition={{ duration: 0.5, delay: 0.3 }}
         style={{ position: "absolute", left: "calc(50% + clamp(155px, 25vw, 305px) + 8px)", top: "50%", zIndex: 20 }}
       >

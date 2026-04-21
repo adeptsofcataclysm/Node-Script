@@ -72,6 +72,20 @@ export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: Mallet
         ))}
       </div>
 
+      {/* Title */}
+      <div style={{
+        fontFamily: "monospace",
+        fontSize: 11,
+        textTransform: "uppercase",
+        letterSpacing: "3px",
+        color: "rgba(255,255,255,0.55)",
+        textAlign: "center",
+        marginBottom: 10,
+        whiteSpace: "nowrap",
+      }}>
+        Молот Кадгара
+      </div>
+
       {/* Draggable wrapper — handles Y drag */}
       <motion.div
         drag={disabled || swinging ? false : "y"}
