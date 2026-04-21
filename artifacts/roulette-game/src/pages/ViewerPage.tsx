@@ -44,17 +44,19 @@ export function ViewerPage() {
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
 
-        {/* Spinning hint below wheel */}
-        <motion.div
-          animate={isSpinning
-            ? { opacity: [0.5, 1, 0.5], color: "#f1c40f" }
-            : { opacity: 0 }
-          }
-          transition={{ duration: 1, repeat: isSpinning ? Infinity : 0 }}
-          style={{ fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "5px", marginTop: 14 }}
-        >
-          ⟳ Вращается...
-        </motion.div>
+        {/* Spinning hint below wheel — desktop only */}
+        {!isMobile && (
+          <motion.div
+            animate={isSpinning
+              ? { opacity: [0.5, 1, 0.5], color: "#f1c40f" }
+              : { opacity: 0 }
+            }
+            transition={{ duration: 1, repeat: isSpinning ? Infinity : 0 }}
+            style={{ fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "5px", marginTop: 14 }}
+          >
+            ⟳ Вращается...
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Mallet — hidden on mobile */}

@@ -95,7 +95,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                       "0 0 100px rgba(241,196,15,0.8), 0 0 200px rgba(241,196,15,0.4)",
                       "0 0 60px rgba(241,196,15,0.4), 0 0 120px rgba(241,196,15,0.2)",
                     ]}}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: isMobile ? 3.6 : 1.8, repeat: Infinity, ease: "easeInOut" }}
                     style={{
                       position: "absolute", inset: -3, borderRadius: 18,
                       pointerEvents: "none", zIndex: 0,
@@ -128,7 +128,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                 {isJackpot && (
                   <motion.div
                     animate={{ x: ["-100%", "200%"] }}
-                    transition={{ duration: 1.4, delay: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: isMobile ? 2.8 : 1.4, delay: 0.3, ease: "easeInOut" }}
                     style={{
                       position: "absolute", inset: 0,
                       background: "linear-gradient(105deg, transparent 30%, rgba(241,196,15,0.18) 50%, transparent 70%)",
@@ -185,11 +185,11 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   transition={{
                     delay: 0.1,
                     scale: (isJackpot || isWipe)
-                      ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                      ? { duration: isMobile ? 3.0 : 1.5, repeat: Infinity, ease: "easeInOut" }
                       : { duration: 0.4 },
                     opacity: { duration: 0.3 },
                     textShadow: (isJackpot || isWipe)
-                      ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                      ? { duration: isMobile ? 3.0 : 1.5, repeat: Infinity, ease: "easeInOut" }
                       : undefined,
                   }}
                   style={{
@@ -224,7 +224,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                       opacity: { delay: 0.3, duration: 0.4 },
                       scale: { delay: 0.3, type: "spring", damping: 10, stiffness: 200 },
                       y: { delay: 0.3, duration: 0.4 },
-                      textShadow: { delay: 0.7, duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+                      textShadow: { delay: 0.7, duration: isMobile ? 3.2 : 1.6, repeat: Infinity, ease: "easeInOut" },
                     }}
                     style={{
                       fontFamily: "monospace",
