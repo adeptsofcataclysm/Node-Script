@@ -246,7 +246,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                     transition={{ delay: 0.35, type: "spring", damping: 10, stiffness: 220 }}
                     style={{
                       position: "absolute",
-                      bottom: 12, right: 12,
+                      top: 12, right: 12,
                       padding: "6px 16px",
                       border: `2px solid ${accentColor}`,
                       borderRadius: 20,
