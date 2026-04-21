@@ -31,8 +31,14 @@ const io = new SocketIOServer(server, {
   pingTimeout: 30000,   // wait 30s for pong before disconnecting
 });
 
-setupGame(io);
+const { adminReset } = setupGame(io);
 setupWheel(io);
+
+// Admin endpoint — full roulette reset
+app.post("/api/admin/reset-roulette", (_req, res) => {
+  adminReset();
+  res.json({ ok: true });
+});
 
 server.listen(port, () => {
   logger.info({ port }, "Server listening");

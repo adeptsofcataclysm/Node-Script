@@ -1,5 +1,8 @@
+import { useState } from "react";
+
 export function AdminPage() {
   const base = window.location.origin;
+  const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
 
   const links = [
     {
@@ -23,6 +26,38 @@ export function AdminPage() {
       ],
     },
   ];
+
+  async function handleResetRoulette() {
+    if (resetStatus === "loading") return;
+    setResetStatus("loading");
+    try {
+      const res = await fetch("/api/admin/reset-roulette", { method: "POST" });
+      if (res.ok) {
+        setResetStatus("done");
+        setTimeout(() => setResetStatus("idle"), 3000);
+      } else {
+        setResetStatus("error");
+        setTimeout(() => setResetStatus("idle"), 3000);
+      }
+    } catch {
+      setResetStatus("error");
+      setTimeout(() => setResetStatus("idle"), 3000);
+    }
+  }
+
+  const resetLabel = {
+    idle: "↺  Обновить ящик пандоры",
+    loading: "Сброс...",
+    done: "✓  Сброшено",
+    error: "✗  Ошибка",
+  }[resetStatus];
+
+  const resetColor = {
+    idle: "#e74c3c",
+    loading: "#e67e22",
+    done: "#2ecc71",
+    error: "#e74c3c",
+  }[resetStatus];
 
   return (
     <div style={{
@@ -68,7 +103,7 @@ export function AdminPage() {
           fontSize: 10, letterSpacing: "6px", textTransform: "uppercase",
           color: "rgba(255,255,255,0.3)", marginBottom: 10,
         }}>
-          Pandora Games
+          Adepts Games
         </div>
         <h1 style={{
           fontSize: "clamp(22px, 3vw, 36px)", fontWeight: "bold",
@@ -145,19 +180,33 @@ export function AdminPage() {
                   </div>
                 </a>
               ))}
+
+              {/* Reset button — only under Ящик Пандоры */}
+              {group.group === "Ящик Пандоры" && (
+                <button
+                  onClick={handleResetRoulette}
+                  disabled={resetStatus === "loading"}
+                  style={{
+                    marginTop: 4,
+                    padding: "12px 20px",
+                    border: `1px solid ${resetColor}66`,
+                    background: `rgba(0,0,0,0.5)`,
+                    borderRadius: 6,
+                    color: resetColor,
+                    fontSize: 12, letterSpacing: "3px", textTransform: "uppercase",
+                    cursor: resetStatus === "loading" ? "not-allowed" : "pointer",
+                    textAlign: "center",
+                    transition: "border-color 0.3s, color 0.3s, box-shadow 0.3s",
+                    boxShadow: resetStatus === "done" ? "0 0 20px rgba(46,204,113,0.3)" : resetStatus === "error" ? "0 0 20px rgba(231,76,60,0.3)" : "none",
+                    width: "100%",
+                  }}
+                >
+                  {resetLabel}
+                </button>
+              )}
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Admin URL hint at bottom */}
-      <div style={{
-        position: "relative", zIndex: 1,
-        marginTop: 48,
-        fontSize: 10, color: "rgba(255,255,255,0.2)",
-        letterSpacing: "2px", textAlign: "center",
-      }}>
-        {base}/admin
       </div>
     </div>
   );

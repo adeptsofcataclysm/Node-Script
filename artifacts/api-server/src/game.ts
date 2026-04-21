@@ -80,6 +80,14 @@ function nextOnlineTurn(state: GameState, from: number): number {
 export function setupGame(io: Server) {
   let gameState: GameState = createFreshState();
 
+  function adminReset() {
+    gameState = createFreshState();
+    // Broadcast fresh state to everyone still connected before disconnecting
+    io.emit("adminReset");
+    // Force-disconnect all sockets so players reconnect fresh
+    io.disconnectSockets(true);
+  }
+
   // Shared rematch logic — callable from both player and spectator sockets
   function doRematch() {
     if (!gameState.gameOver) return;
@@ -338,4 +346,6 @@ export function setupGame(io: Server) {
       }
     });
   });
+
+  return { adminReset };
 }
