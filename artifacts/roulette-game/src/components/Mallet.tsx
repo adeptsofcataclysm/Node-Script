@@ -25,12 +25,12 @@ const SHIMMER_STYLE = `
   background-clip: text;
   color: transparent;
   font-family: monospace;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 3px;
   text-align: center;
   white-space: nowrap;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 `;
 
