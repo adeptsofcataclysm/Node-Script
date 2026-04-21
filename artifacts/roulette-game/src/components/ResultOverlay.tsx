@@ -234,7 +234,7 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                       zIndex: 2,
                     }}
                   >
-                    1500+
+                    +1500
                   </motion.div>
                 )}
 

@@ -39,7 +39,7 @@ export const SEGMENTS = [
     label: "ДЖЕКПОТ",
     color: "#f1c40f", textColor: "#2c3e50",
     image: "jakpotgif.gif", imgW: 500, imgH: 500,
-    description: "+1500",
+    description: "",
   },
   {
     label: "-300",
