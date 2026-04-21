@@ -107,6 +107,20 @@ export function AdminPage() {
 
       {/* Title */}
       <div style={{ position: "relative", zIndex: 1, marginBottom: 48, textAlign: "center" }}>
+        <img
+          src="/adepts-logo.png"
+          alt="Adepts Games"
+          style={{
+            width: "clamp(80px, 10vw, 130px)",
+            height: "auto",
+            marginBottom: 18,
+            borderRadius: 16,
+            boxShadow: "0 0 30px rgba(155,89,182,0.5), 0 0 60px rgba(155,89,182,0.2)",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        />
         <div style={{
           fontSize: 10, letterSpacing: "6px", textTransform: "uppercase",
           color: "rgba(255,255,255,0.3)", marginBottom: 10,
