@@ -78,6 +78,7 @@ export function useGameSocket() {
       if (state.gameStarted) setGameStarted(true);
       if (state.playerNames) setPlayerNames(state.playerNames);
       if (state.onlineStatus) setOnlineStatus(state.onlineStatus);
+      if (state.scores) setScores(state.scores);
     });
 
     s.on("startSpin", () => {
@@ -120,6 +121,7 @@ export function useGameSocket() {
       turn?: number;
       count?: number;
       eliminatedIndex?: number | null;
+      scores?: Record<number, number>;
     }) => {
       setGameOver(false);
       setBulletPos(-1);
@@ -131,8 +133,10 @@ export function useGameSocket() {
       if (data?.onlineStatus) setOnlineStatus(data.onlineStatus);
       if (data?.turn !== undefined) setTurn(data.turn);
       if (data?.count !== undefined) setPlayerCount(data.count);
-      // Clear score of eliminated player
-      if (data?.eliminatedIndex !== null && data?.eliminatedIndex !== undefined) {
+      if (data?.scores !== undefined) {
+        setScores(data.scores);
+      } else if (data?.eliminatedIndex !== null && data?.eliminatedIndex !== undefined) {
+        // fallback: clear eliminated player's score locally
         setScores((prev) => ({ ...prev, [data.eliminatedIndex!]: 0 }));
       }
       setRematchTrigger((n) => n + 1);

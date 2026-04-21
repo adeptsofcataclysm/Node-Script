@@ -60,6 +60,7 @@ export function useSpectatorSocket() {
       if (state.gameStarted) setGameStarted(true);
       if (state.playerNames) setPlayerNames(state.playerNames);
       if (state.onlineStatus) setOnlineStatus(state.onlineStatus);
+      if (state.scores) setScores(state.scores);
     });
 
     s.on("startSpin", () => {
@@ -101,6 +102,7 @@ export function useSpectatorSocket() {
       turn?: number;
       count?: number;
       eliminatedIndex?: number | null;
+      scores?: Record<number, number>;
     }) => {
       setGameOver(false);
       setBulletPos(-1);
@@ -112,7 +114,9 @@ export function useSpectatorSocket() {
       if (data?.onlineStatus) setOnlineStatus(data.onlineStatus);
       if (data?.turn !== undefined) setTurn(data.turn);
       if (data?.count !== undefined) setPlayerCount(data.count);
-      if (data?.eliminatedIndex !== null && data?.eliminatedIndex !== undefined) {
+      if (data?.scores !== undefined) {
+        setScores(data.scores);
+      } else if (data?.eliminatedIndex !== null && data?.eliminatedIndex !== undefined) {
         setScores((prev) => ({ ...prev, [data.eliminatedIndex!]: 0 }));
       }
       setFateAnnounced(null);

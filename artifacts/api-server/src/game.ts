@@ -20,6 +20,7 @@ interface GameState {
   roundCount: number;
   eliminatedIndex: number | null;
   bannedNames: string[];
+  scores: Record<number, number>;
 }
 
 function createFreshState(): GameState {
@@ -34,6 +35,7 @@ function createFreshState(): GameState {
     roundCount: 0,
     eliminatedIndex: null,
     bannedNames: [],
+    scores: {},
   };
 }
 
@@ -100,6 +102,7 @@ export function setupGame(io: Server) {
         gameState.bannedNames.push(elimName);
       }
       gameState.slots[elimIdx] = null;
+      gameState.scores[elimIdx] = 0;
     }
 
     gameState.bulletPos = -1;
@@ -118,6 +121,7 @@ export function setupGame(io: Server) {
       turn: gameState.turn,
       count: filledSlotCount(gameState),
       eliminatedIndex: elimIdx,
+      scores: gameState.scores,
     });
   }
 
@@ -136,6 +140,7 @@ export function setupGame(io: Server) {
         roundCount: gameState.roundCount,
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
+        scores: gameState.scores,
       });
       socket.on("rematch", doRematch);
       socket.on("disconnect", () => {
@@ -177,6 +182,7 @@ export function setupGame(io: Server) {
         roundCount: gameState.roundCount,
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
+        scores: gameState.scores,
       });
     } else {
       socket.emit("gameInProgress", {
@@ -217,6 +223,7 @@ export function setupGame(io: Server) {
           roundCount: gameState.roundCount,
           playerNames: buildPlayerNames(gameState),
           onlineStatus: buildOnlineStatus(gameState),
+          scores: gameState.scores,
         });
         io.emit("playerOnline", { playerIndex: matchIdx });
         io.emit("updatePlayers", {
@@ -295,6 +302,7 @@ export function setupGame(io: Server) {
       } else {
         gameState.currentPos = (gameState.currentPos + 1) % 6;
         gameState.turn = nextOnlineTurn(gameState, gameState.turn);
+        gameState.scores[shooterIndex] = (gameState.scores[shooterIndex] ?? 0) + 1;
         io.emit("shotResult", { isBang: false, playerIndex: shooterIndex, pos: gameState.currentPos });
         io.emit("nextTurn", { turn: gameState.turn });
       }
