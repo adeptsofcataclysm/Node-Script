@@ -6,11 +6,12 @@ interface MalletProps {
   disabled: boolean;
   onGrab?: () => void;
   onSwing?: () => void;
+  hideHints?: boolean;
 }
 
 const PULL_THRESHOLD = 90;
 
-export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
+export function Mallet({ onClick, disabled, onGrab, onSwing, hideHints }: MalletProps) {
   const [swinging, setSwinging] = useState(false);
   const [ready, setReady] = useState(false);
   const y = useMotionValue(0);
@@ -45,7 +46,7 @@ export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", userSelect: "none" }}>
 
       {/* Pull-down hint arrows */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, marginBottom: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, marginBottom: 12, visibility: hideHints ? "hidden" : "visible" }}>
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
@@ -151,7 +152,7 @@ export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
         marginTop: 6,
         color: ready ? "#f1c40f" : "rgba(255,255,255,0.45)",
         textShadow: ready ? "0 0 10px #f1c40f" : "none",
-        opacity: disabled ? 0 : 1,
+        opacity: disabled || hideHints ? 0 : 1,
         transition: "opacity 0.3s, color 0.2s",
       }}>
         {ready ? "Отпустить!" : "Потяни вниз"}

@@ -63,7 +63,7 @@ export function ViewerPage() {
           userSelect: "none",
         }}
       >
-        <Mallet onClick={() => {}} disabled={true} />
+        <Mallet onClick={() => {}} disabled={true} hideHints={true} />
       </motion.div>
 
       {/* Back link */}
