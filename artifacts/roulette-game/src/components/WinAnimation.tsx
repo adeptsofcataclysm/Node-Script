@@ -198,14 +198,15 @@ export function WinAnimation({ label }: { label: string }) {
   const type = getWinType(label);
   const colors = getBurstColors(type);
 
-  // Non-jackpot one-shot burst (fires behind backdrop, before it fades in)
+  // One-shot burst only for non-jackpot, non-wipe (fires behind backdrop — that's fine)
   const otherBurst = useMemo(
-    () => type !== "jackpot" ? makeBurst(type, colors, type === "wipe" ? 50 : 38) : [],
+    () => (type !== "jackpot" && type !== "wipe") ? makeBurst(type, colors, 38) : [],
     [label]
   );
 
-  // Jackpot foreground repeating effects
+  // Jackpot & Wipe foreground repeating effects
   const jackBurst  = useMemo(() => type === "jackpot" ? makeJackBurst(colors, 60) : [], [label]);
+  const wipeBurst  = useMemo(() => type === "wipe"    ? makeJackBurst(colors, 45) : [], [label]);
   const rain       = useMemo(() => type === "jackpot" ? makeRain(colors, 40)      : [], [label]);
   const fireworks  = useMemo(() => type === "jackpot" ? makeFireworks(22)         : [], [label]);
   const confetti   = useMemo(() => type === "jackpot" ? makeConfetti(80)          : [], [label]);
@@ -250,20 +251,6 @@ export function WinAnimation({ label }: { label: string }) {
           />
         ))}
 
-        {/* Wipe rings */}
-        {type === "wipe" && [0, 0.2].map((delay, i) => (
-          <motion.div key={`wring-${i}`}
-            initial={{ scale: 0.3, opacity: 0.8 }}
-            animate={{ scale: 4, opacity: 0 }}
-            transition={{ duration: 1.2, delay, ease: "easeOut" }}
-            style={{
-              position: "absolute", left: "50%", top: "45%",
-              transform: "translate(-50%, -50%)",
-              width: 160, height: 160, borderRadius: "50%",
-              border: "3px solid #e74c3c", boxShadow: "0 0 40px #e74c3c",
-            }}
-          />
-        ))}
       </div>
 
       {/* ── Wipe vignette (above backdrop, pulsing) ──────────────── */}
@@ -277,6 +264,65 @@ export function WinAnimation({ label }: { label: string }) {
             boxShadow: "inset 0 0 160px 40px rgba(231,76,60,0.75), inset 0 0 80px 20px rgba(142,68,173,0.4)",
           }}
         />
+      )}
+
+      {/* ══ WIPE foreground layer (zIndex 56 — above card) ══════════ */}
+      {type === "wipe" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 56, pointerEvents: "none", overflow: "hidden" }}>
+
+          {/* Repeating red/purple burst from center */}
+          {wipeBurst.map((p) => {
+            const tx = Math.cos(p.angle) * p.spread;
+            const ty = Math.sin(p.angle) * p.spread;
+            return (
+              <motion.div
+                key={p.id}
+                initial={{ left: "50%", top: "47%", x: "-50%", y: "-50%", scale: 0, opacity: 0, rotate: 0 }}
+                animate={{
+                  x: `calc(-50% + ${tx}px)`,
+                  y: `calc(-50% + ${ty}px)`,
+                  scale: [0, 1.8, 1.1, 0],
+                  opacity: [0, 1, 0.8, 0],
+                  rotate: p.rotation,
+                }}
+                transition={{
+                  duration: p.duration,
+                  delay: p.delay,
+                  ease: "easeOut",
+                  repeat: Infinity,
+                  repeatDelay: 2.2,
+                }}
+                style={{
+                  position: "absolute", left: "50%", top: "47%",
+                  width: p.size, height: p.size,
+                  borderRadius: p.borderRadius, background: p.color,
+                  boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+                }}
+              />
+            );
+          })}
+
+          {/* Repeating red rings */}
+          {[0, 0.5, 1.0, 1.5].map((delay, i) => (
+            <motion.div key={`wring-${i}`}
+              initial={{ scale: 0.2, opacity: 0.95 }}
+              animate={{ scale: 4.5, opacity: 0 }}
+              transition={{
+                duration: 1.3, delay,
+                ease: "easeOut",
+                repeat: Infinity,
+                repeatDelay: 1.2,
+              }}
+              style={{
+                position: "absolute", left: "50%", top: "47%",
+                transform: "translate(-50%, -50%)",
+                width: 180, height: 180, borderRadius: "50%",
+                border: "3px solid #e74c3c",
+                boxShadow: "0 0 50px #e74c3c, 0 0 20px #8e44ad88",
+              }}
+            />
+          ))}
+        </div>
       )}
 
       {/* ══ JACKPOT foreground layer (zIndex 56 — above card) ══════ */}
