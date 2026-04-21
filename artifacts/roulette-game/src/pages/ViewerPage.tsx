@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FortuneWheel } from "../components/FortuneWheel";
 import { Mallet } from "../components/Mallet";
@@ -9,6 +10,7 @@ import { useWheelSounds } from "../hooks/useWheelSounds";
 export function ViewerPage() {
   const { connected, isSpinning, spinData, result, initialRotation, dismissResult } = useWheelSocket(true);
   useWheelSounds(isSpinning, result);
+  useEffect(() => { fetch("/api/track/watch", { method: "POST" }).catch(() => {}); }, []);
 
   return (
     <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>

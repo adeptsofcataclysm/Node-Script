@@ -22,6 +22,7 @@ function playToasty() {
 }
 
 export function SpectatorPage() {
+  useEffect(() => { fetch("/api/track/spectate", { method: "POST" }).catch(() => {}); }, []);
   const {
     playerCount,
     playerNames,

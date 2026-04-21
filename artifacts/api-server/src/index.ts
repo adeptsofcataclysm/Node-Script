@@ -34,6 +34,19 @@ const io = new SocketIOServer(server, {
 const { adminReset } = setupGame(io);
 setupWheel(io);
 
+// Page visit counters (in-memory)
+const visitCounts: Record<string, number> = {};
+
+app.post("/api/track/:page", (req, res) => {
+  const page = req.params["page"] ?? "unknown";
+  visitCounts[page] = (visitCounts[page] ?? 0) + 1;
+  res.json({ ok: true, count: visitCounts[page] });
+});
+
+app.get("/api/admin/visit-counts", (_req, res) => {
+  res.json(visitCounts);
+});
+
 // Admin endpoint — full roulette reset
 app.post("/api/admin/reset-roulette", (_req, res) => {
   adminReset();

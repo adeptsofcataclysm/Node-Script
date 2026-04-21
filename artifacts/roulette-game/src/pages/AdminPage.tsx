@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function AdminPage() {
   const base = window.location.origin;
   const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const load = () => fetch("/api/admin/visit-counts").then(r => r.json()).then(setVisitCounts).catch(() => {});
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, []);
 
   function copyUrl(href: string, key: string) {
     navigator.clipboard.writeText(href).then(() => {
@@ -19,8 +27,8 @@ export function AdminPage() {
       glow: "rgba(241,196,15,0.25)",
       border: "#f1c40f",
       items: [
-        { label: "Счастливчик", desc: "управление колесом", href: `${base}/` },
-        { label: "Зрители", desc: "наблюдение за колесом", href: `${base}/watch` },
+        { label: "Счастливчик", desc: "управление колесом", href: `${base}/`, trackKey: "host" },
+        { label: "Зрители", desc: "наблюдение за колесом", href: `${base}/watch`, trackKey: "watch" },
       ],
     },
     {
@@ -29,8 +37,8 @@ export function AdminPage() {
       glow: "rgba(155,89,182,0.25)",
       border: "#9b59b6",
       items: [
-        { label: "Игроки", desc: "участники рулетки", href: `${base}/game` },
-        { label: "Наблюдатель", desc: "зрительный режим", href: `${base}/spectate` },
+        { label: "Игроки", desc: "участники рулетки", href: `${base}/game`, trackKey: "game" },
+        { label: "Наблюдатель", desc: "зрительный режим", href: `${base}/spectate`, trackKey: "spectate" },
       ],
     },
   ];
@@ -161,82 +169,102 @@ export function AdminPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {group.items.map((item) => {
                 const isCopied = copiedKey === item.label;
+                const count = visitCounts[item.trackKey] ?? 0;
                 return (
-                  <div key={item.label} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                    {/* Main link row */}
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "14px 20px",
-                        border: `1px solid ${group.border}55`,
-                        borderBottom: "none",
-                        background: `linear-gradient(90deg, ${group.glow} 0%, rgba(0,0,0,0.4) 100%)`,
-                        borderRadius: "6px 6px 0 0",
-                        textDecoration: "none",
-                        transition: "border-color 0.2s, box-shadow 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = group.border;
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = `${group.border}55`;
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 14, color: "#fff", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 4 }}>
-                          {item.label}
+                  <div key={item.label} style={{ display: "flex", alignItems: "stretch", gap: 10 }}>
+                    {/* Card: link row + copy row */}
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                      {/* Main link row */}
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "14px 20px",
+                          border: `1px solid ${group.border}55`,
+                          borderBottom: "none",
+                          background: `linear-gradient(90deg, ${group.glow} 0%, rgba(0,0,0,0.4) 100%)`,
+                          borderRadius: "6px 6px 0 0",
+                          textDecoration: "none",
+                          transition: "border-color 0.2s, box-shadow 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLAnchorElement).style.borderColor = group.border;
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLAnchorElement).style.borderColor = `${group.border}55`;
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 14, color: "#fff", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 4 }}>
+                            {item.label}
+                          </div>
+                          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "1px" }}>
+                            {item.desc}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "1px" }}>
-                          {item.desc}
-                        </div>
-                      </div>
-                      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "1px" }}>
-                        открыть →
-                      </span>
-                    </a>
+                        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "1px" }}>
+                          открыть →
+                        </span>
+                      </a>
 
-                    {/* Copy URL row */}
-                    <button
-                      onClick={() => copyUrl(item.href, item.label)}
-                      title="Скопировать ссылку"
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "8px 20px",
-                        border: `1px solid ${group.border}33`,
-                        background: "rgba(0,0,0,0.45)",
-                        borderRadius: "0 0 6px 6px",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        gap: 12,
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
-                      }}
-                    >
-                      <span style={{
-                        fontSize: 11, color: isCopied ? "#2ecc71" : group.color,
-                        letterSpacing: "0.5px", opacity: 0.85,
-                        wordBreak: "break-all", textAlign: "left", flex: 1,
-                        transition: "color 0.2s",
-                      }}>
-                        {item.href}
+                      {/* Copy URL row */}
+                      <button
+                        onClick={() => copyUrl(item.href, item.label)}
+                        title="Скопировать ссылку"
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "8px 20px",
+                          border: `1px solid ${group.border}33`,
+                          background: "rgba(0,0,0,0.45)",
+                          borderRadius: "0 0 6px 6px",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          gap: 12,
+                          transition: "background 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.45)";
+                        }}
+                      >
+                        <span style={{
+                          fontSize: 11, color: isCopied ? "#2ecc71" : group.color,
+                          letterSpacing: "0.5px", opacity: 0.85,
+                          wordBreak: "break-all", textAlign: "left", flex: 1,
+                          transition: "color 0.2s",
+                        }}>
+                          {item.href}
+                        </span>
+                        <span style={{
+                          fontSize: 10, letterSpacing: "2px", textTransform: "uppercase",
+                          color: isCopied ? "#2ecc71" : "rgba(255,255,255,0.35)",
+                          flexShrink: 0, minWidth: 72,
+                          transition: "color 0.2s",
+                        }}>
+                          {isCopied ? "✓ скопировано" : "⎘ копировать"}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Visit counter badge */}
+                    <div style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                      minWidth: 64, padding: "0 12px",
+                      background: "rgba(0,0,0,0.45)",
+                      border: `1px solid ${group.border}33`,
+                      borderRadius: 6,
+                    }}>
+                      <span style={{ fontSize: 22, fontWeight: 700, color: group.color, lineHeight: 1 }}>
+                        {count}
                       </span>
-                      <span style={{
-                        fontSize: 10, letterSpacing: "2px", textTransform: "uppercase",
-                        color: isCopied ? "#2ecc71" : "rgba(255,255,255,0.35)",
-                        flexShrink: 0, minWidth: 72,
-                        transition: "color 0.2s",
-                      }}>
-                        {isCopied ? "✓ скопировано" : "⎘ копировать"}
+                      <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", letterSpacing: "1.5px", textTransform: "uppercase", marginTop: 4 }}>
+                        заходов
                       </span>
-                    </button>
+                    </div>
                   </div>
                 );
               })}

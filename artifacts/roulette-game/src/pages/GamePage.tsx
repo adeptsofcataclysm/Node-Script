@@ -38,6 +38,7 @@ function playToasty() {
 }
 
 export function GamePage() {
+  useEffect(() => { fetch("/api/track/game", { method: "POST" }).catch(() => {}); }, []);
   const [nameInput, setNameInput] = useState("");
   const [showCestLaVie, setShowCestLaVie] = useState(false);
   const wasEliminatedRef = useRef(false);
