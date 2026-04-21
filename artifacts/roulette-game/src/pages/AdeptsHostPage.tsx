@@ -17,9 +17,30 @@ export function AdeptsHostPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflowX: "hidden" }}>
 
-      {/* Mode badge */}
-      <div style={{ position: "fixed", top: 16, left: 16, zIndex: 30, padding: "6px 18px", border: "1px solid #e67e22", background: "rgba(0,0,0,0.6)", borderRadius: 4, fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "4px", color: "#e67e22", textShadow: "0 0 12px rgba(230,126,34,0.7)" }}>
-        Ведущий Адептов
+      {/* Top-left: host badge + avatar + text */}
+      <div className="fixed top-4 left-4 z-30 flex flex-col items-center gap-1" style={{ width: 148 }}>
+        <div
+          className="px-3 py-1 font-mono text-xs uppercase tracking-[3px] w-full text-center"
+          style={{
+            border: "1px solid #e67e22",
+            color: "#e67e22",
+            background: "rgba(0,0,0,0.7)",
+            textShadow: "0 0 8px #e67e22",
+          }}
+        >
+          Ведущий Адептов
+        </div>
+        <img
+          src="/adepts-logo.png"
+          alt="adepts host"
+          style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #e67e22", boxShadow: "0 0 8px rgba(230,126,34,0.5)" }}
+        />
+        <div
+          className="font-mono text-center"
+          style={{ fontSize: 13, color: "#e67e22", lineHeight: 1.3, marginTop: 2 }}
+        >
+          Ведущий Adepts Games
+        </div>
       </div>
 
       {/* Bottom-right: link to roulette host */}
