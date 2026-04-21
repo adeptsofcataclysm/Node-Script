@@ -87,15 +87,15 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                 }}
               >
 
-                {/* Jackpot static glow */}
-                {isJackpot && (
+                {/* Jackpot static glow — desktop only */}
+                {isJackpot && !isMobile && (
                   <motion.div
                     animate={{ boxShadow: [
                       "0 0 60px rgba(241,196,15,0.4), 0 0 120px rgba(241,196,15,0.2)",
                       "0 0 100px rgba(241,196,15,0.8), 0 0 200px rgba(241,196,15,0.4)",
                       "0 0 60px rgba(241,196,15,0.4), 0 0 120px rgba(241,196,15,0.2)",
                     ]}}
-                    transition={{ duration: isMobile ? 3.6 : 1.8, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                     style={{
                       position: "absolute", inset: -3, borderRadius: 18,
                       pointerEvents: "none", zIndex: 0,
@@ -124,11 +124,11 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   />
                 )}
 
-                {/* Jackpot shimmer sweep */}
-                {isJackpot && (
+                {/* Jackpot shimmer sweep — desktop only */}
+                {isJackpot && !isMobile && (
                   <motion.div
                     animate={{ x: ["-100%", "200%"] }}
-                    transition={{ duration: isMobile ? 2.8 : 1.4, delay: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: 1.4, delay: 0.3, ease: "easeInOut" }}
                     style={{
                       position: "absolute", inset: 0,
                       background: "linear-gradient(105deg, transparent 30%, rgba(241,196,15,0.18) 50%, transparent 70%)",
@@ -167,29 +167,25 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   initial={{ opacity: 0, scale: 0.6 }}
                   animate={{
                     opacity: 1,
-                    scale: isJackpot ? [1, 1.08, 1] : isWipe ? [1, 1.05, 1] : 1,
+                    scale: isJackpot
+                      ? (isMobile ? 1 : [1, 1.08, 1])
+                      : isWipe ? [1, 1.05, 1] : 1,
                     textShadow: isJackpot
-                      ? [
-                          `0 0 40px ${accentColor}`,
-                          `0 0 80px ${accentColor}, 0 0 20px #fff`,
-                          `0 0 40px ${accentColor}`,
-                        ]
+                      ? (isMobile
+                          ? `0 0 40px ${accentColor}`
+                          : [`0 0 40px ${accentColor}`, `0 0 80px ${accentColor}, 0 0 20px #fff`, `0 0 40px ${accentColor}`])
                       : isWipe
-                      ? [
-                          `0 0 30px #e74c3c`,
-                          `0 0 70px #e74c3c, 0 0 30px #8e44ad`,
-                          `0 0 30px #e74c3c`,
-                        ]
+                      ? [`0 0 30px #e74c3c`, `0 0 70px #e74c3c, 0 0 30px #8e44ad`, `0 0 30px #e74c3c`]
                       : `0 0 40px ${accentColor}`,
                   }}
                   transition={{
                     delay: 0.1,
-                    scale: (isJackpot || isWipe)
-                      ? { duration: isMobile ? 3.0 : 1.5, repeat: Infinity, ease: "easeInOut" }
+                    scale: (isJackpot && !isMobile) || isWipe
+                      ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
                       : { duration: 0.4 },
                     opacity: { duration: 0.3 },
-                    textShadow: (isJackpot || isWipe)
-                      ? { duration: isMobile ? 3.0 : 1.5, repeat: Infinity, ease: "easeInOut" }
+                    textShadow: (isJackpot && !isMobile) || isWipe
+                      ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
                       : undefined,
                   }}
                   style={{
@@ -214,17 +210,19 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                     initial={{ opacity: 0, scale: 0.5, y: 10 }}
                     animate={{
                       opacity: 1, scale: 1, y: 0,
-                      textShadow: [
-                        "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
-                        "0 0 40px #f1c40f, 0 0 80px #f1c40f, 0 0 120px #f1c40f88",
-                        "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
-                      ],
+                      textShadow: isMobile
+                        ? "0 0 20px #f1c40f, 0 0 40px #f1c40f88"
+                        : [
+                            "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
+                            "0 0 40px #f1c40f, 0 0 80px #f1c40f, 0 0 120px #f1c40f88",
+                            "0 0 20px #f1c40f, 0 0 40px #f1c40f88",
+                          ],
                     }}
                     transition={{
                       opacity: { delay: 0.3, duration: 0.4 },
                       scale: { delay: 0.3, type: "spring", damping: 10, stiffness: 200 },
                       y: { delay: 0.3, duration: 0.4 },
-                      textShadow: { delay: 0.7, duration: isMobile ? 3.2 : 1.6, repeat: Infinity, ease: "easeInOut" },
+                      textShadow: isMobile ? undefined : { delay: 0.7, duration: 1.6, repeat: Infinity, ease: "easeInOut" },
                     }}
                     style={{
                       fontFamily: "monospace",
@@ -248,15 +246,15 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                     transition={{ delay: 0.35, type: "spring", damping: 10, stiffness: 220 }}
                     style={{
                       position: "absolute",
-                      ...(isMobile ? { top: 12 } : { bottom: 12 }), right: 12,
-                      padding: "6px 16px",
-                      border: `2px solid ${accentColor}`,
+                      bottom: 12, right: 12,
+                      padding: isMobile ? "3px 8px" : "6px 16px",
+                      border: `${isMobile ? 1 : 2}px solid ${accentColor}`,
                       borderRadius: 20,
                       background: isNegative ? "rgba(231,76,60,0.15)" : "rgba(46,204,113,0.15)",
                       fontFamily: "monospace",
-                      fontSize: isJackpot ? 15 : 13,
+                      fontSize: isMobile ? (isJackpot ? 8 : 7) : (isJackpot ? 15 : 13),
                       color: accentColor,
-                      letterSpacing: "2px",
+                      letterSpacing: isMobile ? "1px" : "2px",
                       fontWeight: "bold",
                       zIndex: 3,
                     }}
