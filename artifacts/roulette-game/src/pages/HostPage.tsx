@@ -35,24 +35,27 @@ export function HostPage() {
         {connected ? "Онлайн" : "Подключение..."}
       </div>
 
-      {/* Wheel + Mallet row */}
+      {/* Wheel — centered on screen */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ display: "flex", alignItems: "center", gap: 48 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(320px, 52vw, 620px)" }}
       >
-        {/* Title + Wheel column — so title is centered exactly over the wheel */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(360px, 58vw, 672px)" }}>
-          <WheelTitle />
-          <div style={{ width: "100%", aspectRatio: "1" }}>
-            <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
-          </div>
+        <WheelTitle />
+        <div style={{ width: "100%", aspectRatio: "1" }}>
+          <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
+      </motion.div>
 
-        <div style={{ flexShrink: 0 }}>
-          <Mallet onClick={spin} disabled={isSpinning || !connected} onGrab={playMalletGrab} onSwing={playMalletSwing} />
-        </div>
+      {/* Mallet — positioned separately to the right */}
+      <motion.div
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        style={{ position: "absolute", right: "clamp(40px, 6vw, 100px)", top: "50%", transform: "translateY(-60%)", zIndex: 20 }}
+      >
+        <Mallet onClick={spin} disabled={isSpinning || !connected} onGrab={playMalletGrab} onSwing={playMalletSwing} />
       </motion.div>
 
       {/* Viewer URL block — absolute bottom center */}
