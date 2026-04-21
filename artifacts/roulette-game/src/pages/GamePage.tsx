@@ -6,37 +6,10 @@ import { Cylinder } from "../components/Cylinder";
 import { DefeatScreen } from "../components/DefeatScreen";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
+import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
-function playSpinTicks() {
-  try {
-    const audio = new Audio("/spin.mp3");
-    audio.volume = 1;
-    audio.play();
-  } catch (_) {}
-}
-function playClickSound() {
-  try {
-    const audio = new Audio("/click.mp3"); // Холостой выстрел
-    audio.volume = 1;
-    audio.play();
-  } catch (_) {}
-}
-function playBangSound() {
-  try {
-    const audio = new Audio("/bang.mp3"); // Смертельный выстрел
-    audio.volume = 1.0;
-    audio.play();
-  } catch (_) {}
-}
-function playToasty() {
-  try {
-    const audio = new Audio("/toasty.mp3");
-    audio.volume = 0.85;
-    audio.play();
-  } catch (_) {}
-}
 
 export function GamePage() {
   useEffect(() => { fetch("/api/track/game", { method: "POST" }).catch(() => {}); }, []);
@@ -86,16 +59,16 @@ export function GamePage() {
   } = useGameSocket();
   // Звук кручения барабана
   useEffect(() => {
-    if (isSpinning && !mutedRef.current) playSpinTicks();
+    if (isSpinning && !mutedRef.current) playSound("spin");
   }, [isSpinning]);
 
   // Звук выстрела (результат)
   useEffect(() => {
     if (shotResult) {
       if (shotResult.isBang) {
-        if (!mutedRef.current) playBangSound();
+        if (!mutedRef.current) playSound("bang");
       } else {
-        if (!mutedRef.current) playClickSound();
+        if (!mutedRef.current) playSound("click");
       }
     }
   }, [shotResult]);
@@ -144,7 +117,7 @@ export function GamePage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
-      if (!mutedRef.current) playToasty();
+      if (!mutedRef.current) playSound("toasty");
 
       setTimeout(() => setShowGhost(false), 3000);
     }
@@ -179,6 +152,9 @@ export function GamePage() {
     }
   }, [shotResult]);
 
+  // Preload all sound effects eagerly on mount
+  useEffect(() => { preloadSounds(); }, []);
+
   // Music: start when all players ready, stop when someone leaves
   useEffect(() => {
     if (!musicRef.current) {
@@ -192,8 +168,10 @@ export function GamePage() {
     if (gameReady) {
       const tryPlay = () => { if (!mutedRef.current) audio.play().catch(() => {}); };
       tryPlay();
-      // Browsers may block autoplay — retry on first user interaction
+      // Browsers may block autoplay — retry on first user interaction.
+      // Also unlock all sfx sounds so they play reliably (especially on iOS).
       const onInteract = () => {
+        unlockSounds();
         if (!mutedRef.current) audio.play().catch(() => {});
         document.removeEventListener("click", onInteract);
         document.removeEventListener("keydown", onInteract);

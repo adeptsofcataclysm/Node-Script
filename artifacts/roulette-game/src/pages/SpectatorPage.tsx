@@ -5,22 +5,10 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { Cylinder } from "../components/Cylinder";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { LottoModal } from "../components/LottoModal";
+import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
 
 const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
-
-function playSpinTicks() {
-  try { const a = new Audio("/spin.mp3"); a.volume = 1; a.play(); } catch (_) {}
-}
-function playClickSound() {
-  try { const a = new Audio("/click.mp3"); a.volume = 1; a.play(); } catch (_) {}
-}
-function playBangSound() {
-  try { const a = new Audio("/bang.mp3"); a.volume = 1; a.play(); } catch (_) {}
-}
-function playToasty() {
-  try { const a = new Audio("/toasty.mp3"); a.volume = 0.85; a.play(); } catch (_) {}
-}
 
 export function SpectatorPage() {
   useEffect(() => { fetch("/api/track/spectate", { method: "POST" }).catch(() => {}); }, []);
@@ -73,6 +61,9 @@ export function SpectatorPage() {
     if (bangRef.current) bangRef.current.volume = next ? 0 : 1;
   };
 
+  // Preload all sound effects eagerly on mount
+  useEffect(() => { preloadSounds(); }, []);
+
   // Create music once on mount, play as soon as user interacts or gameReady
   useEffect(() => {
     const audio = new Audio("/music.mp3");
@@ -81,6 +72,8 @@ export function SpectatorPage() {
     musicRef.current = audio;
 
     const tryPlay = () => {
+      // Unlock all sfx sounds on first user gesture (important for iOS Safari)
+      unlockSounds();
       if (!mutedRef.current) audio.play().catch(() => {});
       window.removeEventListener("click", tryPlay);
       window.removeEventListener("keydown", tryPlay);
@@ -105,7 +98,7 @@ export function SpectatorPage() {
 
   // Spin sound
   useEffect(() => {
-    if (isSpinning && !mutedRef.current) playSpinTicks();
+    if (isSpinning && !mutedRef.current) playSound("spin");
   }, [isSpinning]);
 
   // Shot sounds + stop music on BANG
@@ -123,7 +116,7 @@ export function SpectatorPage() {
       bang.play().catch(() => {});
       bangRef.current = bang;
     } else {
-      if (!mutedRef.current) playClickSound();
+      if (!mutedRef.current) playSound("click");
     }
   }, [shotResult]);
 
@@ -168,7 +161,7 @@ export function SpectatorPage() {
       ];
       setGhostPos(positions[Math.floor(Math.random() * positions.length)]);
       setShowGhost(true);
-      if (!mutedRef.current) playToasty();
+      if (!mutedRef.current) playSound("toasty");
       setTimeout(() => setShowGhost(false), 3100);
     }
   }, [turn, gameReady, gameOver]);
