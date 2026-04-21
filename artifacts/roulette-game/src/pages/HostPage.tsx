@@ -35,9 +35,6 @@ export function HostPage() {
         {connected ? "Онлайн" : "Подключение..."}
       </div>
 
-      {/* Title */}
-      <WheelTitle />
-
       {/* Wheel + Mallet row */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
@@ -45,11 +42,15 @@ export function HostPage() {
         transition={{ duration: 0.5, delay: 0.1 }}
         style={{ display: "flex", alignItems: "center", gap: 12 }}
       >
-        <div style={{ width: "clamp(300px, 48vw, 560px)", aspectRatio: "1" }}>
-          <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
+        {/* Title + Wheel column — so title is centered exactly over the wheel */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <WheelTitle />
+          <div style={{ width: "clamp(300px, 48vw, 560px)", aspectRatio: "1" }}>
+            <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
+          </div>
         </div>
 
-        <div style={{ marginTop: 24, flexShrink: 0 }}>
+        <div style={{ flexShrink: 0 }}>
           <Mallet onClick={spin} disabled={isSpinning || !connected} onGrab={playMalletGrab} onSwing={playMalletSwing} />
         </div>
       </motion.div>

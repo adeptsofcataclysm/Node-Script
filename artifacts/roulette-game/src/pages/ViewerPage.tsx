@@ -23,17 +23,17 @@ export function ViewerPage() {
         {connected ? "Онлайн" : "Подключение..."}
       </div>
 
-      {/* Title */}
-      <WheelTitle />
-
-      {/* Wheel */}
+      {/* Title + Wheel — wrapped together so title is centered exactly over wheel */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ width: "clamp(300px, 52vw, 580px)", aspectRatio: "1" }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
+        <WheelTitle />
+        <div style={{ width: "clamp(300px, 52vw, 580px)", aspectRatio: "1" }}>
+          <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
+        </div>
       </motion.div>
 
       {/* Status */}
