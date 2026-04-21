@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { FortuneWheel } from "../components/FortuneWheel";
 import { ResultOverlay } from "../components/ResultOverlay";
+import { WheelTitle } from "../components/WheelTitle";
 import { useWheelSocket } from "../hooks/useWheelSocket";
 import { useWheelSounds } from "../hooks/useWheelSounds";
 
@@ -23,14 +24,7 @@ export function ViewerPage() {
       </div>
 
       {/* Title */}
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        style={{ fontFamily: "monospace", fontSize: "clamp(16px, 2.5vw, 26px)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "8px", color: "#f1c40f", textShadow: "0 0 20px rgba(241,196,15,0.5)", marginBottom: 20, textAlign: "center" }}
-      >
-        Колесо Адептов
-      </motion.h1>
+      <WheelTitle />
 
       {/* Wheel */}
       <motion.div
