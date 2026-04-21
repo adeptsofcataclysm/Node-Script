@@ -17,7 +17,7 @@ const SEGMENTS = [
 
 const NUM_SEGMENTS = SEGMENTS.length;
 const SEGMENT_ANGLE = 360 / NUM_SEGMENTS;
-const SPIN_DURATION_MS = 5200;
+const SPIN_DURATION_MS = 10400;
 
 interface WheelState {
   isSpinning: boolean;
@@ -77,7 +77,7 @@ export function setupWheel(io: Server) {
         const segCenterAngle = segmentIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
         const currentMod = ((state.totalRotation % 360) + 360) % 360;
         const adjustment = ((90 - segCenterAngle - currentMod) % 360 + 360) % 360;
-        const fullSpins = 5 + Math.floor(Math.random() * 4);
+        const fullSpins = 8 + Math.floor(Math.random() * 6);
         const targetRotation = state.totalRotation + fullSpins * 360 + adjustment;
 
         state.previousTotalRotation = state.totalRotation;
