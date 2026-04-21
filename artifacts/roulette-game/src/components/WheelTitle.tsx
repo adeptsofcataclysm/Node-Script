@@ -18,7 +18,17 @@ export function WheelTitle() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginBottom: 22, userSelect: "none" }}>
+    <motion.div
+      animate={{
+        filter: [
+          "drop-shadow(0 0 6px rgba(241,196,15,0.25))",
+          "drop-shadow(0 0 24px rgba(241,196,15,0.8)) drop-shadow(0 0 50px rgba(241,196,15,0.3))",
+          "drop-shadow(0 0 6px rgba(241,196,15,0.25))",
+        ],
+      }}
+      transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      style={{ textAlign: "center", marginBottom: 16, userSelect: "none" }}
+    >
       {/* Line 1 */}
       <motion.div
         variants={container}
@@ -73,38 +83,6 @@ export function WheelTitle() {
           </motion.span>
         ))}
       </motion.div>
-
-      {/* Animated underline */}
-      <motion.div
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={{ scaleX: 1, opacity: 1 }}
-        transition={{ delay: 1.1, duration: 0.7, ease: "easeOut" }}
-        style={{
-          height: 2,
-          marginTop: 8,
-          background: "linear-gradient(90deg, transparent 0%, #f1c40f 30%, #fff8c0 50%, #f1c40f 70%, transparent 100%)",
-          borderRadius: 2,
-          transformOrigin: "center",
-        }}
-      />
-
-      {/* Continuous shimmer glow on both lines — full-width overlay trick */}
-      <motion.div
-        animate={{
-          opacity: [0.4, 1, 0.4],
-          filter: [
-            "drop-shadow(0 0 8px rgba(241,196,15,0.3))",
-            "drop-shadow(0 0 28px rgba(241,196,15,0.85)) drop-shadow(0 0 60px rgba(241,196,15,0.35))",
-            "drop-shadow(0 0 8px rgba(241,196,15,0.3))",
-          ],
-        }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-        }}
-      />
-    </div>
+    </motion.div>
   );
 }
