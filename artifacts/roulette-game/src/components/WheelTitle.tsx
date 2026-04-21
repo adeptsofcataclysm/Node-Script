@@ -26,7 +26,7 @@ export function WheelTitle() {
         ],
       }}
       transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-      style={{ textAlign: "center", marginBottom: 16, userSelect: "none" }}
+      style={{ width: "100%", textAlign: "center", marginBottom: 16, userSelect: "none" }}
     >
       <motion.div
         variants={container}

@@ -43,9 +43,9 @@ export function HostPage() {
         style={{ display: "flex", alignItems: "center", gap: 48 }}
       >
         {/* Title + Wheel column — so title is centered exactly over the wheel */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(360px, 58vw, 672px)" }}>
           <WheelTitle />
-          <div style={{ width: "clamp(360px, 58vw, 672px)", aspectRatio: "1" }}>
+          <div style={{ width: "100%", aspectRatio: "1" }}>
             <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
           </div>
         </div>

@@ -28,10 +28,10 @@ export function ViewerPage() {
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(360px, 62vw, 696px)" }}
       >
         <WheelTitle />
-        <div style={{ width: "clamp(360px, 62vw, 696px)", aspectRatio: "1" }}>
+        <div style={{ width: "100%", aspectRatio: "1" }}>
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
       </motion.div>
