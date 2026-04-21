@@ -107,18 +107,18 @@ interface FireworkData { id: number; x: number; y: number; delay: number; color:
 function makeFireworks(count: number): FireworkData[] {
   return Array.from({ length: count }, (_, i) => {
     const color = FW_COLORS[i % FW_COLORS.length];
-    const x = 5 + Math.random() * 90;
-    const y = 5 + Math.random() * 50;
-    const sparkN = 14 + Math.floor(Math.random() * 8);
+    const x = 4 + Math.random() * 92;
+    const y = 3 + Math.random() * 55;
+    const sparkN = 18 + Math.floor(Math.random() * 14);
     return {
       id: i, x, y,
-      delay: (i / count) * 12 + Math.random() * 0.4,   // spread across 12 s
+      delay: (i / count) * 7 + Math.random() * 0.3,   // spread across 7 s, then repeat
       color,
       sparks: Array.from({ length: sparkN }, (_, j) => ({
-        angle: (j / sparkN) * 360 + (Math.random() - 0.5) * 10,
-        dist: 50 + Math.random() * 80,
-        size: 3 + Math.random() * 4,
-        color: Math.random() > 0.35 ? color : "#fff",
+        angle: (j / sparkN) * 360 + (Math.random() - 0.5) * 12,
+        dist: 55 + Math.random() * 110,
+        size: 3.5 + Math.random() * 5,
+        color: Math.random() > 0.3 ? color : "#fff",
       })),
     };
   });
@@ -130,7 +130,11 @@ function FireworkBurst({ fw }: { fw: FireworkData }) {
       <motion.div
         initial={{ scaleY: 0, opacity: 0 }}
         animate={{ scaleY: [0, 1, 1, 0], opacity: [0, 0.9, 0.9, 0] }}
-        transition={{ duration: 0.35, delay: Math.max(0, fw.delay - 0.32), times: [0, 0.25, 0.75, 1] }}
+        transition={{
+          duration: 0.35, delay: Math.max(0, fw.delay - 0.32),
+          times: [0, 0.25, 0.75, 1],
+          repeat: Infinity, repeatDelay: 6.65,
+        }}
         style={{
           position: "fixed", left: `${fw.x}vw`, top: `${fw.y}vh`,
           width: 2, height: 55, transformOrigin: "bottom",
@@ -151,10 +155,11 @@ function FireworkBurst({ fw }: { fw: FireworkData }) {
               opacity: [0, 1, 0.8, 0],
             }}
             transition={{
-              duration: 0.8 + Math.random() * 0.3,
+              duration: 0.9 + Math.random() * 0.3,
               delay: fw.delay,
               ease: "easeOut",
               opacity: { times: [0, 0.08, 0.6, 1] },
+              repeat: Infinity, repeatDelay: 6.1,
             }}
             style={{
               position: "fixed", left: `${fw.x}vw`, top: `${fw.y}vh`,
@@ -207,9 +212,9 @@ export function WinAnimation({ label }: { label: string }) {
   // Jackpot & Wipe foreground repeating effects
   const jackBurst  = useMemo(() => type === "jackpot" ? makeJackBurst(colors, 60) : [], [label]);
   const wipeBurst  = useMemo(() => type === "wipe"    ? makeJackBurst(colors, 45) : [], [label]);
-  const rain       = useMemo(() => type === "jackpot" ? makeRain(colors, 40)      : [], [label]);
-  const fireworks  = useMemo(() => type === "jackpot" ? makeFireworks(22)         : [], [label]);
-  const confetti   = useMemo(() => type === "jackpot" ? makeConfetti(80)          : [], [label]);
+  const rain       = useMemo(() => type === "jackpot" ? makeRain(colors, 55)      : [], [label]);
+  const fireworks  = useMemo(() => type === "jackpot" ? makeFireworks(48)         : [], [label]);
+  const confetti   = useMemo(() => type === "jackpot" ? makeConfetti(140)         : [], [label]);
 
   const flashColor =
     type === "jackpot"   ? "rgba(241,196,15,0.25)"
@@ -390,26 +395,6 @@ export function WinAnimation({ label }: { label: string }) {
             />
           ))}
 
-          {/* Repeating golden pulse rings */}
-          {[0, 0.6, 1.2, 1.8].map((delay, i) => (
-            <motion.div key={`ring-${i}`}
-              initial={{ scale: 0.2, opacity: 0.95 }}
-              animate={{ scale: 4, opacity: 0 }}
-              transition={{
-                duration: 1.3, delay,
-                ease: "easeOut",
-                repeat: Infinity,
-                repeatDelay: 1.1,
-              }}
-              style={{
-                position: "absolute", left: "50%", top: "47%",
-                transform: "translate(-50%, -50%)",
-                width: 200, height: 200, borderRadius: "50%",
-                border: "3px solid #f1c40f",
-                boxShadow: "0 0 50px #f1c40f, 0 0 20px #fff8",
-              }}
-            />
-          ))}
         </div>
       )}
 
