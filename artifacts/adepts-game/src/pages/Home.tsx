@@ -29,16 +29,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col text-foreground">
-      <div className="fixed top-0 left-0 right-0 z-10">
-        <Scoreboard
-          players={state.players}
-          onUpdateName={updatePlayerName}
-          onUpdateScore={updatePlayerScore}
-          onResetScores={resetScores}
-        />
-      </div>
-
-      <main className="flex-1 pt-48 pb-12 overflow-y-auto">
+      <main className="flex-1 pt-6 pb-6 overflow-y-auto">
         <QuizBoard
           themes={state.themes}
           questions={state.questions}
@@ -46,6 +37,15 @@ export default function Home() {
           onQuestionClick={handleQuestionClick}
         />
       </main>
+
+      <div className="w-full">
+        <Scoreboard
+          players={state.players}
+          onUpdateName={updatePlayerName}
+          onUpdateScore={updatePlayerScore}
+          onResetScores={resetScores}
+        />
+      </div>
 
       {activeQuestion && (
         <QuestionModal

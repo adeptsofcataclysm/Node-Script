@@ -20,10 +20,10 @@ export function Scoreboard({
   const [confirmReset, setConfirmReset] = useState(false);
 
   return (
-    <div className="w-full bg-card/80 border-b border-border p-4 backdrop-blur-sm">
+    <div className="w-full bg-card/80 border-t border-border p-4 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-2xl tracking-wider text-primary">
-          ADEPTS GAME
+        <h2 className="font-display text-2xl tracking-wider text-primary glow-text">
+          САМЫЙ ДУШНЫЙ 3.0
         </h2>
         <div className="flex items-center gap-3">
           <a
