@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { FortuneWheel } from "../components/FortuneWheel";
 import { Mallet } from "../components/Mallet";
@@ -6,6 +7,16 @@ import { useWheelSocket } from "../hooks/useWheelSocket";
 
 export function HostPage() {
   const { connected, isSpinning, spinData, result, initialRotation, spin, dismissResult } = useWheelSocket(false);
+  const [copied, setCopied] = useState<"watch" | null>(null);
+
+  const watchUrl = window.location.origin + "/watch";
+
+  const copyUrl = (url: string, key: "watch") => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
@@ -47,15 +58,33 @@ export function HostPage() {
         </div>
       </motion.div>
 
-      {/* Viewer URL hint */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.35 }}
-        transition={{ delay: 1 }}
-        style={{ marginTop: 14, fontFamily: "monospace", fontSize: 11, color: "#aaa", letterSpacing: "2px", textTransform: "uppercase" }}
-      >
-        Зрители: /watch
-      </motion.p>
+      {/* Viewer URL block — absolute bottom center */}
+      <div style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+        <div style={{ fontFamily: "monospace", fontSize: 10, color: "#aaa", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 2 }}>
+          Ссылка для зрителей
+        </div>
+        <button
+          onClick={() => copyUrl(watchUrl, "watch")}
+          title="Нажмите, чтобы скопировать"
+          style={{
+            background: "rgba(0,0,0,0.7)",
+            border: "1px solid rgba(52,152,219,0.7)",
+            borderRadius: 4,
+            padding: "8px 18px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ fontFamily: "monospace", fontSize: 13, color: "#3498db", letterSpacing: "1px", wordBreak: "break-all" }}>
+            {watchUrl}
+          </span>
+          <span style={{ fontFamily: "monospace", fontSize: 10, color: copied === "watch" ? "#2ecc71" : "#888", letterSpacing: "1px", flexShrink: 0, minWidth: 60, transition: "color 0.2s" }}>
+            {copied === "watch" ? "✓ скопировано" : "копировать"}
+          </span>
+        </button>
+      </div>
 
       <ResultOverlay result={result} onDismiss={dismissResult} />
     </div>
