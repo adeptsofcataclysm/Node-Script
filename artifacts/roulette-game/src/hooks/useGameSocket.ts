@@ -36,10 +36,24 @@ export function useGameSocket() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const s = io({ path: "/socket.io" });
+    const s = io({
+      path: "/socket.io",
+      transports: ["websocket"],
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+    });
     setSocket(s);
     s.on("connect", () => setConnected(true));
     s.on("disconnect", () => setConnected(false));
+
+    // On auto-reconnect: re-send name to reclaim offline slot
+    s.io.on("reconnect", () => {
+      const savedName = sessionStorage.getItem("pandora_player_name");
+      if (savedName) {
+        s.emit("setName", savedName);
+      }
+    });
 
     s.on("assignedIndex", (index: number) => setMyIndex(index));
 

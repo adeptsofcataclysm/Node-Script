@@ -22,7 +22,14 @@ export function useWheelSocket(isViewer: boolean) {
 
   useEffect(() => {
     const query = isViewer ? { viewer: "1" } : {};
-    const s = io("/wheel", { path: "/socket.io", query });
+    const s = io("/wheel", {
+      path: "/socket.io",
+      query,
+      transports: ["websocket"],
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+    });
     socketRef.current = s;
 
     s.on("connect", () => setConnected(true));

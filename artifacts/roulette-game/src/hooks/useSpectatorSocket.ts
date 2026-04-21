@@ -28,7 +28,14 @@ export function useSpectatorSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const s = io({ path: "/socket.io", query: { spectator: "1" } });
+    const s = io({
+      path: "/socket.io",
+      query: { spectator: "1" },
+      transports: ["websocket"],
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+    });
     s.on("connect", () => setConnected(true));
     s.on("disconnect", () => setConnected(false));
     socketRef.current = s;

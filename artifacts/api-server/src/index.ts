@@ -27,8 +27,8 @@ const io = new SocketIOServer(server, {
     methods: ["GET", "POST"],
   },
   path: "/socket.io",
-  pingInterval: 10000,  // ping every 10s — keeps proxy alive
-  pingTimeout: 30000,   // wait 30s for pong before disconnecting
+  pingInterval: 5000,   // ping every 5s — keeps proxy alive
+  pingTimeout: 20000,   // wait 20s for pong before disconnecting
 });
 
 const { adminReset } = setupGame(io);
