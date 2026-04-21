@@ -31,15 +31,15 @@ export function AdeptsHostPage() {
           Ведущий Адептов
         </div>
         <img
-          src="/adepts-logo.png"
-          alt="adepts host"
+          src="/spectator-avatar.png"
+          alt="spectator"
           style={{ width: "100%", borderRadius: "50%", display: "block", border: "1px solid #9b59b6", boxShadow: "0 0 8px rgba(155,89,182,0.5)" }}
         />
         <div
           className="font-mono text-center"
           style={{ fontSize: 13, color: "#9b59b6", lineHeight: 1.3, marginTop: 2 }}
         >
-          Ведущий Adepts Games
+          {"\"Ненавижу, ебучее програмирование!\"\u00A0(с)"}
         </div>
       </div>
 
