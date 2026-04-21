@@ -15,7 +15,7 @@ export function HostPage() {
 
       {/* Mode badge */}
       <div style={{ position: "fixed", top: 16, left: 16, zIndex: 30, padding: "6px 18px", border: "1px solid #f1c40f", background: "rgba(0,0,0,0.6)", borderRadius: 4, fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "4px", color: "#f1c40f", textShadow: "0 0 12px rgba(241,196,15,0.7)" }}>
-        Ведущий
+        Счастливчик
       </div>
 
       {/* Connection indicator */}
