@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { FortuneWheel } from "../components/FortuneWheel";
+import { Mallet } from "../components/Mallet";
 import { ResultOverlay } from "../components/ResultOverlay";
 import { WheelTitle } from "../components/WheelTitle";
 import { useWheelSocket } from "../hooks/useWheelSocket";
@@ -23,29 +24,51 @@ export function ViewerPage() {
         {connected ? "Онлайн" : "Подключение..."}
       </div>
 
-      {/* Title + Wheel — wrapped together so title is centered exactly over wheel */}
+      {/* Wheel centered — same layout as HostPage */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(360px, 62vw, 696px)" }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "clamp(320px, 52vw, 620px)" }}
       >
         <WheelTitle />
         <div style={{ width: "100%", aspectRatio: "1" }}>
           <FortuneWheel spinData={spinData} isSpinning={isSpinning} initialRotation={initialRotation} />
         </div>
+
+        {/* Spinning hint below wheel */}
+        <motion.div
+          animate={isSpinning
+            ? { opacity: [0.5, 1, 0.5], color: "#f1c40f" }
+            : { opacity: 0 }
+          }
+          transition={{ duration: 1, repeat: isSpinning ? Infinity : 0 }}
+          style={{ fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "5px", marginTop: 14 }}
+        >
+          ⟳ Вращается...
+        </motion.div>
       </motion.div>
 
-      {/* Status */}
+      {/* Mallet — visible but fully non-interactive */}
       <motion.div
-        style={{ marginTop: 18, fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "4px" }}
-        animate={isSpinning ? { opacity: [0.5, 1, 0.5], color: ["#f1c40f", "#f1c40f", "#f1c40f"] } : { opacity: 0.3, color: "#aaa" }}
-        transition={{ duration: 1, repeat: isSpinning ? Infinity : 0 }}
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        style={{
+          position: "absolute",
+          right: "clamp(16px, 2vw, 40px)",
+          top: "50%",
+          transform: "translateY(-60%)",
+          zIndex: 20,
+          pointerEvents: "none",
+          userSelect: "none",
+          filter: "brightness(0.6) saturate(0.7)",
+        }}
       >
-        {isSpinning ? "⟳  Вращается..." : "— только наблюдение —"}
+        <Mallet onClick={() => {}} disabled={true} />
       </motion.div>
 
-      {/* Bottom-right: back to Roulette button */}
+      {/* Back link */}
       <a
         href="https://node-script--gg22last.replit.app/spectate"
         style={{
