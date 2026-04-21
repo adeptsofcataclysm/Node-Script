@@ -404,10 +404,10 @@ export function GamePage() {
 
         {/* Controls */}
         <div className="flex gap-5">
-          <PandoraButton onClick={spin} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-spin">
+          <PandoraButton onClick={spin} disabled={!isMyTurn || isSpinning || hasSpun || gameOver} data-testid="button-spin">
             Крутить
           </PandoraButton>
-          <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-shoot">
+          <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || !hasSpun || gameOver} data-testid="button-shoot">
             Испытать судьбу
           </PandoraButton>
         </div>
