@@ -157,7 +157,7 @@ export function AdminGuard() {
           onChange={e => setInput(e.target.value)}
           disabled={status !== "idle"}
           autoFocus
-          placeholder="Введи ответ..."
+          placeholder="Введи пароль..."
           style={{
             width: "100%",
             padding: "10px 16px",
