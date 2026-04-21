@@ -21,19 +21,8 @@ export function Scoreboard({
 
   return (
     <div className="w-full bg-card/80 border-t border-border p-4 backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-2xl tracking-wider text-primary glow-text">
-          САМЫЙ ДУШНЫЙ 3.0
-        </h2>
+      <div className="flex items-center justify-end mb-4">
         <div className="flex items-center gap-3">
-          <a
-            href="https://node-script--gg22last.replit.app/admin"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-display tracking-wider text-primary/70 hover:text-primary border border-primary/30 hover:border-primary/70 px-3 py-1.5 rounded transition-colors"
-          >
-            Adepts-game / spectate
-          </a>
           {confirmReset ? (
             <div className="flex items-center gap-2 animate-in fade-in">
               <span className="text-sm text-destructive">Are you sure?</span>

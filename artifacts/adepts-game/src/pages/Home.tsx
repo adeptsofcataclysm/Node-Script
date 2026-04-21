@@ -29,7 +29,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col text-foreground">
-      <main className="flex-1 pt-6 pb-6 overflow-y-auto">
+      <header className="w-full flex items-center justify-between px-6 py-3 bg-card/80 border-b border-border backdrop-blur-sm">
+        <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
+          САМЫЙ ДУШНЫЙ 3.0
+        </h1>
+        <a
+          href="https://node-script--gg22last.replit.app/admin"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-display tracking-wider text-primary/70 hover:text-primary border border-primary/30 hover:border-primary/70 px-3 py-1.5 rounded transition-colors"
+        >
+          Adepts-game / spectate
+        </a>
+      </header>
+
+      <main className="flex-1 pt-4 pb-4 overflow-y-auto">
         <QuizBoard
           themes={state.themes}
           questions={state.questions}
