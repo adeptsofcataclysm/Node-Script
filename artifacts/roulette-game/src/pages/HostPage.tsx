@@ -4,9 +4,11 @@ import { FortuneWheel } from "../components/FortuneWheel";
 import { Mallet } from "../components/Mallet";
 import { ResultOverlay } from "../components/ResultOverlay";
 import { useWheelSocket } from "../hooks/useWheelSocket";
+import { useWheelSounds } from "../hooks/useWheelSounds";
 
 export function HostPage() {
   const { connected, isSpinning, spinData, result, initialRotation, spin, dismissResult } = useWheelSocket(false);
+  const { playMalletGrab, playMalletSwing } = useWheelSounds(isSpinning, result);
   const [copied, setCopied] = useState<"watch" | null>(null);
 
   const watchUrl = window.location.origin + "/watch";
@@ -54,7 +56,7 @@ export function HostPage() {
         </div>
 
         <div style={{ marginTop: 24, flexShrink: 0 }}>
-          <Mallet onClick={spin} disabled={isSpinning || !connected} />
+          <Mallet onClick={spin} disabled={isSpinning || !connected} onGrab={playMalletGrab} onSwing={playMalletSwing} />
         </div>
       </motion.div>
 

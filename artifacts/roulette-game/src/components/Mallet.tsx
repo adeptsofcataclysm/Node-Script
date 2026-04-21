@@ -4,14 +4,22 @@ import { motion } from "framer-motion";
 interface MalletProps {
   onClick: () => void;
   disabled: boolean;
+  onGrab?: () => void;
+  onSwing?: () => void;
 }
 
-export function Mallet({ onClick, disabled }: MalletProps) {
+export function Mallet({ onClick, disabled, onGrab, onSwing }: MalletProps) {
   const [swinging, setSwinging] = useState(false);
+
+  const handleMouseDown = () => {
+    if (disabled) return;
+    onGrab?.();
+  };
 
   const handleClick = () => {
     if (disabled || swinging) return;
     setSwinging(true);
+    onSwing?.();
     onClick();
     setTimeout(() => setSwinging(false), 600);
   };
@@ -20,6 +28,7 @@ export function Mallet({ onClick, disabled }: MalletProps) {
     <div
       style={{ cursor: disabled ? "not-allowed" : "pointer", display: "inline-block", userSelect: "none" }}
       title={disabled ? "Колесо вращается..." : "Нажми, чтобы крутить!"}
+      onMouseDown={handleMouseDown}
     >
       <motion.div
         animate={swinging ? { rotate: [-30, 15, -10, 5, 0] } : { rotate: 0 }}
