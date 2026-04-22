@@ -33,13 +33,16 @@ const DEFAULT_STATE: GameState = {
 };
 
 const STORAGE_KEY = "adepts-game-2-state";
+const PLAYERS_KEY = "adepts-shared-players";
 
 export function useGameState() {
   const [state, setState] = useState<GameState>(() => {
     try {
+      const storedPlayers = localStorage.getItem(PLAYERS_KEY);
+      const players = storedPlayers ? JSON.parse(storedPlayers) : DEFAULT_STATE.players;
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        return { ...JSON.parse(stored), players };
       }
     } catch (err) {
       console.error("Failed to load state", err);
@@ -49,12 +52,19 @@ export function useGameState() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
   }, [state]);
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try { setState(JSON.parse(e.newValue)); } catch {}
+      }
+      if (e.key === PLAYERS_KEY && e.newValue) {
+        try {
+          const players = JSON.parse(e.newValue);
+          setState(prev => ({ ...prev, players }));
+        } catch {}
       }
     };
     window.addEventListener("storage", handler);
