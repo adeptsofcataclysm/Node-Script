@@ -59,7 +59,7 @@ const DEFAULT_STATE: GameState = {
       { text: "Кто это говорит?\n«Вы не готовы!»", questionUrl: "", answerText: "Иллидан", answerUrl: "/vy-ne-gotovy.mp4", used: false },
       { text: "Продолжите цитату:\nAllright chamss. Let's do this, [...]", questionUrl: "", answerText: "LEEEEROY JANKINS", answerUrl: "/leeroy.mp4", used: false },
       { text: "Разрешите доебаться... (с)", questionUrl: "", answerText: "Джентельменыч", answerUrl: "/razreshite.mp4", used: false },
-      { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "https://drive.google.com/uc?export=view&id=1Ems5KLbyjGBgrxNdSgg1nDC5mwxGVPze", used: false },
+      { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "/3x3.mp4", used: false },
       { text: "Закончите цитату:\nYou think you do, [...]", questionUrl: "", answerText: "but you don't.", answerUrl: "https://drive.google.com/uc?export=view&id=1kEHC1K2H_2rybvs5sMmEEA9lp_Fzc12h", used: false },
     ],
     // Лор World of Warcraft
@@ -107,7 +107,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 export function useGameState() {
   const [state, setState] = useState<GameState>(() => {
