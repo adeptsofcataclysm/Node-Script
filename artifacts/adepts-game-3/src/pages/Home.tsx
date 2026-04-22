@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "../components/Scoreboard";
 import { QuizBoard } from "../components/QuizBoard";
@@ -13,6 +13,10 @@ export default function Home() {
     updateQuestion,
     resetScores,
   } = useGameState();
+
+  useEffect(() => {
+    fetch("/api/track/adepts-game-3", { method: "POST" }).catch(() => {});
+  }, []);
 
   const [activeQuestion, setActiveQuestion] = useState<{
     themeIndex: number;
