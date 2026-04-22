@@ -236,7 +236,23 @@ export function QuestionModal({
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-border bg-muted/30 flex justify-center items-center">
+              <div className="p-6 border-t border-border bg-muted/30 flex justify-between items-center">
+                {question.used ? (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      onUpdate({ used: false });
+                      onClose();
+                    }}
+                    className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
+                  >
+                    Сделать карточку активной
+                  </Button>
+                ) : (
+                  <div />
+                )}
+
                 {stage === "question" ? (
                   <Button
                     size="lg"
