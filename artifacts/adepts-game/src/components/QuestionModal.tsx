@@ -209,12 +209,21 @@ export function QuestionModal({
                         </div>
                         {answerUrl && (
                           <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
-                            <img
-                              src={answerUrl}
-                              alt="Answer media"
-                              className="max-h-56 max-w-full object-contain"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                            />
+                            {/\.(mp4|webm|ogg)$/i.test(answerUrl) ? (
+                              <video
+                                src={answerUrl}
+                                controls
+                                autoPlay
+                                className="max-h-72 max-w-full"
+                              />
+                            ) : (
+                              <img
+                                src={answerUrl}
+                                alt="Answer media"
+                                className="max-h-56 max-w-full object-contain"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                              />
+                            )}
                           </div>
                         )}
                       </div>

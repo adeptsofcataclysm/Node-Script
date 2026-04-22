@@ -18,6 +18,7 @@ export type GameState = {
   players: Player[];
   themes: string[];
   questions: Question[][];
+  dataVersion?: number;
 };
 
 const DEFAULT_STATE: GameState = {
@@ -55,7 +56,7 @@ const DEFAULT_STATE: GameState = {
     ],
     // Цитаты и Фразы
     [
-      { text: "Кто это говорит?\n«Вы не готовы!»", questionUrl: "", answerText: "Иллидан", answerUrl: "https://drive.google.com/uc?export=view&id=152UX7qZxElhdIDzOWSHWxBOm29sCYeMq", used: false },
+      { text: "Кто это говорит?\n«Вы не готовы!»", questionUrl: "", answerText: "Иллидан", answerUrl: "/vy-ne-gotovy.mp4", used: false },
       { text: "Продолжите цитату:\nAllright chamss. Let's do this, [...]", questionUrl: "", answerText: "LEEEEROY JANKINS", answerUrl: "https://drive.google.com/uc?export=view&id=1He52CqUQ-8ETkdRQdnXJVTn9EcDdpSbv", used: false },
       { text: "Разрешите доебаться... (с)", questionUrl: "", answerText: "Джентельменыч", answerUrl: "https://drive.google.com/uc?export=view&id=1lZmnCZyaOq8zAFNjSW8RA1sIYyQwaGOK", used: false },
       { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "https://drive.google.com/uc?export=view&id=1Ems5KLbyjGBgrxNdSgg1nDC5mwxGVPze", used: false },
@@ -106,6 +107,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
+const DATA_VERSION = 2;
 
 export function useGameState() {
   const [state, setState] = useState<GameState>(() => {
@@ -116,18 +118,15 @@ export function useGameState() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const hasContent = parsed.questions?.some((theme: any[]) =>
-          theme?.some((q: any) => q.text?.trim())
-        );
-        if (!hasContent) {
-          return { ...DEFAULT_STATE, players };
+        if (parsed.dataVersion !== DATA_VERSION) {
+          return { ...DEFAULT_STATE, players, dataVersion: DATA_VERSION };
         }
         return { ...parsed, players };
       }
     } catch (err) {
       console.error("Failed to load state", err);
     }
-    return DEFAULT_STATE;
+    return { ...DEFAULT_STATE, dataVersion: DATA_VERSION };
   });
 
   useEffect(() => {
