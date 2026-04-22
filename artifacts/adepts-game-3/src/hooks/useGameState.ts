@@ -50,6 +50,16 @@ export function useGameState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try { setState(JSON.parse(e.newValue)); } catch {}
+      }
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
+
   const updatePlayerName = useCallback((index: number, name: string) => {
     setState((prev) => {
       const next = { ...prev };

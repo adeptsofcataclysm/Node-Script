@@ -1,10 +1,29 @@
 import { useState, useEffect } from "react";
 
+const QUIZ_STORAGE_KEYS: Record<string, string> = {
+  "adepts-game": "adepts-game-state",
+  "adepts-game-2": "adepts-game-2-state",
+  "adepts-game-3": "adepts-game-3-state",
+};
+
+function resetQuizCards(storageKey: string) {
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    state.questions = state.questions.map((theme: any[]) =>
+      theme.map((q: any) => ({ ...q, used: false }))
+    );
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {}
+}
+
 export function AdminPage() {
   const base = window.location.origin;
   const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+  const [resetQuizKey, setResetQuizKey] = useState<string | null>(null);
 
   useEffect(() => {
     const load = () => fetch("/api/admin/visit-counts").then(r => r.json()).then(setVisitCounts).catch(() => {});
@@ -277,6 +296,37 @@ export function AdminPage() {
                         заходов
                       </span>
                     </div>
+
+                    {/* Reset quiz cards button — only for quiz boards */}
+                    {QUIZ_STORAGE_KEYS[item.trackKey] && (() => {
+                      const isReset = resetQuizKey === item.trackKey;
+                      return (
+                        <button
+                          title="Сбросить карточки в начальное положение"
+                          onClick={() => {
+                            resetQuizCards(QUIZ_STORAGE_KEYS[item.trackKey]);
+                            setResetQuizKey(item.trackKey);
+                            setTimeout(() => setResetQuizKey(null), 2000);
+                          }}
+                          style={{
+                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                            minWidth: 64, padding: "0 12px",
+                            background: "rgba(0,0,0,0.45)",
+                            border: `1px solid ${isReset ? "#2ecc71" : group.border}33`,
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            color: isReset ? "#2ecc71" : group.color,
+                            transition: "color 0.2s, border-color 0.2s",
+                            gap: 4,
+                          }}
+                        >
+                          <span style={{ fontSize: 22, lineHeight: 1 }}>{isReset ? "✓" : "↺"}</span>
+                          <span style={{ fontSize: 8, letterSpacing: "1.5px", textTransform: "uppercase", marginTop: 4, color: isReset ? "#2ecc71" : "rgba(255,255,255,0.3)" }}>
+                            {isReset ? "сброшено" : "сбросить"}
+                          </span>
+                        </button>
+                      );
+                    })()}
                   </div>
                 );
               })}
