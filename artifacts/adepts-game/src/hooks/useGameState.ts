@@ -8,6 +8,7 @@ export type Player = {
 
 export type Question = {
   text: string;
+  questionUrl: string;
   answerText: string;
   answerUrl: string;
   used: boolean;
@@ -25,10 +26,82 @@ const DEFAULT_STATE: GameState = {
     name: `Player ${i + 1}`,
     score: 0,
   })),
-  themes: Array.from({ length: 8 }, (_, i) => `Theme ${i + 1}`),
-  questions: Array.from({ length: 8 }, () =>
-    Array.from({ length: 5 }, () => ({ text: "", answerText: "", answerUrl: "", used: false }))
-  ),
+  themes: [
+    "Боссы",
+    "Пасхалки",
+    "Цитаты и Фразы",
+    "Лор World of Warcraft",
+    "Всратый косплей",
+    "Халява",
+    "Локации",
+    "Профессии",
+  ],
+  questions: [
+    // Боссы
+    [
+      { text: "Что это за босс?", questionUrl: "https://drive.google.com/uc?export=view&id=1VMS1EGHBoK9_pLEvdmxNaM12-36W_gpH", answerText: "Ониксия", answerUrl: "", used: false },
+      { text: "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.", questionUrl: "", answerText: "Атрамед", answerUrl: "", used: false },
+      { text: "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.", questionUrl: "", answerText: "Валестраз", answerUrl: "", used: false },
+      { text: "Назовите этого босса?", questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/945708-controlling-the-elements.jpg", answerText: "Ал'акир", answerUrl: "", used: false },
+      { text: "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...", questionUrl: "", answerText: "Алгалона", answerUrl: "", used: false },
+    ],
+    // Пасхалки
+    [
+      { text: "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.", questionUrl: "", answerText: "Харрисон Джонс", answerUrl: "", used: false },
+      { text: "В ЛБРС рука робота около лавы — к чему эта пасхалка?", questionUrl: "", answerText: "Терминатор 2", answerUrl: "", used: false },
+      { text: "В канализации Даларана можно встретить алхимика по имени Уолтер Уайт (или его подобие). Он носит характерные очки и занимается «варкой» зелий, что является явной отсылкой к сериалу. Say my name?!", questionUrl: "", answerText: "Хайзенберг", answerUrl: "", used: false },
+      { text: "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?", questionUrl: "", answerText: "Остаться в живых (Lost)", answerUrl: "", used: false },
+      { text: "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?", questionUrl: "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg", answerText: "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)", answerUrl: "", used: false },
+    ],
+    // Цитаты и Фразы
+    [
+      { text: "Кто это говорит?\n«Вы не готовы!»", questionUrl: "", answerText: "Иллидан", answerUrl: "https://drive.google.com/uc?export=view&id=152UX7qZxElhdIDzOWSHWxBOm29sCYeMq", used: false },
+      { text: "Продолжите цитату:\nAllright chamss. Let's do this, [...]", questionUrl: "", answerText: "LEEEEROY JANKINS", answerUrl: "https://drive.google.com/uc?export=view&id=1He52CqUQ-8ETkdRQdnXJVTn9EcDdpSbv", used: false },
+      { text: "Разрешите доебаться... (с)", questionUrl: "", answerText: "Джентельменыч", answerUrl: "https://drive.google.com/uc?export=view&id=1lZmnCZyaOq8zAFNjSW8RA1sIYyQwaGOK", used: false },
+      { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "https://drive.google.com/uc?export=view&id=1Ems5KLbyjGBgrxNdSgg1nDC5mwxGVPze", used: false },
+      { text: "Закончите цитату:\nYou think you do, [...]", questionUrl: "", answerText: "but you don't.", answerUrl: "https://drive.google.com/uc?export=view&id=1kEHC1K2H_2rybvs5sMmEEA9lp_Fzc12h", used: false },
+    ],
+    // Лор World of Warcraft
+    [
+      { text: "Как назывался единый континент на Азероте до Великого Раскола?", questionUrl: "", answerText: "Калимдор", answerUrl: "", used: false },
+      { text: "Чем закончилась Первая война против орды?", questionUrl: "", answerText: "Разрушением Штормграда", answerUrl: "", used: false },
+      { text: "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?", questionUrl: "", answerText: "Иллидан", answerUrl: "", used: false },
+      { text: "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?", questionUrl: "", answerText: "Дух Жизни", answerUrl: "", used: false },
+      { text: "Какое событие изображено на картинке?", questionUrl: "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg", answerText: "Битва у Врат Гнева", answerUrl: "", used: false },
+    ],
+    // Всратый косплей
+    [
+      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+    ],
+    // Халява
+    [
+      { text: "100", questionUrl: "", answerText: "100", answerUrl: "", used: false },
+      { text: "200", questionUrl: "", answerText: "200", answerUrl: "", used: false },
+      { text: "300", questionUrl: "", answerText: "300", answerUrl: "", used: false },
+      { text: "400", questionUrl: "", answerText: "400", answerUrl: "", used: false },
+      { text: "Ящик пандоры", questionUrl: "", answerText: "Ящик пандоры", answerUrl: "", used: false },
+    ],
+    // Локации
+    [
+      { text: "В какой локации расположен вход в легендарное подземелье «Огненные Недра» (Molten Core)?", questionUrl: "", answerText: "Чёрная гора", answerUrl: "", used: false },
+      { text: "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?", questionUrl: "", answerText: "Оргриммар", answerUrl: "", used: false },
+      { text: "Как называлось Мировое древо, у которого располагалась столица ночных эльфов Дарнас?", questionUrl: "", answerText: "Тельдрасил", answerUrl: "", used: false },
+      { text: "Через какой перевал в Восточных королевствах можно попасть в локацию Болото Печали, если идти из Сумеречного леса?", questionUrl: "", answerText: "Перевал мёртвого ветра", answerUrl: "", used: false },
+      { text: "В какой локации Пандарии игроки могли выращивать собственные овощи и строить отношения с фракцией Земледельцев?", questionUrl: "", answerText: "Ферма солнечной песни", answerUrl: "", used: false },
+    ],
+    // Профессии
+    [
+      { text: "«Гоблинская» и «Гномская» — о какой профессии идёт речь?", questionUrl: "", answerText: "Инженерия", answerUrl: "", used: false },
+      { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "", used: false },
+      { text: "Какая новая профессия появилась в WotLK?", questionUrl: "", answerText: "Начертание", answerUrl: "", used: false },
+      { text: "С помощью какой профессии призывался один из боссов в дополнении TBC?", questionUrl: "", answerText: "Рыбалка", answerUrl: "", used: false },
+      { text: "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.", questionUrl: "", answerText: "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.", answerUrl: "", used: false },
+    ],
+  ],
 };
 
 const STORAGE_KEY = "adepts-game-state";
@@ -38,7 +111,14 @@ export function useGameState() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        const hasContent = parsed.questions?.some((theme: any[]) =>
+          theme?.some((q: any) => q.text?.trim())
+        );
+        if (!hasContent) {
+          return { ...DEFAULT_STATE, players: parsed.players ?? DEFAULT_STATE.players };
+        }
+        return parsed;
       }
     } catch (err) {
       console.error("Failed to load state", err);

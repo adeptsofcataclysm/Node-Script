@@ -8,6 +8,7 @@ export type Player = {
 
 export type Question = {
   text: string;
+  questionUrl: string;
   answerText: string;
   answerUrl: string;
   used: boolean;
@@ -27,7 +28,7 @@ const DEFAULT_STATE: GameState = {
   })),
   themes: Array.from({ length: 8 }, (_, i) => `Theme ${i + 1}`),
   questions: Array.from({ length: 8 }, () =>
-    Array.from({ length: 5 }, () => ({ text: "", answerText: "", answerUrl: "", used: false }))
+    Array.from({ length: 5 }, () => ({ text: "", questionUrl: "", answerText: "", answerUrl: "", used: false }))
   ),
 };
 
