@@ -143,26 +143,37 @@ export function QuestionModal({
                         <div className="space-y-3">
                           <Label className="text-lg text-muted-foreground uppercase tracking-wider">Медиа к вопросу</Label>
                           <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
-                            <img
-                              src={resolveUrl(question.questionUrl)}
-                              alt="Question media"
-                              className="max-h-72 max-w-full object-contain"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = "none";
-                                const btn = (e.currentTarget as HTMLImageElement).nextElementSibling as HTMLElement;
-                                if (btn) btn.style.display = "flex";
-                              }}
-                            />
-                            <a
-                              href={question.questionUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ display: "none" }}
-                              className="flex items-center gap-2 p-4 text-primary hover:text-accent transition-colors"
-                            >
-                              <ExternalLink className="w-5 h-5" />
-                              Открыть медиа
-                            </a>
+                            {/\.(mp4|webm|ogg)$/i.test(question.questionUrl) ? (
+                              <video
+                                src={resolveUrl(question.questionUrl)}
+                                controls
+                                autoPlay
+                                className="max-h-72 max-w-full"
+                              />
+                            ) : (
+                              <>
+                                <img
+                                  src={resolveUrl(question.questionUrl)}
+                                  alt="Question media"
+                                  className="max-h-72 max-w-full object-contain"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                                    const btn = (e.currentTarget as HTMLImageElement).nextElementSibling as HTMLElement;
+                                    if (btn) btn.style.display = "flex";
+                                  }}
+                                />
+                                <a
+                                  href={question.questionUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ display: "none" }}
+                                  className="flex items-center gap-2 p-4 text-primary hover:text-accent transition-colors"
+                                >
+                                  <ExternalLink className="w-5 h-5" />
+                                  Открыть медиа
+                                </a>
+                              </>
+                            )}
                           </div>
                         </div>
                       )}

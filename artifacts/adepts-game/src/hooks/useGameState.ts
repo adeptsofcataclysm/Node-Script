@@ -40,7 +40,7 @@ const DEFAULT_STATE: GameState = {
   questions: [
     // Боссы
     [
-      { text: "Что это за босс?", questionUrl: "https://drive.google.com/uc?export=view&id=1VMS1EGHBoK9_pLEvdmxNaM12-36W_gpH", answerText: "Ониксия", answerUrl: "", used: false },
+      { text: "Что это за босс?", questionUrl: "/bossy-100.mp4", answerText: "Ониксия", answerUrl: "", used: false },
       { text: "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.", questionUrl: "", answerText: "Атрамед", answerUrl: "", used: false },
       { text: "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.", questionUrl: "", answerText: "Валестраз", answerUrl: "", used: false },
       { text: "Назовите этого босса?", questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/945708-controlling-the-elements.jpg", answerText: "Ал'акир", answerUrl: "", used: false },
@@ -107,7 +107,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 
 export function useGameState() {
   const [state, setState] = useState<GameState>(() => {
