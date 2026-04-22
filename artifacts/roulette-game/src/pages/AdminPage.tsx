@@ -48,7 +48,9 @@ export function AdminPage() {
       glow: "rgba(26,188,156,0.25)",
       border: "#1abc9c",
       items: [
-        { label: "Квиз-доска", desc: "табло с вопросами и очками", href: `${base}/adepts-game/`, trackKey: "adepts-game" },
+        { label: "Квиз-доска 1", desc: "табло с вопросами и очками", href: `${base}/adepts-game/`, trackKey: "adepts-game" },
+        { label: "Квиз-доска 2", desc: "табло с вопросами и очками", href: `${base}/adepts-game-2/`, trackKey: "adepts-game-2" },
+        { label: "Квиз-доска 3", desc: "табло с вопросами и очками", href: `${base}/adepts-game-3/`, trackKey: "adepts-game-3" },
       ],
     },
   ];

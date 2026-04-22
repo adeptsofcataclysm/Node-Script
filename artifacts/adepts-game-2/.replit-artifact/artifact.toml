@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/adepts-game-2/"
+title = "Самый Душный 3.0 — игра 2"
+version = "1.0.0"
+id = "artifacts/adepts-game-2"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/adepts-game-2/" ]
+localPort = 24459
+
+[services.development]
+run = "pnpm --filter @workspace/adepts-game-2 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/adepts-game-2", "run", "build" ]
+publicDir = "artifacts/adepts-game-2/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24459"
+BASE_PATH = "/adepts-game-2/"
