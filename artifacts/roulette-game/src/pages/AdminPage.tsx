@@ -42,6 +42,15 @@ export function AdminPage() {
         { label: "Ведущий", desc: "Ведущий Adepts Games", href: `${base}/spectate`, trackKey: "spectate" },
       ],
     },
+    {
+      group: "Самый душный 3.0",
+      color: "#1abc9c",
+      glow: "rgba(26,188,156,0.25)",
+      border: "#1abc9c",
+      items: [
+        { label: "Квиз-доска", desc: "табло с вопросами и очками", href: `${base}/adepts-game/`, trackKey: "adepts-game" },
+      ],
+    },
   ];
 
   async function handleResetRoulette() {
