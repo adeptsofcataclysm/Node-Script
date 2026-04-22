@@ -123,7 +123,7 @@ export function Scoreboard({
             key={player.id}
             className="flex flex-col items-center bg-background/50 p-4 rounded-lg border border-border relative overflow-hidden group"
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
             <Input
               value={player.name}
