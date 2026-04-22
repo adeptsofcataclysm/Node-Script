@@ -236,11 +236,7 @@ export function QuestionModal({
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-border bg-muted/30 flex justify-between items-center">
-                <Button variant="outline" onClick={onClose} size="lg">
-                  Закрыть
-                </Button>
-
+              <div className="p-6 border-t border-border bg-muted/30 flex justify-center items-center">
                 {stage === "question" ? (
                   <Button
                     size="lg"
