@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { FolderOpen } from "lucide-react";
 import { Question } from "../hooks/useGameState";
 
 interface QuizBoardProps {
@@ -33,28 +34,31 @@ export function QuizBoard({
               {questions[tIdx].map((q, qIdx) => {
                 const points = (qIdx + 1) * 100;
                 
-                return (
+                return q.used ? (
+                  <div
+                    key={qIdx}
+                    className="relative w-full h-full rounded-lg border bg-background/20 border-border/50 flex items-center justify-center group"
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-full h-px bg-muted-foreground/30 rotate-[-15deg]" />
+                    </div>
+                    <button
+                      onClick={() => onQuestionClick(tIdx, qIdx)}
+                      className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-1 text-muted-foreground hover:text-primary"
+                    >
+                      <FolderOpen className="w-5 h-5" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Открыть</span>
+                    </button>
+                  </div>
+                ) : (
                   <motion.button
                     key={qIdx}
-                    whileHover={!q.used ? { scale: 1.05 } : {}}
-                    whileTap={!q.used ? { scale: 0.95 } : {}}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => onQuestionClick(tIdx, qIdx)}
-                    className={`
-                      relative w-full h-full rounded-lg border flex items-center justify-center
-                      font-display text-3xl font-bold transition-all duration-300
-                      ${
-                        q.used
-                          ? "bg-background/20 border-border/50 text-muted-foreground/30 cursor-not-allowed"
-                          : "bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_15px_hsla(280,65%,50%,0.3)] cursor-pointer"
-                      }
-                    `}
+                    className="relative w-full h-full rounded-lg border flex items-center justify-center font-display text-3xl font-bold transition-all duration-300 bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_15px_hsla(280,65%,50%,0.3)] cursor-pointer"
                   >
-                    {!q.used && <span className="glow-text">{points}</span>}
-                    {q.used && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-full h-px bg-muted-foreground/30 rotate-[-15deg]" />
-                      </div>
-                    )}
+                    <span className="glow-text">{points}</span>
                   </motion.button>
                 );
               })}
