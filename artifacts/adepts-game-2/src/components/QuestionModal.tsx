@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, CheckCircle, Trophy } from "lucide-react";
+import { X, ExternalLink, Trophy, ChevronRight, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ interface QuestionModalProps {
   onAwardPoints: (playerIndex: number, points: number) => void;
 }
 
+type Stage = "question" | "answer";
+
 export function QuestionModal({
   isOpen,
   themeName,
@@ -28,29 +30,31 @@ export function QuestionModal({
   onUpdate,
   onAwardPoints,
 }: QuestionModalProps) {
+  const [stage, setStage] = useState<Stage>("question");
   const [text, setText] = useState("");
+  const [answerText, setAnswerText] = useState("");
   const [answerUrl, setAnswerUrl] = useState("");
   const [awarded, setAwarded] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setText(question.text || "");
+      setAnswerText(question.answerText || "");
       setAnswerUrl(question.answerUrl || "");
       setAwarded(null);
+      setStage("question");
     }
   }, [isOpen, question]);
 
   const handleAward = (playerIndex: number) => {
     onAwardPoints(playerIndex, points);
-    onUpdate({ text, answerUrl, used: true });
+    onUpdate({ text, answerText, answerUrl, used: true });
     setAwarded(playerIndex);
-    setTimeout(() => {
-      onClose();
-    }, 900);
+    setTimeout(() => onClose(), 900);
   };
 
-  const handleMarkUsed = () => {
-    onUpdate({ text, answerUrl, used: !question.used });
+  const handleSkip = () => {
+    onUpdate({ text, answerText, answerUrl, used: true });
     onClose();
   };
 
@@ -75,12 +79,24 @@ export function QuestionModal({
             >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-border bg-muted/30">
-                <div>
-                  <div className="text-sm font-bold text-accent uppercase tracking-widest mb-1">
-                    {themeName}
+                <div className="flex items-center gap-4">
+                  <div>
+                    <div className="text-sm font-bold text-accent uppercase tracking-widest mb-1">
+                      {themeName}
+                    </div>
+                    <div className="font-display text-4xl text-primary glow-text">
+                      {points} Points
+                    </div>
                   </div>
-                  <div className="font-display text-4xl text-primary glow-text">
-                    {points} Points
+                  {/* Stage indicator */}
+                  <div className="flex items-center gap-2 ml-6">
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${stage === "question" ? "bg-primary/20 text-primary border border-primary/50" : "bg-muted/30 text-muted-foreground border border-border"}`}>
+                      Вопрос
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${stage === "answer" ? "bg-primary/20 text-primary border border-primary/50" : "bg-muted/30 text-muted-foreground border border-border"}`}>
+                      Ответ
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -94,115 +110,156 @@ export function QuestionModal({
               </div>
 
               {/* Body */}
-              <div className="p-8 flex-1 overflow-y-auto space-y-8">
-                {/* Question text */}
-                <div className="space-y-4">
-                  <Label className="text-lg text-muted-foreground uppercase tracking-wider">Вопрос</Label>
-                  <Textarea
-                    value={text}
-                    onChange={(e) => {
-                      setText(e.target.value);
-                      onUpdate({ text: e.target.value });
-                    }}
-                    placeholder="Текст вопроса..."
-                    className="min-h-[160px] text-2xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
-                  />
-                </div>
+              <div className="flex-1 overflow-y-auto">
+                <AnimatePresence mode="wait">
+                  {stage === "question" ? (
+                    <motion.div
+                      key="question"
+                      initial={{ opacity: 0, x: -30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -30 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-8 space-y-6"
+                    >
+                      <div className="space-y-3">
+                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Вопрос</Label>
+                        <Textarea
+                          value={text}
+                          onChange={(e) => {
+                            setText(e.target.value);
+                            onUpdate({ text: e.target.value });
+                          }}
+                          placeholder="Текст вопроса..."
+                          className="min-h-[200px] text-2xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
+                        />
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="answer"
+                      initial={{ opacity: 0, x: 30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 30 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-8 space-y-6"
+                    >
+                      {/* Answer text */}
+                      <div className="space-y-3">
+                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Ответ</Label>
+                        <Textarea
+                          value={answerText}
+                          onChange={(e) => {
+                            setAnswerText(e.target.value);
+                            onUpdate({ answerText: e.target.value });
+                          }}
+                          placeholder="Текст ответа..."
+                          className="min-h-[120px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
+                        />
+                      </div>
 
-                {/* Answer URL */}
-                <div className="space-y-4">
-                  <Label className="text-lg text-muted-foreground uppercase tracking-wider">Ссылка на ответ / медиа</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={answerUrl}
-                      onChange={(e) => {
-                        setAnswerUrl(e.target.value);
-                        onUpdate({ answerUrl: e.target.value });
-                      }}
-                      placeholder="https://..."
-                      className="bg-background border-accent/20 focus-visible:ring-accent"
-                    />
-                    {answerUrl && (
-                      <Button
-                        variant="secondary"
-                        onClick={() => window.open(answerUrl, "_blank")}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Открыть
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Award points section */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-primary" />
-                    <Label className="text-lg text-muted-foreground uppercase tracking-wider">Начислить очки игроку</Label>
-                  </div>
-                  <div className="grid grid-cols-5 gap-3">
-                    {players.map((player, idx) => {
-                      const isAwarded = awarded === idx;
-                      return (
-                        <motion.button
-                          key={player.id}
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.96 }}
-                          onClick={() => handleAward(idx)}
-                          disabled={awarded !== null}
-                          className={`
-                            flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2
-                            font-display transition-all duration-200
-                            ${isAwarded
-                              ? "border-primary bg-primary/20 shadow-[0_0_20px_hsla(45,93%,47%,0.5)]"
-                              : "border-accent/30 bg-secondary/30 hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_15px_hsla(45,93%,47%,0.2)]"
-                            }
-                            ${awarded !== null && !isAwarded ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
-                          `}
-                        >
-                          {isAwarded ? (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                      {/* Answer URL */}
+                      <div className="space-y-3">
+                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Ссылка на медиа</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={answerUrl}
+                            onChange={(e) => {
+                              setAnswerUrl(e.target.value);
+                              onUpdate({ answerUrl: e.target.value });
+                            }}
+                            placeholder="https://..."
+                            className="bg-background border-accent/20 focus-visible:ring-accent"
+                          />
+                          {answerUrl && (
+                            <Button
+                              variant="secondary"
+                              onClick={() => window.open(answerUrl, "_blank")}
                             >
-                              <Trophy className="w-6 h-6 text-primary" />
-                            </motion.div>
-                          ) : (
-                            <span className="text-2xl font-bold text-primary glow-text">+{points}</span>
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Открыть
+                            </Button>
                           )}
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider truncate w-full text-center">
-                            {player.name}
-                          </span>
-                          <span className="text-xs text-accent/70 font-mono">
-                            {player.score}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
+                        </div>
+                      </div>
+
+                      {/* Award points */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-primary" />
+                          <Label className="text-lg text-muted-foreground uppercase tracking-wider">Начислить очки игроку</Label>
+                        </div>
+                        <div className="grid grid-cols-5 gap-3">
+                          {players.map((player, idx) => {
+                            const isAwarded = awarded === idx;
+                            return (
+                              <motion.button
+                                key={player.id}
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
+                                onClick={() => handleAward(idx)}
+                                disabled={awarded !== null}
+                                className={`
+                                  flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2
+                                  font-display transition-all duration-200
+                                  ${isAwarded
+                                    ? "border-primary bg-primary/20 shadow-[0_0_20px_hsla(45,93%,47%,0.5)]"
+                                    : "border-accent/30 bg-secondary/30 hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_15px_hsla(45,93%,47%,0.2)]"
+                                  }
+                                  ${awarded !== null && !isAwarded ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+                                `}
+                              >
+                                {isAwarded ? (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                                  >
+                                    <Trophy className="w-6 h-6 text-primary" />
+                                  </motion.div>
+                                ) : (
+                                  <span className="text-2xl font-bold text-primary glow-text">+{points}</span>
+                                )}
+                                <span className="text-xs text-muted-foreground uppercase tracking-wider truncate w-full text-center">
+                                  {player.name}
+                                </span>
+                                <span className="text-xs text-accent/70 font-mono">
+                                  {player.score}
+                                </span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Footer */}
               <div className="p-6 border-t border-border bg-muted/30 flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                  Изменения сохраняются автоматически.
-                </div>
-                <div className="flex gap-4">
-                  <Button variant="outline" onClick={onClose} size="lg">
-                    Закрыть
-                  </Button>
+                <Button variant="outline" onClick={onClose} size="lg">
+                  Закрыть
+                </Button>
+
+                {stage === "question" ? (
                   <Button
-                    variant={question.used ? "secondary" : "default"}
                     size="lg"
-                    onClick={handleMarkUsed}
+                    onClick={() => setStage("answer")}
+                    className="font-bold tracking-wide gap-2"
+                  >
+                    <Eye className="w-5 h-5" />
+                    Показать ответ
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={handleSkip}
                     className="font-bold tracking-wide"
                   >
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    {question.used ? "Снять отметку" : "Отметить сыгранным"}
+                    Никто не ответил — закрыть
                   </Button>
-                </div>
+                )}
               </div>
             </motion.div>
           </div>
