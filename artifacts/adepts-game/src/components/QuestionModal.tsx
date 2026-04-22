@@ -20,6 +20,12 @@ interface QuestionModalProps {
 
 type Stage = "question" | "answer";
 
+function resolveUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith("http") || url.startsWith("//")) return url;
+  return import.meta.env.BASE_URL + url.replace(/^\//, "");
+}
+
 export function QuestionModal({
   isOpen,
   themeName,
@@ -138,7 +144,7 @@ export function QuestionModal({
                           <Label className="text-lg text-muted-foreground uppercase tracking-wider">Медиа к вопросу</Label>
                           <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
                             <img
-                              src={question.questionUrl}
+                              src={resolveUrl(question.questionUrl)}
                               alt="Question media"
                               className="max-h-72 max-w-full object-contain"
                               onError={(e) => {
@@ -211,14 +217,14 @@ export function QuestionModal({
                           <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
                             {/\.(mp4|webm|ogg)$/i.test(answerUrl) ? (
                               <video
-                                src={answerUrl}
+                                src={resolveUrl(answerUrl)}
                                 controls
                                 autoPlay
                                 className="max-h-72 max-w-full"
                               />
                             ) : (
                               <img
-                                src={answerUrl}
+                                src={resolveUrl(answerUrl)}
                                 alt="Answer media"
                                 className="max-h-56 max-w-full object-contain"
                                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
