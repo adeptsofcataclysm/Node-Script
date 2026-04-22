@@ -14,6 +14,10 @@ export default function Home() {
     resetScores,
   } = useGameState();
 
+  const handleAwardPoints = (playerIndex: number, points: number) => {
+    updatePlayerScore(playerIndex, state.players[playerIndex].score + points);
+  };
+
   useEffect(() => {
     fetch("/api/track/adepts-game", { method: "POST" }).catch(() => {});
   }, []);
@@ -81,6 +85,7 @@ export default function Home() {
               activeQuestion.questionIndex
             ]
           }
+          players={state.players}
           onClose={closeQuestion}
           onUpdate={(data) =>
             updateQuestion(
@@ -89,6 +94,7 @@ export default function Home() {
               data
             )
           }
+          onAwardPoints={handleAwardPoints}
         />
       )}
     </div>
