@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,65 @@ interface ScoreboardProps {
   onResetScores: () => void;
 }
 
+function ScoreInput({
+  score,
+  onCommit,
+}: {
+  score: number;
+  onCommit: (val: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [raw, setRaw] = useState(String(score));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editing) setRaw(String(score));
+  }, [score, editing]);
+
+  const open = () => {
+    setRaw(String(score));
+    setEditing(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 0);
+  };
+
+  const commit = () => {
+    const n = parseInt(raw, 10);
+    onCommit(isNaN(n) ? score : n);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { setEditing(false); }
+        }}
+        className="text-center font-display text-4xl font-bold w-24 px-1 rounded-md outline-none bg-background/90 border-2 border-primary glow-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        style={{ color: "hsl(var(--primary))" }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={open}
+      title="Нажмите, чтобы ввести очки"
+      className="font-display text-4xl font-bold glow-text w-24 text-center cursor-pointer select-none hover:opacity-75 transition-opacity block"
+    >
+      {score}
+    </span>
+  );
+}
+
 export function Scoreboard({
   players,
   onUpdateName,
@@ -18,23 +77,6 @@ export function Scoreboard({
   onResetScores,
 }: ScoreboardProps) {
   const [confirmReset, setConfirmReset] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const startEdit = (index: number, currentScore: number) => {
-    setEditingIndex(index);
-    setEditValue(String(currentScore));
-    setTimeout(() => {
-      inputRef.current?.select();
-    }, 0);
-  };
-
-  const commitEdit = (index: number) => {
-    const parsed = parseInt(editValue, 10);
-    onUpdateScore(index, isNaN(parsed) ? 0 : parsed);
-    setEditingIndex(null);
-  };
 
   return (
     <div className="w-full bg-card/80 border-t border-border p-4 backdrop-blur-sm">
@@ -99,29 +141,10 @@ export function Scoreboard({
                 <Minus className="w-4 h-4" />
               </Button>
 
-              {editingIndex === index ? (
-                <input
-                  ref={inputRef}
-                  type="number"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onBlur={() => commitEdit(index)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitEdit(index);
-                    if (e.key === "Escape") setEditingIndex(null);
-                  }}
-                  className="text-center font-display text-4xl font-bold bg-background/80 border border-primary glow-text w-24 px-1 rounded-md outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  style={{ color: "hsl(var(--primary))" }}
-                />
-              ) : (
-                <span
-                  onDoubleClick={() => startEdit(index, player.score)}
-                  title="Двойной клик для ввода"
-                  className="font-display text-4xl font-bold glow-text w-24 text-center cursor-pointer select-none hover:opacity-80 transition-opacity"
-                >
-                  {player.score}
-                </span>
-              )}
+              <ScoreInput
+                score={player.score}
+                onCommit={(val) => onUpdateScore(index, val)}
+              />
 
               <Button
                 variant="ghost"
