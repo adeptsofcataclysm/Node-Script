@@ -50,7 +50,7 @@ export function QuestionModal({
     onAwardPoints(playerIndex, points);
     onUpdate({ text, answerText, answerUrl, used: true });
     setAwarded(playerIndex);
-    setTimeout(() => onClose(), 900);
+    onClose();
   };
 
   const handleSkip = () => {
