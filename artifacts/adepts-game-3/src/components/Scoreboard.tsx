@@ -86,7 +86,7 @@ export function Scoreboard({
                 type="number"
                 value={player.score}
                 onChange={(e) => onUpdateScore(index, parseInt(e.target.value) || 0)}
-                className="text-center font-display text-4xl font-bold bg-transparent border-none glow-text w-24 px-0 focus-visible:ring-0"
+                className="text-center font-display text-4xl font-bold bg-transparent border border-transparent hover:border-border/60 focus:border-primary glow-text w-24 px-1 focus-visible:ring-0 transition-colors rounded-md"
               />
               
               <Button
