@@ -8,7 +8,7 @@ import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
 
-const BG_URL = "url('https://thumbs.dreamstime.com/b/ilustraci%C3%B3n-digital-de-la-caja-pandora-con-luz-m%C3%A1gica-p%C3%BArpura-enciende-llamas-que-escapan-fantas%C3%ADa-esfera-brillante-energ%C3%ADa-385669089.jpg?w=768')";
+const BG_URL = "url('/pandora-bg.png')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
 
 export function GamePage() {
