@@ -175,52 +175,53 @@ export function QuestionModal({
                           />
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center px-12 py-12 min-h-[240px]">
-                          <motion.p
-                            key={text}
-                            initial={{ opacity: 0, y: 28, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                            className={`font-display ${questionFontSize} text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap`}
-                            style={{ textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
-                          >
-                            {text || "—"}
-                          </motion.p>
-                        </div>
-                      )}
-
-                      {question.questionUrl && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.97 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.2, duration: 0.35 }}
-                          className="px-8 pb-8 flex justify-center"
-                        >
-                          {isVideo(question.questionUrl) ? (
-                            <video
-                              src={resolveUrl(question.questionUrl)}
-                              controls
-                              autoPlay
-                              preload="auto"
-                              className="max-h-80 rounded-xl shadow-lg"
-                            />
-                          ) : (
-                            <img
-                              src={resolveUrl(question.questionUrl)}
-                              alt="Question media"
-                              className="max-h-72 rounded-xl object-contain shadow-lg"
-                              onError={(e) => {
-                                const el = e.currentTarget as HTMLImageElement;
-                                el.style.display = "none";
-                                const link = document.createElement("a");
-                                link.href = question.questionUrl;
-                                link.target = "_blank";
-                                link.textContent = "Открыть медиа";
-                                el.parentNode?.appendChild(link);
-                              }}
-                            />
+                        <>
+                          {question.questionUrl && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.97 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.1, duration: 0.35 }}
+                              className="px-8 pt-8 flex justify-center"
+                            >
+                              {isVideo(question.questionUrl) ? (
+                                <video
+                                  src={resolveUrl(question.questionUrl)}
+                                  controls
+                                  autoPlay
+                                  preload="auto"
+                                  className="max-h-80 rounded-xl shadow-lg"
+                                />
+                              ) : (
+                                <img
+                                  src={resolveUrl(question.questionUrl)}
+                                  alt="Question media"
+                                  className="max-h-72 rounded-xl object-contain shadow-lg"
+                                  onError={(e) => {
+                                    const el = e.currentTarget as HTMLImageElement;
+                                    el.style.display = "none";
+                                    const link = document.createElement("a");
+                                    link.href = question.questionUrl;
+                                    link.target = "_blank";
+                                    link.textContent = "Открыть медиа";
+                                    el.parentNode?.appendChild(link);
+                                  }}
+                                />
+                              )}
+                            </motion.div>
                           )}
-                        </motion.div>
+                          <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[180px]">
+                            <motion.p
+                              key={text}
+                              initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                              className={`font-display ${questionFontSize} text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap`}
+                              style={{ textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
+                            >
+                              {text || "—"}
+                            </motion.p>
+                          </div>
+                        </>
                       )}
                     </motion.div>
                   ) : (
@@ -260,52 +261,53 @@ export function QuestionModal({
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[180px]">
-                          <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
-                            {answerWords.map((word, i) => (
-                              <motion.span
-                                key={i}
-                                initial={{ opacity: 0, y: 32, scale: 0.8 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{
-                                  delay: i * 0.07,
-                                  type: "spring",
-                                  damping: 16,
-                                  stiffness: 300,
-                                }}
-                                className={`font-display ${answerFontSize} text-primary glow-text leading-tight`}
-                              >
-                                {word}
-                              </motion.span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {answerUrl && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.97 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: answerWords.length * 0.07 + 0.1, duration: 0.35 }}
-                          className="px-8 pb-4 flex justify-center"
-                        >
-                          {isVideo(answerUrl) ? (
-                            <video
-                              src={resolveUrl(answerUrl)}
-                              controls
-                              autoPlay
-                              preload="auto"
-                              className="max-h-80 rounded-xl shadow-lg"
-                            />
-                          ) : (
-                            <img
-                              src={resolveUrl(answerUrl)}
-                              alt="Answer media"
-                              className="max-h-64 rounded-xl object-contain shadow-lg"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                            />
+                        <>
+                          {answerUrl && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.97 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.1, duration: 0.35 }}
+                              className="px-8 pt-8 flex justify-center"
+                            >
+                              {isVideo(answerUrl) ? (
+                                <video
+                                  src={resolveUrl(answerUrl)}
+                                  controls
+                                  autoPlay
+                                  preload="auto"
+                                  className="max-h-80 rounded-xl shadow-lg"
+                                />
+                              ) : (
+                                <img
+                                  src={resolveUrl(answerUrl)}
+                                  alt="Answer media"
+                                  className="max-h-64 rounded-xl object-contain shadow-lg"
+                                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                                />
+                              )}
+                            </motion.div>
                           )}
-                        </motion.div>
+                          <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[140px]">
+                            <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
+                              {answerWords.map((word, i) => (
+                                <motion.span
+                                  key={i}
+                                  initial={{ opacity: 0, y: 32, scale: 0.8 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  transition={{
+                                    delay: i * 0.07,
+                                    type: "spring",
+                                    damping: 16,
+                                    stiffness: 300,
+                                  }}
+                                  className={`font-display ${answerFontSize} text-primary glow-text leading-tight`}
+                                >
+                                  {word}
+                                </motion.span>
+                              ))}
+                            </div>
+                          </div>
+                        </>
                       )}
 
                       {/* Award points */}
