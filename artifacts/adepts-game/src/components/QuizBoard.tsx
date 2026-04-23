@@ -104,27 +104,22 @@ export function QuizBoard({
               </span>
             )}
 
-            {/* Theme icon — right side, 90% height, floating animation */}
+            {/* Theme icon — right side, fades into card background */}
             {THEME_ICONS[theme.toLowerCase()] && (
               <motion.img
                 src={THEME_ICONS[theme.toLowerCase()]}
                 alt=""
                 className="absolute right-0 w-auto object-contain pointer-events-none select-none"
                 style={{
-                  height: "90%",
-                  top: "5%",
-                  filter: "drop-shadow(0 0 2px hsla(40,90%,50%,0.15))",
+                  height: "95%",
+                  top: "2.5%",
+                  maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
+                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
+                  filter: "drop-shadow(2px 0 12px hsla(280,60%,30%,0.5))",
                 }}
-                animate={{
-                  y: [0, -5, 0, 3, 0],
-                  rotate: [0, 1.5, 0, -1, 0],
-                }}
-                transition={{
-                  duration: 3.5 + (tIdx % 3) * 0.4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: tIdx * 0.25,
-                }}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" }}
               />
             )}
           </motion.div>
