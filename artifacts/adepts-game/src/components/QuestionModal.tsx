@@ -189,13 +189,13 @@ export function QuestionModal({
                                   controls
                                   autoPlay
                                   preload="auto"
-                                  className="max-h-80 rounded-xl shadow-lg"
+                                  className="max-h-[400px] rounded-xl shadow-lg"
                                 />
                               ) : (
                                 <img
                                   src={resolveUrl(question.questionUrl)}
                                   alt="Question media"
-                                  className="max-h-72 rounded-xl object-contain shadow-lg"
+                                  className="max-h-[360px] rounded-xl object-contain shadow-lg"
                                   onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
                                     el.style.display = "none";
