@@ -493,7 +493,20 @@ export function QuestionModal({
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.25, type: "spring", damping: 18, stiffness: 260 }}
                     >
-                      <CountdownTimer seconds={countdown} />
+                      {countdown === 0 ? (
+                        <motion.span
+                          key="expired"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ type: "spring", damping: 14, stiffness: 240 }}
+                          className="text-sm font-bold uppercase tracking-widest whitespace-nowrap"
+                          style={{ color: "hsl(0, 75%, 55%)", textShadow: "0 0 12px hsla(0,75%,55%,0.6)" }}
+                        >
+                          Время истекло!
+                        </motion.span>
+                      ) : (
+                        <CountdownTimer seconds={countdown} />
+                      )}
                     </motion.div>
                   )}
                 </div>
