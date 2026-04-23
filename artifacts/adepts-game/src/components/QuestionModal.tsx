@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, Trophy, ChevronRight, Eye } from "lucide-react";
+import { X, ExternalLink, Trophy, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Question, Player } from "../hooks/useGameState";
 
 interface QuestionModalProps {
@@ -26,6 +25,17 @@ function resolveUrl(url: string): string {
   return import.meta.env.BASE_URL + url.replace(/^\//, "");
 }
 
+function isVideo(url: string) {
+  return /\.(mp4|webm|ogg)$/i.test(url);
+}
+
+function adaptiveSize(str: string, sizes: [number, string][], fallback: string) {
+  for (const [limit, cls] of sizes) {
+    if (str.length <= limit) return cls;
+  }
+  return fallback;
+}
+
 export function QuestionModal({
   isOpen,
   themeName,
@@ -37,6 +47,7 @@ export function QuestionModal({
   onAwardPoints,
 }: QuestionModalProps) {
   const [stage, setStage] = useState<Stage>("question");
+  const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState("");
   const [answerText, setAnswerText] = useState("");
   const [answerUrl, setAnswerUrl] = useState("");
@@ -49,6 +60,7 @@ export function QuestionModal({
       setAnswerUrl(question.answerUrl || "");
       setAwarded(null);
       setStage("question");
+      setIsEditing(false);
     }
   }, [isOpen, question]);
 
@@ -64,6 +76,20 @@ export function QuestionModal({
     onClose();
   };
 
+  const questionFontSize = adaptiveSize(text, [
+    [40, "text-5xl"],
+    [80, "text-4xl"],
+    [140, "text-3xl"],
+  ], "text-2xl");
+
+  const answerFontSize = adaptiveSize(answerText, [
+    [20, "text-6xl"],
+    [40, "text-5xl"],
+    [80, "text-4xl"],
+  ], "text-3xl");
+
+  const answerWords = answerText.split(/\s+/).filter(Boolean);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -77,42 +103,52 @@ export function QuestionModal({
           />
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.92, opacity: 0, y: 24 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full max-w-4xl bg-card border-2 border-accent/40 rounded-xl shadow-[0_0_50px_hsla(280,65%,50%,0.15)] pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
+              exit={{ scale: 0.92, opacity: 0, y: 24 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              className="w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col max-h-[92vh]"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between px-8 py-5 border-b border-border/60 bg-muted/20">
+                <div className="flex items-center gap-6">
                   <div>
-                    <div className="text-sm font-bold text-accent uppercase tracking-widest mb-1">
+                    <div className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">
                       {themeName}
                     </div>
-                    <div className="font-display text-4xl text-primary glow-text">
-                      {points} Points
+                    <div className="font-display text-5xl text-primary glow-text leading-none">
+                      {points}
                     </div>
                   </div>
-                  {/* Stage indicator */}
-                  <div className="flex items-center gap-2 ml-6">
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${stage === "question" ? "bg-primary/20 text-primary border border-primary/50" : "bg-muted/30 text-muted-foreground border border-border"}`}>
+                  <div className="flex items-center gap-2 ml-2">
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${stage === "question" ? "bg-primary/20 text-primary border-primary/50" : "bg-muted/30 text-muted-foreground border-border"}`}>
                       Вопрос
                     </div>
                     <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${stage === "answer" ? "bg-primary/20 text-primary border border-primary/50" : "bg-muted/30 text-muted-foreground border border-border"}`}>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${stage === "answer" ? "bg-primary/20 text-primary border-primary/50" : "bg-muted/30 text-muted-foreground border-border"}`}>
                       Ответ
                     </div>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className="rounded-full hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <X className="w-6 h-6" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsEditing((v) => !v)}
+                    title={isEditing ? "Режим просмотра" : "Редактировать"}
+                    className={`rounded-full transition-colors ${isEditing ? "bg-accent/20 text-accent hover:bg-accent/30" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
               </div>
 
               {/* Body */}
@@ -121,137 +157,164 @@ export function QuestionModal({
                   {stage === "question" ? (
                     <motion.div
                       key="question"
-                      initial={{ opacity: 0, x: -30 }}
+                      initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -30 }}
-                      transition={{ duration: 0.2 }}
-                      className="p-8 space-y-6"
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.22 }}
                     >
-                      <div className="space-y-3">
-                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Вопрос</Label>
-                        <Textarea
-                          value={text}
-                          onChange={(e) => {
-                            setText(e.target.value);
-                            onUpdate({ text: e.target.value });
-                          }}
-                          placeholder="Текст вопроса..."
-                          className="min-h-[160px] text-2xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
-                        />
-                      </div>
-                      {question.questionUrl && (
-                        <div className="space-y-3">
-                          <Label className="text-lg text-muted-foreground uppercase tracking-wider">Медиа к вопросу</Label>
-                          <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
-                            {/\.(mp4|webm|ogg)$/i.test(question.questionUrl) ? (
-                              <video
-                                src={resolveUrl(question.questionUrl)}
-                                controls
-                                autoPlay
-                                preload="auto"
-                                className="max-h-72 max-w-full"
-                              />
-                            ) : (
-                              <>
-                                <img
-                                  src={resolveUrl(question.questionUrl)}
-                                  alt="Question media"
-                                  className="max-h-72 max-w-full object-contain"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                                    const btn = (e.currentTarget as HTMLImageElement).nextElementSibling as HTMLElement;
-                                    if (btn) btn.style.display = "flex";
-                                  }}
-                                />
-                                <a
-                                  href={question.questionUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ display: "none" }}
-                                  className="flex items-center gap-2 p-4 text-primary hover:text-accent transition-colors"
-                                >
-                                  <ExternalLink className="w-5 h-5" />
-                                  Открыть медиа
-                                </a>
-                              </>
-                            )}
-                          </div>
+                      {isEditing ? (
+                        <div className="p-8">
+                          <Textarea
+                            value={text}
+                            onChange={(e) => {
+                              setText(e.target.value);
+                              onUpdate({ text: e.target.value });
+                            }}
+                            placeholder="Текст вопроса..."
+                            className="min-h-[160px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
+                          />
                         </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center px-12 py-12 min-h-[240px]">
+                          <motion.p
+                            key={text}
+                            initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                            className={`font-display ${questionFontSize} text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap`}
+                            style={{ textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
+                          >
+                            {text || "—"}
+                          </motion.p>
+                        </div>
+                      )}
+
+                      {question.questionUrl && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.97 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.2, duration: 0.35 }}
+                          className="px-8 pb-8 flex justify-center"
+                        >
+                          {isVideo(question.questionUrl) ? (
+                            <video
+                              src={resolveUrl(question.questionUrl)}
+                              controls
+                              autoPlay
+                              preload="auto"
+                              className="max-h-80 rounded-xl shadow-lg"
+                            />
+                          ) : (
+                            <img
+                              src={resolveUrl(question.questionUrl)}
+                              alt="Question media"
+                              className="max-h-72 rounded-xl object-contain shadow-lg"
+                              onError={(e) => {
+                                const el = e.currentTarget as HTMLImageElement;
+                                el.style.display = "none";
+                                const link = document.createElement("a");
+                                link.href = question.questionUrl;
+                                link.target = "_blank";
+                                link.textContent = "Открыть медиа";
+                                el.parentNode?.appendChild(link);
+                              }}
+                            />
+                          )}
+                        </motion.div>
                       )}
                     </motion.div>
                   ) : (
                     <motion.div
                       key="answer"
-                      initial={{ opacity: 0, x: 30 }}
+                      initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 30 }}
-                      transition={{ duration: 0.2 }}
-                      className="p-8 space-y-6"
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.22 }}
                     >
-                      {/* Answer text */}
-                      <div className="space-y-3">
-                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Ответ</Label>
-                        <Textarea
-                          value={answerText}
-                          onChange={(e) => {
-                            setAnswerText(e.target.value);
-                            onUpdate({ answerText: e.target.value });
-                          }}
-                          placeholder="Текст ответа..."
-                          className="min-h-[120px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
-                        />
-                      </div>
-
-                      {/* Answer URL */}
-                      <div className="space-y-3">
-                        <Label className="text-lg text-muted-foreground uppercase tracking-wider">Медиа к ответу</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={answerUrl}
+                      {isEditing ? (
+                        <div className="p-8 space-y-4">
+                          <Textarea
+                            value={answerText}
                             onChange={(e) => {
-                              setAnswerUrl(e.target.value);
-                              onUpdate({ answerUrl: e.target.value });
+                              setAnswerText(e.target.value);
+                              onUpdate({ answerText: e.target.value });
                             }}
-                            placeholder="https://..."
-                            className="bg-background border-accent/20 focus-visible:ring-accent"
+                            placeholder="Текст ответа..."
+                            className="min-h-[100px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
                           />
-                          {answerUrl && (
-                            <Button
-                              variant="secondary"
-                              onClick={() => window.open(answerUrl, "_blank")}
-                            >
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              Открыть
-                            </Button>
-                          )}
-                        </div>
-                        {answerUrl && (
-                          <div className="rounded-lg overflow-hidden border border-accent/20 bg-background/50 flex items-center justify-center">
-                            {/\.(mp4|webm|ogg)$/i.test(answerUrl) ? (
-                              <video
-                                src={resolveUrl(answerUrl)}
-                                controls
-                                autoPlay
-                                preload="auto"
-                                className="max-h-72 max-w-full"
-                              />
-                            ) : (
-                              <img
-                                src={resolveUrl(answerUrl)}
-                                alt="Answer media"
-                                className="max-h-56 max-w-full object-contain"
-                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                              />
+                          <div className="flex gap-2">
+                            <Input
+                              value={answerUrl}
+                              onChange={(e) => {
+                                setAnswerUrl(e.target.value);
+                                onUpdate({ answerUrl: e.target.value });
+                              }}
+                              placeholder="URL медиа к ответу (https://... или /file.mp4)"
+                              className="bg-background border-accent/20 focus-visible:ring-accent"
+                            />
+                            {answerUrl && (
+                              <Button variant="secondary" onClick={() => window.open(resolveUrl(answerUrl), "_blank")}>
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[180px]">
+                          <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
+                            {answerWords.map((word, i) => (
+                              <motion.span
+                                key={i}
+                                initial={{ opacity: 0, y: 32, scale: 0.8 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{
+                                  delay: i * 0.07,
+                                  type: "spring",
+                                  damping: 16,
+                                  stiffness: 300,
+                                }}
+                                className={`font-display ${answerFontSize} text-primary glow-text leading-tight`}
+                              >
+                                {word}
+                              </motion.span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {answerUrl && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.97 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: answerWords.length * 0.07 + 0.1, duration: 0.35 }}
+                          className="px-8 pb-4 flex justify-center"
+                        >
+                          {isVideo(answerUrl) ? (
+                            <video
+                              src={resolveUrl(answerUrl)}
+                              controls
+                              autoPlay
+                              preload="auto"
+                              className="max-h-80 rounded-xl shadow-lg"
+                            />
+                          ) : (
+                            <img
+                              src={resolveUrl(answerUrl)}
+                              alt="Answer media"
+                              className="max-h-64 rounded-xl object-contain shadow-lg"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          )}
+                        </motion.div>
+                      )}
 
                       {/* Award points */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="w-5 h-5 text-primary" />
-                          <Label className="text-lg text-muted-foreground uppercase tracking-wider">Начислить очки игроку</Label>
+                      <div className="px-8 pb-8 pt-4 space-y-3 border-t border-border/40 mt-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Trophy className="w-4 h-4 text-primary" />
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            Начислить очки игроку
+                          </span>
                         </div>
                         <div className="grid grid-cols-5 gap-3">
                           {players.map((player, idx) => {
@@ -259,8 +322,8 @@ export function QuestionModal({
                             return (
                               <motion.button
                                 key={player.id}
-                                whileHover={{ scale: 1.04 }}
-                                whileTap={{ scale: 0.96 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={() => handleAward(idx)}
                                 disabled={awarded !== null}
                                 className={`
@@ -301,7 +364,7 @@ export function QuestionModal({
               </div>
 
               {/* Footer */}
-              <div className="p-6 border-t border-border bg-muted/30 flex justify-between items-center">
+              <div className="px-8 py-5 border-t border-border/60 bg-muted/20 flex justify-between items-center">
                 {question.used ? (
                   <Button
                     variant="outline"
@@ -321,8 +384,8 @@ export function QuestionModal({
                 {stage === "question" ? (
                   <Button
                     size="lg"
-                    onClick={() => setStage("answer")}
-                    className="font-bold tracking-wide gap-2"
+                    onClick={() => { setStage("answer"); setIsEditing(false); }}
+                    className="font-bold tracking-wide gap-2 text-base px-8"
                   >
                     <Eye className="w-5 h-5" />
                     Показать ответ
@@ -332,7 +395,7 @@ export function QuestionModal({
                     variant="secondary"
                     size="lg"
                     onClick={handleSkip}
-                    className="font-bold tracking-wide"
+                    className="font-bold tracking-wide text-base"
                   >
                     Никто не ответил — закрыть
                   </Button>
