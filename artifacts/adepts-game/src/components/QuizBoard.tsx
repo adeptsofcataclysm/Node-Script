@@ -8,6 +8,7 @@ const THEME_ICONS: Record<string, string> = {
   "боссы": `${BASE}bossy.png`,
   "пасхалки": `${BASE}pashalki.png`,
   "лор world of warcraft": `${BASE}lor-wow.png`,
+  "лор wow": `${BASE}lor-wow2.png`,
   "всратый косплей": `${BASE}cosplay.png`,
 };
 
