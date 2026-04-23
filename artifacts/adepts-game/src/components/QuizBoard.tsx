@@ -113,8 +113,8 @@ export function QuizBoard({
                 style={{
                   height: "95%",
                   top: "2.5%",
-                  maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
-                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
+                  maskImage: "linear-gradient(to left, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
+                  WebkitMaskImage: "linear-gradient(to left, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
                   filter: "drop-shadow(2px 0 12px hsla(280,60%,30%,0.5))",
                 }}
                 initial={{ opacity: 0, x: 12 }}
