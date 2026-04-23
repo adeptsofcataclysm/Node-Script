@@ -103,7 +103,7 @@ export function QuizBoard({
                 src={THEME_ICONS[theme.toLowerCase()]}
                 alt=""
                 className="absolute right-0 top-0 h-full w-auto object-contain pointer-events-none select-none"
-                style={{ filter: "drop-shadow(0 0 6px hsla(40,90%,50%,0.4))" }}
+                style={{ filter: "drop-shadow(0 0 2px hsla(40,90%,50%,0.15))" }}
               />
             )}
           </motion.div>
