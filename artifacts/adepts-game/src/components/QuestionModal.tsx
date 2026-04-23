@@ -186,7 +186,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-6 lg:px-8 pt-6 lg:pt-8 flex justify-center"
+                              className="px-6 lg:px-8 pt-4 lg:pt-6 flex justify-center"
                             >
                               {isVideo(question.questionUrl) ? (
                                 <video
@@ -195,14 +195,14 @@ export function QuestionModal({
                                   autoPlay
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
-                                  style={{ maxHeight: "38vh" }}
+                                  style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
                                 />
                               ) : (
                                 <img
                                   src={resolveUrl(question.questionUrl)}
                                   alt="Question media"
                                   className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={{ maxHeight: "34vh", maxWidth: "100%" }}
+                                  style={{ maxHeight: "clamp(100px, 27vh, 360px)", maxWidth: "100%" }}
                                   onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
                                     el.style.display = "none";
@@ -216,7 +216,7 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-6 lg:py-10" style={{ minHeight: "12vh" }}>
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
                             <motion.p
                               key={text}
                               initial={{ opacity: 0, y: 28, scale: 0.96 }}
@@ -274,7 +274,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-6 lg:px-8 pt-6 lg:pt-8 flex justify-center"
+                              className="px-6 lg:px-8 pt-4 lg:pt-6 flex justify-center"
                             >
                               {isVideo(answerUrl) ? (
                                 <video
@@ -283,20 +283,20 @@ export function QuestionModal({
                                   autoPlay
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
-                                  style={{ maxHeight: "38vh" }}
+                                  style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
                                 />
                               ) : (
                                 <img
                                   src={resolveUrl(answerUrl)}
                                   alt="Answer media"
                                   className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={{ maxHeight: "30vh", maxWidth: "100%" }}
+                                  style={{ maxHeight: "clamp(100px, 24vh, 320px)", maxWidth: "100%" }}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                                 />
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-6 lg:py-10" style={{ minHeight: "10vh" }}>
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-3 lg:py-6">
                             <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
                               {answerWords.map((word, i) => (
                                 <motion.span
@@ -321,7 +321,7 @@ export function QuestionModal({
                       )}
 
                       {/* Award points */}
-                      <div className="px-5 lg:px-8 pb-6 lg:pb-8 pt-3 lg:pt-4 space-y-3 border-t border-border/40 mt-2">
+                      <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Trophy className="w-4 h-4 text-primary" />
                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
