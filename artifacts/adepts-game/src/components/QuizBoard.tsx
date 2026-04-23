@@ -68,16 +68,6 @@ export function QuizBoard({
               transition={{ duration: 0.3 }}
             />
 
-            {/* Decorative glow dot (only when no icon) */}
-            {!THEME_ICONS[theme.toLowerCase()] && (
-              <div
-                className="absolute left-3 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{
-                  background: "hsla(280,65%,70%,0.9)",
-                  boxShadow: "0 0 8px 2px hsla(280,65%,60%,0.6)",
-                }}
-              />
-            )}
 
             {editingTheme === tIdx ? (
               <input
