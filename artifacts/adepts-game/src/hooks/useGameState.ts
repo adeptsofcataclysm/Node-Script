@@ -97,7 +97,7 @@ const DEFAULT_STATE: GameState = {
     ],
     // Профессии
     [
-      { text: "«Гоблинская» и «Гномская» — о какой профессии идёт речь?", questionUrl: "", answerText: "Инженерия", answerUrl: "", used: false },
+      { text: "«Гоблинская» и «Гномская» — о какой профессии идёт речь?", questionUrl: "", answerText: "Инженерия", answerUrl: "/professions-100-answer.png", used: false },
       { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "", used: false },
       { text: "Какая новая профессия появилась в WotLK?", questionUrl: "", answerText: "Начертание", answerUrl: "", used: false },
       { text: "С помощью какой профессии призывался один из боссов в дополнении TBC?", questionUrl: "", answerText: "Рыбалка", answerUrl: "", used: false },
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 35;
+const DATA_VERSION = 36;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
