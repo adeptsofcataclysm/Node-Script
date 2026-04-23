@@ -70,15 +70,16 @@ export function QuizBoard({
                 onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
                 onBlur={() => setEditingTheme(null)}
                 onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
-                className="w-full bg-transparent outline-none pl-7 pr-3 font-display font-bold uppercase tracking-widest text-foreground"
-                style={{ fontSize: "clamp(0.7rem, 1.2vw, 1.1rem)" }}
+                className="w-full bg-transparent outline-none pl-7 pr-3 uppercase tracking-widest text-foreground"
+                style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
                 placeholder={`Тема ${tIdx + 1}`}
               />
             ) : (
               <span
-                className="pl-7 pr-3 font-display font-bold uppercase tracking-widest text-foreground truncate select-none"
+                className="pl-7 pr-3 uppercase tracking-widest text-foreground truncate select-none"
                 style={{
-                  fontSize: "clamp(0.7rem, 1.2vw, 1.1rem)",
+                  fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
+                  fontFamily: "WarCraft, sans-serif",
                   textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
                 }}
               >

@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'WarCraft';
+  src: url('./assets/WarCraft.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
@@ -42,6 +50,7 @@
 
   --font-sans: var(--app-font-sans);
   --font-display: var(--app-font-display);
+  --font-warcraft: var(--app-font-warcraft);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -52,6 +61,7 @@
 :root {
   --app-font-sans: 'Space Grotesk', sans-serif;
   --app-font-display: 'Cinzel', serif;
+  --app-font-warcraft: 'WarCraft', sans-serif;
   --radius: 0.25rem;
 
   --background: 260 40% 5%;
