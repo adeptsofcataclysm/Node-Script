@@ -90,7 +90,7 @@ const DEFAULT_STATE: GameState = {
     // Локации
     [
       { text: "В какой локации расположен вход в легендарное подземелье «Огненные Недра» (Molten Core)?", questionUrl: "", answerText: "Чёрная гора", answerUrl: "/locations-100-answer.jpg", used: false },
-      { text: "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?", questionUrl: "", answerText: "Оргриммар", answerUrl: "", used: false },
+      { text: "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?", questionUrl: "", answerText: "Оргриммар", answerUrl: "/locations-200-answer.jpg", used: false },
       { text: "Как называлось Мировое древо, у которого располагалась столица ночных эльфов Дарнас?", questionUrl: "", answerText: "Тельдрасил", answerUrl: "", used: false },
       { text: "Через какой перевал в Восточных королевствах можно попасть в локацию Болото Печали, если идти из Сумеречного леса?", questionUrl: "", answerText: "Перевал мёртвого ветра", answerUrl: "", used: false },
       { text: "В какой локации Пандарии игроки могли выращивать собственные овощи и строить отношения с фракцией Земледельцев?", questionUrl: "", answerText: "Ферма солнечной песни", answerUrl: "", used: false },
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 31;
+const DATA_VERSION = 32;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
