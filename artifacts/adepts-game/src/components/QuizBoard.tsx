@@ -46,7 +46,7 @@ export function QuizBoard({
               damping: 22,
               stiffness: 180,
             }}
-            className="w-1/4 relative flex items-center rounded-xl overflow-hidden cursor-text group"
+            className="w-[21%] relative flex items-center rounded-xl overflow-hidden cursor-text group"
             style={{
               background: "linear-gradient(105deg, hsla(270,40%,12%,0.95) 0%, hsla(270,30%,9%,0.7) 100%)",
               borderLeft: "3px solid hsla(280,65%,58%,0.85)",
@@ -101,7 +101,7 @@ export function QuizBoard({
                   alt=""
                   className="flex-shrink-0 w-auto object-contain pointer-events-none select-none"
                   style={{
-                    height: "3.6rem",
+                    height: "3.2rem",
                     filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
                   }}
                   initial={{ opacity: 0, x: 8 }}
@@ -113,7 +113,7 @@ export function QuizBoard({
           </motion.div>
 
           {/* Question point cells */}
-          <div className="w-3/4 grid grid-cols-5 gap-2">
+          <div className="flex-1 grid grid-cols-5 gap-2">
             {questions[tIdx].map((q, qIdx) => {
               const points = (qIdx + 1) * 100;
               return (
