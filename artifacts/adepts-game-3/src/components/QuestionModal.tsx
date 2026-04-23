@@ -29,8 +29,6 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-// Returns a CSS clamp() value that scales with viewport height
-// min stays readable on small screens, mid scales naturally, max caps on large monitors
 function adaptiveFontSize(str: string): string {
   const len = str.length;
   if (len <= 30)  return "clamp(1.8rem, 6vh, 3.75rem)";
@@ -66,6 +64,8 @@ export function QuestionModal({
   const [answerUrl, setAnswerUrl] = useState("");
   const [awarded, setAwarded] = useState<number | null>(null);
 
+  // Initialize local state only when modal opens — NOT on every question update.
+  // Reacting to question prop changes would reset editing mid-type.
   useEffect(() => {
     if (isOpen) {
       setText(question.text || "");
@@ -75,7 +75,14 @@ export function QuestionModal({
       setStage("question");
       setIsEditing(false);
     }
-  }, [isOpen, question]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Save local edits to global state (and thus to socket) only on close
+  const saveAndClose = (extra: Partial<Question> = {}) => {
+    onUpdate({ text, answerText, answerUrl, ...extra });
+    onClose();
+  };
 
   const handleAward = (playerIndex: number) => {
     onAwardPoints(playerIndex, points);
@@ -85,8 +92,11 @@ export function QuestionModal({
   };
 
   const handleSkip = () => {
-    onUpdate({ text, answerText, answerUrl, used: true });
-    onClose();
+    saveAndClose({ used: true });
+  };
+
+  const handleClose = () => {
+    saveAndClose();
   };
 
   const questionFontSizeStyle = adaptiveFontSize(text);
@@ -103,7 +113,7 @@ export function QuestionModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50"
-            onClick={onClose}
+            onClick={handleClose}
           />
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
             <motion.div
@@ -148,7 +158,7 @@ export function QuestionModal({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="rounded-full hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="w-5 h-5" />
@@ -171,10 +181,7 @@ export function QuestionModal({
                         <div className="p-6 lg:p-8">
                           <Textarea
                             value={text}
-                            onChange={(e) => {
-                              setText(e.target.value);
-                              onUpdate({ text: e.target.value });
-                            }}
+                            onChange={(e) => setText(e.target.value)}
                             placeholder="Текст вопроса..."
                             className="min-h-[120px] lg:min-h-[160px] text-lg lg:text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
                           />
@@ -243,20 +250,14 @@ export function QuestionModal({
                         <div className="p-6 lg:p-8 space-y-4">
                           <Textarea
                             value={answerText}
-                            onChange={(e) => {
-                              setAnswerText(e.target.value);
-                              onUpdate({ answerText: e.target.value });
-                            }}
+                            onChange={(e) => setAnswerText(e.target.value)}
                             placeholder="Текст ответа..."
                             className="min-h-[80px] lg:min-h-[100px] text-lg lg:text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
                           />
                           <div className="flex gap-2">
                             <Input
                               value={answerUrl}
-                              onChange={(e) => {
-                                setAnswerUrl(e.target.value);
-                                onUpdate({ answerUrl: e.target.value });
-                              }}
+                              onChange={(e) => setAnswerUrl(e.target.value)}
                               placeholder="URL медиа к ответу (https://... или /file.mp4)"
                               className="bg-background border-accent/20 focus-visible:ring-accent"
                             />
@@ -382,7 +383,7 @@ export function QuestionModal({
                     variant="outline"
                     size="lg"
                     onClick={() => {
-                      onUpdate({ used: false });
+                      onUpdate({ text, answerText, answerUrl, used: false });
                       onClose();
                     }}
                     className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
