@@ -77,16 +77,16 @@ export function QuestionModal({
   };
 
   const questionFontSize = adaptiveSize(text, [
-    [40, "text-5xl"],
-    [80, "text-4xl"],
-    [140, "text-3xl"],
-  ], "text-2xl");
+    [40, "text-4xl lg:text-5xl"],
+    [80, "text-3xl lg:text-4xl"],
+    [140, "text-2xl lg:text-3xl"],
+  ], "text-xl lg:text-2xl");
 
   const answerFontSize = adaptiveSize(answerText, [
-    [20, "text-6xl"],
-    [40, "text-5xl"],
-    [80, "text-4xl"],
-  ], "text-3xl");
+    [20, "text-5xl lg:text-6xl"],
+    [40, "text-4xl lg:text-5xl"],
+    [80, "text-3xl lg:text-4xl"],
+  ], "text-2xl lg:text-3xl");
 
   const answerWords = answerText.split(/\s+/).filter(Boolean);
 
@@ -101,22 +101,23 @@ export function QuestionModal({
             className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50"
             onClick={onClose}
           />
-          <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 24 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0, y: 24 }}
               transition={{ type: "spring", damping: 26, stiffness: 320 }}
-              className="w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col max-h-[92vh]"
+              className="w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col"
+              style={{ maxHeight: "94vh" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-8 py-5 border-b border-border/60 bg-muted/20">
-                <div className="flex items-center gap-6">
+              <div className="flex-shrink-0 flex items-center justify-between px-5 lg:px-8 py-3 lg:py-4 border-b border-border/60 bg-muted/20">
+                <div className="flex items-center gap-4 lg:gap-6">
                   <div>
-                    <div className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">
+                    <div className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-0.5">
                       {themeName}
                     </div>
-                    <div className="font-display text-5xl text-primary glow-text leading-none">
+                    <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
                       {points}
                     </div>
                   </div>
@@ -152,7 +153,7 @@ export function QuestionModal({
               </div>
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <AnimatePresence mode="wait">
                   {stage === "question" ? (
                     <motion.div
@@ -163,7 +164,7 @@ export function QuestionModal({
                       transition={{ duration: 0.22 }}
                     >
                       {isEditing ? (
-                        <div className="p-8">
+                        <div className="p-6 lg:p-8">
                           <Textarea
                             value={text}
                             onChange={(e) => {
@@ -171,7 +172,7 @@ export function QuestionModal({
                               onUpdate({ text: e.target.value });
                             }}
                             placeholder="Текст вопроса..."
-                            className="min-h-[160px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
+                            className="min-h-[120px] lg:min-h-[160px] text-lg lg:text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
                           />
                         </div>
                       ) : (
@@ -181,7 +182,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-8 pt-8 flex justify-center"
+                              className="px-6 lg:px-8 pt-6 lg:pt-8 flex justify-center"
                             >
                               {isVideo(question.questionUrl) ? (
                                 <video
@@ -189,13 +190,15 @@ export function QuestionModal({
                                   controls
                                   autoPlay
                                   preload="auto"
-                                  className="max-h-[400px] rounded-xl shadow-lg"
+                                  className="w-full rounded-xl shadow-lg"
+                                  style={{ maxHeight: "38vh" }}
                                 />
                               ) : (
                                 <img
                                   src={resolveUrl(question.questionUrl)}
                                   alt="Question media"
-                                  className="max-h-[360px] rounded-xl object-contain shadow-lg"
+                                  className="w-auto rounded-xl object-contain shadow-lg"
+                                  style={{ maxHeight: "34vh", maxWidth: "100%" }}
                                   onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
                                     el.style.display = "none";
@@ -209,7 +212,7 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[180px]">
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-6 lg:py-10" style={{ minHeight: "12vh" }}>
                             <motion.p
                               key={text}
                               initial={{ opacity: 0, y: 28, scale: 0.96 }}
@@ -233,7 +236,7 @@ export function QuestionModal({
                       transition={{ duration: 0.22 }}
                     >
                       {isEditing ? (
-                        <div className="p-8 space-y-4">
+                        <div className="p-6 lg:p-8 space-y-4">
                           <Textarea
                             value={answerText}
                             onChange={(e) => {
@@ -241,7 +244,7 @@ export function QuestionModal({
                               onUpdate({ answerText: e.target.value });
                             }}
                             placeholder="Текст ответа..."
-                            className="min-h-[100px] text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
+                            className="min-h-[80px] lg:min-h-[100px] text-lg lg:text-xl resize-y font-sans leading-relaxed bg-background border-accent/20 focus-visible:ring-accent"
                           />
                           <div className="flex gap-2">
                             <Input
@@ -267,7 +270,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-8 pt-8 flex justify-center"
+                              className="px-6 lg:px-8 pt-6 lg:pt-8 flex justify-center"
                             >
                               {isVideo(answerUrl) ? (
                                 <video
@@ -275,19 +278,21 @@ export function QuestionModal({
                                   controls
                                   autoPlay
                                   preload="auto"
-                                  className="max-h-[400px] rounded-xl shadow-lg"
+                                  className="w-full rounded-xl shadow-lg"
+                                  style={{ maxHeight: "38vh" }}
                                 />
                               ) : (
                                 <img
                                   src={resolveUrl(answerUrl)}
                                   alt="Answer media"
-                                  className="max-h-80 rounded-xl object-contain shadow-lg"
+                                  className="w-auto rounded-xl object-contain shadow-lg"
+                                  style={{ maxHeight: "30vh", maxWidth: "100%" }}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                                 />
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-12 py-10 min-h-[140px]">
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-6 lg:py-10" style={{ minHeight: "10vh" }}>
                             <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
                               {answerWords.map((word, i) => (
                                 <motion.span
@@ -311,14 +316,14 @@ export function QuestionModal({
                       )}
 
                       {/* Award points */}
-                      <div className="px-8 pb-8 pt-4 space-y-3 border-t border-border/40 mt-4">
+                      <div className="px-5 lg:px-8 pb-6 lg:pb-8 pt-3 lg:pt-4 space-y-3 border-t border-border/40 mt-2">
                         <div className="flex items-center gap-2 mb-2">
                           <Trophy className="w-4 h-4 text-primary" />
                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             Начислить очки игроку
                           </span>
                         </div>
-                        <div className="grid grid-cols-5 gap-3">
+                        <div className="grid grid-cols-5 gap-2 lg:gap-3">
                           {players.map((player, idx) => {
                             const isAwarded = awarded === idx;
                             return (
@@ -329,7 +334,7 @@ export function QuestionModal({
                                 onClick={() => handleAward(idx)}
                                 disabled={awarded !== null}
                                 className={`
-                                  flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2
+                                  flex flex-col items-center justify-center gap-1 lg:gap-2 p-2 lg:p-4 rounded-xl border-2
                                   font-display transition-all duration-200
                                   ${isAwarded
                                     ? "border-primary bg-primary/20 shadow-[0_0_20px_hsla(45,93%,47%,0.5)]"
@@ -344,10 +349,10 @@ export function QuestionModal({
                                     animate={{ scale: 1 }}
                                     transition={{ type: "spring", damping: 12, stiffness: 200 }}
                                   >
-                                    <Trophy className="w-6 h-6 text-primary" />
+                                    <Trophy className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
                                   </motion.div>
                                 ) : (
-                                  <span className="text-2xl font-bold text-primary glow-text">+{points}</span>
+                                  <span className="text-xl lg:text-2xl font-bold text-primary glow-text">+{points}</span>
                                 )}
                                 <span className="text-xs text-muted-foreground uppercase tracking-wider truncate w-full text-center">
                                   {player.name}
@@ -366,7 +371,7 @@ export function QuestionModal({
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-5 border-t border-border/60 bg-muted/20 flex justify-between items-center">
+              <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-5 border-t border-border/60 bg-muted/20 flex justify-between items-center">
                 {question.used ? (
                   <Button
                     variant="outline"
@@ -387,7 +392,7 @@ export function QuestionModal({
                   <Button
                     size="lg"
                     onClick={() => { setStage("answer"); setIsEditing(false); }}
-                    className="font-bold tracking-wide gap-2 text-base px-8"
+                    className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8"
                   >
                     <Eye className="w-5 h-5" />
                     Показать ответ

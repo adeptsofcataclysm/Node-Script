@@ -51,20 +51,20 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col text-foreground">
-      {/* Hidden video preloader — buffers all videos in background */}
+    <div className="h-screen flex flex-col text-foreground overflow-hidden">
+      {/* Hidden video preloader */}
       <div style={{ display: "none" }} aria-hidden="true">
         {videoUrls.map((url) => (
           <video key={url} src={url} preload="auto" muted />
         ))}
       </div>
-      {/* Fixed online indicator — same style as other pages */}
+      {/* Fixed online indicator */}
       <div style={{ position: "fixed", top: 20, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />
         Онлайн
       </div>
 
-      <header className="w-full flex items-center gap-6 px-6 py-3 bg-card/80 border-b border-border backdrop-blur-sm">
+      <header className="flex-shrink-0 w-full flex items-center gap-6 px-6 py-3 bg-card/80 border-b border-border backdrop-blur-sm">
         <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
@@ -73,7 +73,7 @@ export default function Home() {
         </span>
       </header>
 
-      <main className="flex-1 pt-4 pb-4 overflow-y-auto">
+      <main className="flex-1 min-h-0 py-3">
         <QuizBoard
           themes={state.themes}
           questions={state.questions}
@@ -82,7 +82,7 @@ export default function Home() {
         />
       </main>
 
-      <div className="w-full">
+      <div className="flex-shrink-0 w-full">
         <Scoreboard
           players={state.players}
           onUpdateName={updatePlayerName}
