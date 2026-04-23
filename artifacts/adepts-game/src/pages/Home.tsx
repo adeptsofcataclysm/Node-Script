@@ -1,8 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "../components/Scoreboard";
 import { QuizBoard } from "../components/QuizBoard";
 import { QuestionModal } from "../components/QuestionModal";
+
+function resolveUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith("http") || url.startsWith("//")) return url;
+  return import.meta.env.BASE_URL + url.replace(/^\//, "");
+}
 
 export default function Home() {
   const {
@@ -17,6 +23,15 @@ export default function Home() {
   const handleAwardPoints = (playerIndex: number, points: number) => {
     updatePlayerScore(playerIndex, state.players[playerIndex].score + points);
   };
+
+  const videoUrls = useMemo(() => {
+    const urls = new Set<string>();
+    state.questions.flat().forEach((q) => {
+      if (q.questionUrl && /\.(mp4|webm|ogg)$/i.test(q.questionUrl)) urls.add(resolveUrl(q.questionUrl));
+      if (q.answerUrl && /\.(mp4|webm|ogg)$/i.test(q.answerUrl)) urls.add(resolveUrl(q.answerUrl));
+    });
+    return [...urls];
+  }, [state.questions]);
 
   useEffect(() => {
     fetch("/api/track/adepts-game", { method: "POST" }).catch(() => {});
@@ -37,6 +52,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col text-foreground">
+      {/* Hidden video preloader — buffers all videos in background */}
+      <div style={{ display: "none" }} aria-hidden="true">
+        {videoUrls.map((url) => (
+          <video key={url} src={url} preload="auto" muted />
+        ))}
+      </div>
       {/* Fixed online indicator — same style as other pages */}
       <div style={{ position: "fixed", top: 20, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />

@@ -148,6 +148,7 @@ export function QuestionModal({
                                 src={resolveUrl(question.questionUrl)}
                                 controls
                                 autoPlay
+                                preload="auto"
                                 className="max-h-72 max-w-full"
                               />
                             ) : (
@@ -231,6 +232,7 @@ export function QuestionModal({
                                 src={resolveUrl(answerUrl)}
                                 controls
                                 autoPlay
+                                preload="auto"
                                 className="max-h-72 max-w-full"
                               />
                             ) : (
