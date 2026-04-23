@@ -32,7 +32,7 @@ const DEFAULT_STATE: GameState = {
     "Боссы",
     "Пасхалки",
     "Цитаты и Фразы",
-    "Лор World of Warcraft",
+    "Лор WOW",
     "Всратый косплей",
     "Халява",
     "Локации",
@@ -63,7 +63,7 @@ const DEFAULT_STATE: GameState = {
       { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "/3x3.mp4", used: false },
       { text: "Закончите цитату:\nYou think you do, [...]", questionUrl: "", answerText: "but you don't.", answerUrl: "/you-think.mp4", used: false },
     ],
-    // Лор World of Warcraft
+    // Лор WOW
     [
       { text: "Как назывался единый континент на Азероте до Великого Раскола?", questionUrl: "", answerText: "Калимдор", answerUrl: "", used: false },
       { text: "Чем закончилась Первая война против орды?", questionUrl: "", answerText: "Разрушением Штормграда", answerUrl: "", used: false },
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 15;
+const DATA_VERSION = 16;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
