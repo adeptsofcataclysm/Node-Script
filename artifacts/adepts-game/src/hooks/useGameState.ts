@@ -53,7 +53,7 @@ const DEFAULT_STATE: GameState = {
       { text: "В ЛБРС рука робота около лавы — к чему эта пасхалка?", questionUrl: "", answerText: "Терминатор 2", answerUrl: "/pashalki-200-answer.jpg", used: false },
       { text: "В канализации Даларана можно встретить алхимика по имени Уолтер Уайт (или его подобие). Он носит характерные очки и занимается «варкой» зелий, что является явной отсылкой к сериалу. Say my name?!", questionUrl: "", answerText: "Хайзенберг", answerUrl: "", used: false },
       { text: "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?", questionUrl: "", answerText: "Остаться в живых (Lost)", answerUrl: "/pashalki-400-answer.jpg", used: false },
-      { text: "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?", questionUrl: "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg", answerText: "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)", answerUrl: "", used: false },
+      { text: "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?", questionUrl: "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg", answerText: "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)", answerUrl: "/pashalki-500-answer.jpg", used: false },
     ],
     // Цитаты и Фразы
     [
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 14;
+const DATA_VERSION = 15;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
