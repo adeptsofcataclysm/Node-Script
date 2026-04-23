@@ -18,7 +18,7 @@ export function QuizBoard({
   const [editingTheme, setEditingTheme] = useState<number | null>(null);
 
   return (
-    <div className="h-full w-full max-w-7xl mx-auto px-4 flex flex-col gap-2">
+    <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-2">
       {themes.map((theme, tIdx) => (
         <div key={tIdx} className="flex gap-2 items-stretch flex-1 min-h-0">
 
