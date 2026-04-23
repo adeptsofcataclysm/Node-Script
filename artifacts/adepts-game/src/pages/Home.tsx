@@ -68,14 +68,9 @@ export default function Home() {
         <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
-        <a
-          href="https://node-script--gg22last.replit.app/admin"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-display tracking-wider text-primary/70 hover:text-primary border border-primary/30 hover:border-primary/70 px-3 py-1.5 rounded transition-colors"
-        >
-          Adepts-game / spectate
-        </a>
+        <span className="text-sm font-display tracking-wider text-primary/70 border border-primary/30 px-3 py-1.5 rounded">
+          Adepts-game
+        </span>
       </header>
 
       <main className="flex-1 pt-4 pb-4 overflow-y-auto">
