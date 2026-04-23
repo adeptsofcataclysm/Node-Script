@@ -6,6 +6,7 @@ const BASE = import.meta.env.BASE_URL;
 
 const THEME_ICONS: Record<string, string> = {
   "боссы": `${BASE}bossy.png`,
+  "всратый косплей": `${BASE}cosplay.png`,
 };
 
 interface QuizBoardProps {
