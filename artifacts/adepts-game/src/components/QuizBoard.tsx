@@ -101,7 +101,7 @@ export function QuizBoard({
                   alt=""
                   className="flex-shrink-0 w-auto object-contain pointer-events-none select-none"
                   style={{
-                    height: "2.4rem",
+                    height: "3.6rem",
                     filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
                   }}
                   initial={{ opacity: 0, x: 8 }}
