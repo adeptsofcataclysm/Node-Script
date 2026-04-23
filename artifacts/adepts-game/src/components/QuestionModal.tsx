@@ -20,7 +20,7 @@ interface QuestionModalProps {
 type Stage = "question" | "answer";
 
 const TIMER_SECONDS = 30;
-const RADIUS = 36;
+const RADIUS = 31;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 function resolveUrl(url: string): string {
@@ -66,33 +66,33 @@ function CountdownTimer({ seconds }: { seconds: number }) {
                    "hsla(0,75%,55%,0.55)";
 
   return (
-    <div className="flex flex-col items-center select-none" style={{ filter: `drop-shadow(0 0 10px ${glowColor})` }}>
-      <svg width="88" height="88" viewBox="0 0 88 88">
+    <div className="flex flex-col items-center select-none" style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}>
+      <svg width="75" height="75" viewBox="0 0 75 75">
         {/* Track */}
         <circle
-          cx="44" cy="44" r={RADIUS}
+          cx="37.5" cy="37.5" r={RADIUS}
           fill="none"
           stroke="hsla(280,30%,30%,0.4)"
-          strokeWidth="6"
+          strokeWidth="5"
         />
         {/* Progress ring */}
         <circle
-          cx="44" cy="44" r={RADIUS}
+          cx="37.5" cy="37.5" r={RADIUS}
           fill="none"
           stroke={color}
-          strokeWidth="6"
+          strokeWidth="5"
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={dashOffset}
-          transform="rotate(-90 44 44)"
+          transform="rotate(-90 37.5 37.5)"
           style={{ transition: "stroke-dashoffset 0.95s linear, stroke 0.4s ease" }}
         />
         {/* Number */}
         <text
-          x="44" y="44"
+          x="37.5" y="37.5"
           dominantBaseline="central"
           textAnchor="middle"
-          fontSize="24"
+          fontSize="20"
           fontWeight="bold"
           fontFamily="inherit"
           fill={color}
@@ -313,25 +313,17 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-6">
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
                             <motion.p
                               key={text}
                               initial={{ opacity: 0, y: 28, scale: 0.96 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap mb-5 lg:mb-6"
+                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
                               style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
                             >
                               {text || "—"}
                             </motion.p>
-
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.7 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.3, type: "spring", damping: 18, stiffness: 260 }}
-                            >
-                              <CountdownTimer seconds={countdown} />
-                            </motion.div>
                           </div>
                         </>
                       )}
@@ -475,42 +467,59 @@ export function QuestionModal({
               </div>
 
               {/* Footer */}
-              <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-5 border-t border-border/60 bg-muted/20 flex justify-between items-center">
-                {question.used ? (
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => {
-                      onUpdate({ text, answerText, answerUrl, used: false });
-                      onClose();
-                    }}
-                    className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
-                  >
-                    Сделать карточку активной
-                  </Button>
-                ) : (
-                  <div />
-                )}
+              <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-4 border-t border-border/60 bg-muted/20 grid grid-cols-3 items-center gap-4">
+                {/* Left */}
+                <div className="flex justify-start">
+                  {question.used && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        onUpdate({ text, answerText, answerUrl, used: false });
+                        onClose();
+                      }}
+                      className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
+                    >
+                      Сделать карточку активной
+                    </Button>
+                  )}
+                </div>
 
-                {stage === "question" ? (
-                  <Button
-                    size="lg"
-                    onClick={handleShowAnswer}
-                    className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8"
-                  >
-                    <Eye className="w-5 h-5" />
-                    Показать ответ
-                  </Button>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    onClick={handleSkip}
-                    className="font-bold tracking-wide text-base"
-                  >
-                    Никто не ответил — закрыть
-                  </Button>
-                )}
+                {/* Center — timer (only on question stage) */}
+                <div className="flex justify-center">
+                  {stage === "question" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.25, type: "spring", damping: 18, stiffness: 260 }}
+                    >
+                      <CountdownTimer seconds={countdown} />
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Right */}
+                <div className="flex justify-end">
+                  {stage === "question" ? (
+                    <Button
+                      size="lg"
+                      onClick={handleShowAnswer}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8"
+                    >
+                      <Eye className="w-5 h-5" />
+                      Показать ответ
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={handleSkip}
+                      className="font-bold tracking-wide text-base"
+                    >
+                      Никто не ответил — закрыть
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>
