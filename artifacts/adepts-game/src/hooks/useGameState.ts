@@ -101,14 +101,14 @@ const DEFAULT_STATE: GameState = {
       { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "/professions-200-answer.png", used: false },
       { text: "Какая новая профессия появилась в WotLK?", questionUrl: "", answerText: "Начертание", answerUrl: "/professions-300-answer.png", used: false },
       { text: "С помощью какой профессии призывался один из боссов в дополнении TBC?", questionUrl: "", answerText: "Рыбалка", answerUrl: "/professions-400-answer.png", used: false },
-      { text: "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.", questionUrl: "", answerText: "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.", answerUrl: "", used: false },
+      { text: "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.", questionUrl: "", answerText: "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.", answerUrl: "/professions-500-answer.png", used: false },
     ],
   ],
 };
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 39;
+const DATA_VERSION = 40;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
