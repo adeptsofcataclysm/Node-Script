@@ -29,11 +29,24 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-function adaptiveSize(str: string, sizes: [number, string][], fallback: string) {
-  for (const [limit, cls] of sizes) {
-    if (str.length <= limit) return cls;
-  }
-  return fallback;
+// Returns a CSS clamp() value that scales with viewport height
+// min stays readable on small screens, mid scales naturally, max caps on large monitors
+function adaptiveFontSize(str: string): string {
+  const len = str.length;
+  if (len <= 30)  return "clamp(1.8rem, 6vh, 3.75rem)";
+  if (len <= 60)  return "clamp(1.5rem, 4.8vh, 3rem)";
+  if (len <= 110) return "clamp(1.2rem, 3.6vh, 2.25rem)";
+  if (len <= 180) return "clamp(1rem, 2.8vh, 1.75rem)";
+  return                 "clamp(0.85rem, 2.2vh, 1.4rem)";
+}
+
+function adaptiveAnswerFontSize(str: string): string {
+  const len = str.length;
+  if (len <= 15)  return "clamp(2.5rem, 8vh, 5.5rem)";
+  if (len <= 30)  return "clamp(2rem, 6.5vh, 4.25rem)";
+  if (len <= 60)  return "clamp(1.6rem, 5vh, 3.25rem)";
+  if (len <= 100) return "clamp(1.3rem, 4vh, 2.5rem)";
+  return                 "clamp(1rem, 3vh, 2rem)";
 }
 
 export function QuestionModal({
@@ -76,17 +89,8 @@ export function QuestionModal({
     onClose();
   };
 
-  const questionFontSize = adaptiveSize(text, [
-    [40, "text-4xl lg:text-5xl"],
-    [80, "text-3xl lg:text-4xl"],
-    [140, "text-2xl lg:text-3xl"],
-  ], "text-xl lg:text-2xl");
-
-  const answerFontSize = adaptiveSize(answerText, [
-    [20, "text-5xl lg:text-6xl"],
-    [40, "text-4xl lg:text-5xl"],
-    [80, "text-3xl lg:text-4xl"],
-  ], "text-2xl lg:text-3xl");
+  const questionFontSizeStyle = adaptiveFontSize(text);
+  const answerFontSizeStyle = adaptiveAnswerFontSize(answerText);
 
   const answerWords = answerText.split(/\s+/).filter(Boolean);
 
@@ -218,8 +222,8 @@ export function QuestionModal({
                               initial={{ opacity: 0, y: 28, scale: 0.96 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                              className={`font-display ${questionFontSize} text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap`}
-                              style={{ textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
+                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
+                              style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
                             >
                               {text || "—"}
                             </motion.p>
@@ -305,7 +309,8 @@ export function QuestionModal({
                                     damping: 16,
                                     stiffness: 300,
                                   }}
-                                  className={`font-display ${answerFontSize} text-primary glow-text leading-tight`}
+                                  className="font-display text-primary glow-text leading-tight"
+                                  style={{ fontSize: answerFontSizeStyle }}
                                 >
                                   {word}
                                 </motion.span>
