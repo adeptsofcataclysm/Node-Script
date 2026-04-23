@@ -2,6 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Question } from "../hooks/useGameState";
 
+const BASE = import.meta.env.BASE_URL;
+
+const THEME_ICONS: Record<string, string> = {
+  "боссы": `${BASE}bossy.png`,
+};
+
 interface QuizBoardProps {
   themes: string[];
   questions: Question[][];
@@ -54,14 +60,23 @@ export function QuizBoard({
               transition={{ duration: 0.3 }}
             />
 
-            {/* Decorative glow dot */}
-            <div
-              className="absolute left-3 w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{
-                background: "hsla(280,65%,70%,0.9)",
-                boxShadow: "0 0 8px 2px hsla(280,65%,60%,0.6)",
-              }}
-            />
+            {/* Theme icon or glow dot */}
+            {THEME_ICONS[theme.toLowerCase()] ? (
+              <img
+                src={THEME_ICONS[theme.toLowerCase()]}
+                alt=""
+                className="absolute left-1.5 h-[80%] w-auto object-contain pointer-events-none select-none"
+                style={{ maxWidth: "2.8rem", filter: "drop-shadow(0 0 6px hsla(40,90%,50%,0.5))" }}
+              />
+            ) : (
+              <div
+                className="absolute left-3 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{
+                  background: "hsla(280,65%,70%,0.9)",
+                  boxShadow: "0 0 8px 2px hsla(280,65%,60%,0.6)",
+                }}
+              />
+            )}
 
             {editingTheme === tIdx ? (
               <input
@@ -70,14 +85,16 @@ export function QuizBoard({
                 onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
                 onBlur={() => setEditingTheme(null)}
                 onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
-                className="w-full bg-transparent outline-none pl-7 pr-3 uppercase tracking-widest text-foreground"
+                className="w-full bg-transparent outline-none pl-12 pr-3 uppercase tracking-widest text-foreground"
                 style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
                 placeholder={`Тема ${tIdx + 1}`}
               />
             ) : (
               <span
-                className="pl-7 pr-3 uppercase tracking-widest text-foreground truncate select-none"
+                className="uppercase tracking-widest text-foreground truncate select-none"
                 style={{
+                  paddingLeft: THEME_ICONS[theme.toLowerCase()] ? "3rem" : "1.75rem",
+                  paddingRight: "0.75rem",
                   fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
                   fontFamily: "WarCraft, sans-serif",
                   textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
