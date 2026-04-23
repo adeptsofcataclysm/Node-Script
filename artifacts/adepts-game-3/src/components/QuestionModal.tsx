@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Trophy, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,10 @@ interface QuestionModalProps {
 }
 
 type Stage = "question" | "answer";
+
+const TIMER_SECONDS = 30;
+const RADIUS = 36;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -47,6 +51,60 @@ function adaptiveAnswerFontSize(str: string): string {
   return                 "clamp(1rem, 3vh, 2rem)";
 }
 
+function CountdownTimer({ seconds }: { seconds: number }) {
+  const fraction = seconds / TIMER_SECONDS;
+  const dashOffset = CIRCUMFERENCE * (1 - fraction);
+
+  const color =
+    seconds > 15 ? "hsl(var(--primary))" :
+    seconds > 7  ? "hsl(35, 95%, 55%)" :
+                   "hsl(0, 75%, 55%)";
+
+  const glowColor =
+    seconds > 15 ? "hsla(45,93%,47%,0.45)" :
+    seconds > 7  ? "hsla(35,95%,55%,0.45)" :
+                   "hsla(0,75%,55%,0.55)";
+
+  return (
+    <div className="flex flex-col items-center select-none" style={{ filter: `drop-shadow(0 0 10px ${glowColor})` }}>
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        {/* Track */}
+        <circle
+          cx="44" cy="44" r={RADIUS}
+          fill="none"
+          stroke="hsla(280,30%,30%,0.4)"
+          strokeWidth="6"
+        />
+        {/* Progress ring */}
+        <circle
+          cx="44" cy="44" r={RADIUS}
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={CIRCUMFERENCE}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 44 44)"
+          style={{ transition: "stroke-dashoffset 0.95s linear, stroke 0.4s ease" }}
+        />
+        {/* Number */}
+        <text
+          x="44" y="44"
+          dominantBaseline="central"
+          textAnchor="middle"
+          fontSize="24"
+          fontWeight="bold"
+          fontFamily="inherit"
+          fill={color}
+          style={{ transition: "fill 0.4s ease" }}
+        >
+          {seconds}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 export function QuestionModal({
   isOpen,
   themeName,
@@ -63,9 +121,30 @@ export function QuestionModal({
   const [answerText, setAnswerText] = useState("");
   const [answerUrl, setAnswerUrl] = useState("");
   const [awarded, setAwarded] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState(TIMER_SECONDS);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Initialize local state only when modal opens — NOT on every question update.
-  // Reacting to question prop changes would reset editing mid-type.
+  const stopTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const startTimer = () => {
+    stopTimer();
+    setCountdown(TIMER_SECONDS);
+    intervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          stopTimer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   useEffect(() => {
     if (isOpen) {
       setText(question.text || "");
@@ -74,17 +153,23 @@ export function QuestionModal({
       setAwarded(null);
       setStage("question");
       setIsEditing(false);
+      startTimer();
+    } else {
+      stopTimer();
+      setCountdown(TIMER_SECONDS);
     }
+    return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Save local edits to global state (and thus to socket) only on close
   const saveAndClose = (extra: Partial<Question> = {}) => {
+    stopTimer();
     onUpdate({ text, answerText, answerUrl, ...extra });
     onClose();
   };
 
   const handleAward = (playerIndex: number) => {
+    stopTimer();
     onAwardPoints(playerIndex, points);
     onUpdate({ text, answerText, answerUrl, used: true });
     setAwarded(playerIndex);
@@ -99,9 +184,14 @@ export function QuestionModal({
     saveAndClose();
   };
 
+  const handleShowAnswer = () => {
+    stopTimer();
+    setStage("answer");
+    setIsEditing(false);
+  };
+
   const questionFontSizeStyle = adaptiveFontSize(text);
   const answerFontSizeStyle = adaptiveAnswerFontSize(answerText);
-
   const answerWords = answerText.split(/\s+/).filter(Boolean);
 
   return (
@@ -223,17 +313,25 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
+                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-6">
                             <motion.p
                               key={text}
                               initial={{ opacity: 0, y: 28, scale: 0.96 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
+                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap mb-5 lg:mb-6"
                               style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
                             >
                               {text || "—"}
                             </motion.p>
+
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.7 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.3, type: "spring", damping: 18, stiffness: 260 }}
+                            >
+                              <CountdownTimer seconds={countdown} />
+                            </motion.div>
                           </div>
                         </>
                       )}
@@ -397,7 +495,7 @@ export function QuestionModal({
                 {stage === "question" ? (
                   <Button
                     size="lg"
-                    onClick={() => { setStage("answer"); setIsEditing(false); }}
+                    onClick={handleShowAnswer}
                     className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8"
                   >
                     <Eye className="w-5 h-5" />
