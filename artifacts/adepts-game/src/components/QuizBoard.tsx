@@ -69,47 +69,47 @@ export function QuizBoard({
             />
 
 
-            {editingTheme === tIdx ? (
-              <input
-                autoFocus
-                value={theme}
-                onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
-                onBlur={() => setEditingTheme(null)}
-                onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
-                className="w-full bg-transparent outline-none pl-7 pr-3 uppercase tracking-widest text-foreground"
-                style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
-                placeholder={`Тема ${tIdx + 1}`}
-              />
-            ) : (
-              <span
-                className="pl-7 uppercase tracking-widest text-foreground truncate select-none"
-                style={{
-                  paddingRight: THEME_ICONS[theme.toLowerCase()] ? "0" : "0.75rem",
-                  fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
-                  fontFamily: "WarCraft, sans-serif",
-                  textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
-                }}
-              >
-                {theme || <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
-              </span>
-            )}
+            {/* Centered content: text + icon as a unit */}
+            <div className="flex items-center justify-center gap-2 w-full px-3">
+              {editingTheme === tIdx ? (
+                <input
+                  autoFocus
+                  value={theme}
+                  onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
+                  onBlur={() => setEditingTheme(null)}
+                  onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
+                  className="flex-1 bg-transparent outline-none uppercase tracking-widest text-foreground text-center"
+                  style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
+                  placeholder={`Тема ${tIdx + 1}`}
+                />
+              ) : (
+                <span
+                  className="uppercase tracking-widest text-foreground truncate select-none text-center"
+                  style={{
+                    fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
+                    fontFamily: "WarCraft, sans-serif",
+                    textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
+                  }}
+                >
+                  {theme || <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
+                </span>
+              )}
 
-            {/* Theme icon — right side, fades into card background */}
-            {THEME_ICONS[theme.toLowerCase()] && (
-              <motion.img
-                src={THEME_ICONS[theme.toLowerCase()]}
-                alt=""
-                className="absolute right-0 w-auto object-contain pointer-events-none select-none"
-                style={{
-                  height: "85%",
-                  top: "7.5%",
-                  filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.55)) drop-shadow(0 0 14px hsla(45,100%,55%,0.25))",
-                }}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" }}
-              />
-            )}
+              {THEME_ICONS[theme.toLowerCase()] && (
+                <motion.img
+                  src={THEME_ICONS[theme.toLowerCase()]}
+                  alt=""
+                  className="flex-shrink-0 w-auto object-contain pointer-events-none select-none"
+                  style={{
+                    height: "2.4rem",
+                    filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
+                  }}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" }}
+                />
+              )}
+            </div>
           </motion.div>
 
           {/* Question point cells */}
