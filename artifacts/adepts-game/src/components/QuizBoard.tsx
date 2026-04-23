@@ -101,24 +101,27 @@ export function QuizBoard({
                 alt=""
                 className="absolute right-0 w-auto object-contain pointer-events-none select-none"
                 style={{
-                  height: "90%",
-                  top: "5%",
+                  height: "85%",
+                  top: "7.5%",
                 }}
-                initial={{ opacity: 0, x: 12, scale: 0.9 }}
+                initial={{ opacity: 0, x: 12 }}
                 animate={{
                   opacity: 1,
                   x: 0,
-                  scale: [1, 1.07, 1],
+                  filter: [
+                    "drop-shadow(0 0 4px hsla(45,100%,60%,0.3)) drop-shadow(0 0 8px hsla(45,100%,60%,0.1))",
+                    "drop-shadow(0 0 8px hsla(45,100%,65%,0.7)) drop-shadow(0 0 16px hsla(45,100%,55%,0.35))",
+                    "drop-shadow(0 0 4px hsla(45,100%,60%,0.3)) drop-shadow(0 0 8px hsla(45,100%,60%,0.1))",
+                  ],
                 }}
                 transition={{
                   opacity: { delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" },
                   x: { delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" },
-                  scale: {
-                    delay: tIdx * 0.35,
-                    duration: 3.6 + (tIdx % 5) * 0.5,
+                  filter: {
+                    delay: tIdx * 0.15,
+                    duration: 2.8 + (tIdx % 4) * 0.3,
                     repeat: Infinity,
                     ease: "easeInOut",
-                    repeatType: "mirror",
                   },
                 }}
               />
