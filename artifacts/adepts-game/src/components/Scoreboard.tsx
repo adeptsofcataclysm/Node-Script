@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Player } from "../hooks/useGameState";
 
 interface ScoreboardProps {
@@ -9,6 +8,64 @@ interface ScoreboardProps {
   onUpdateName: (index: number, name: string) => void;
   onUpdateScore: (index: number, score: number) => void;
   onResetScores: () => void;
+}
+
+function NameInput({
+  name,
+  onCommit,
+}: {
+  name: string;
+  onCommit: (val: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [raw, setRaw] = useState(name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editing) setRaw(name);
+  }, [name, editing]);
+
+  const open = () => {
+    setRaw(name);
+    setEditing(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 0);
+  };
+
+  const commit = () => {
+    onCommit(raw.trim() || name);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { setEditing(false); }
+        }}
+        className="text-center font-bold w-full px-2 py-1 rounded-md outline-none bg-background/90 border-2 border-primary text-lg mb-2"
+        style={{ color: "hsl(var(--foreground))" }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={open}
+      title="Нажмите, чтобы изменить имя"
+      className="text-center font-bold text-lg mb-2 block cursor-pointer hover:opacity-75 transition-opacity select-none truncate w-full px-2"
+    >
+      {name}
+    </span>
+  );
 }
 
 function ScoreInput({
@@ -125,10 +182,9 @@ export function Scoreboard({
           >
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-            <Input
-              value={player.name}
-              onChange={(e) => onUpdateName(index, e.target.value)}
-              className="text-center font-bold bg-transparent border-transparent hover:border-border focus:border-primary transition-colors text-lg mb-2"
+            <NameInput
+              name={player.name}
+              onCommit={(val) => onUpdateName(index, val)}
             />
 
             <div className="flex items-center justify-center gap-2 w-full">
