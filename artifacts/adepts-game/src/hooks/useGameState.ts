@@ -65,7 +65,7 @@ const DEFAULT_STATE: GameState = {
     ],
     // Лор WOW
     [
-      { text: "Как назывался единый континент на Азероте до Великого Раскола?", questionUrl: "", answerText: "Калимдор", answerUrl: "", used: false },
+      { text: "Как назывался единый континент на Азероте до Великого Раскола?", questionUrl: "", answerText: "Калимдор", answerUrl: "/lor-wow-100-answer.webp", used: false },
       { text: "Чем закончилась Первая война против орды?", questionUrl: "", answerText: "Разрушением Штормграда", answerUrl: "", used: false },
       { text: "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?", questionUrl: "", answerText: "Иллидан", answerUrl: "", used: false },
       { text: "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?", questionUrl: "", answerText: "Дух Жизни", answerUrl: "", used: false },
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 16;
+const DATA_VERSION = 17;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
