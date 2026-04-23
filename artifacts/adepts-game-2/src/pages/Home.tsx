@@ -69,7 +69,7 @@ export default function Home() {
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
         <span className="text-sm font-display tracking-wider text-primary/70 border border-primary/30 px-3 py-1.5 rounded">
-          Adepts-game / spectate
+          Adepts-game 2
         </span>
       </header>
 
