@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
 export type Player = {
   id: string;
@@ -34,35 +35,74 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
+const ROOM = "adepts-game-2";
+
+function loadInitialState(): GameState {
+  try {
+    const storedPlayers = localStorage.getItem(PLAYERS_KEY);
+    const players = storedPlayers ? JSON.parse(storedPlayers) : DEFAULT_STATE.players;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...parsed, players };
+    }
+    return { ...DEFAULT_STATE, players };
+  } catch {
+    return DEFAULT_STATE;
+  }
+}
 
 export function useGameState() {
-  const [state, setState] = useState<GameState>(() => {
-    try {
-      const storedPlayers = localStorage.getItem(PLAYERS_KEY);
-      const players = storedPlayers ? JSON.parse(storedPlayers) : DEFAULT_STATE.players;
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return { ...JSON.parse(stored), players };
-      }
-    } catch (err) {
-      console.error("Failed to load state", err);
-    }
-    return DEFAULT_STATE;
-  });
+  const [state, setState] = useState<GameState>(loadInitialState);
+
+  const socketRef = useRef<Socket | null>(null);
+  const skipEmitRef = useRef(false);
+
+  useEffect(() => {
+    const socket = io("/quiz", {
+      path: "/socket.io",
+      query: { room: ROOM },
+      transports: ["websocket"],
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    });
+    socketRef.current = socket;
+
+    socket.on("sync", (incoming: GameState) => {
+      skipEmitRef.current = true;
+      setState(incoming);
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
+
+    if (skipEmitRef.current) {
+      skipEmitRef.current = false;
+      return;
+    }
+
+    socketRef.current?.emit("update", state);
   }, [state]);
 
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
-        try { setState(JSON.parse(e.newValue)); } catch {}
+        try {
+          skipEmitRef.current = true;
+          setState(JSON.parse(e.newValue));
+        } catch {}
       }
       if (e.key === PLAYERS_KEY && e.newValue) {
         try {
           const players = JSON.parse(e.newValue);
+          skipEmitRef.current = true;
           setState(prev => ({ ...prev, players }));
         } catch {}
       }
@@ -73,8 +113,7 @@ export function useGameState() {
 
   const updatePlayerName = useCallback((index: number, name: string) => {
     setState((prev) => {
-      const next = { ...prev };
-      next.players = [...prev.players];
+      const next = { ...prev, players: [...prev.players] };
       next.players[index] = { ...next.players[index], name };
       return next;
     });
@@ -82,8 +121,7 @@ export function useGameState() {
 
   const updatePlayerScore = useCallback((index: number, score: number) => {
     setState((prev) => {
-      const next = { ...prev };
-      next.players = [...prev.players];
+      const next = { ...prev, players: [...prev.players] };
       next.players[index] = { ...next.players[index], score };
       return next;
     });
@@ -91,8 +129,7 @@ export function useGameState() {
 
   const updateThemeName = useCallback((index: number, name: string) => {
     setState((prev) => {
-      const next = { ...prev };
-      next.themes = [...prev.themes];
+      const next = { ...prev, themes: [...prev.themes] };
       next.themes[index] = name;
       return next;
     });
@@ -100,17 +137,14 @@ export function useGameState() {
 
   const updateQuestion = useCallback(
     (themeIndex: number, questionIndex: number, data: Partial<Question>) => {
-      setState((prev) => {
-        const next = { ...prev };
-        next.questions = prev.questions.map((theme, tIdx) =>
+      setState((prev) => ({
+        ...prev,
+        questions: prev.questions.map((theme, tIdx) =>
           tIdx === themeIndex
-            ? theme.map((q, qIdx) =>
-                qIdx === questionIndex ? { ...q, ...data } : q
-              )
+            ? theme.map((q, qIdx) => (qIdx === questionIndex ? { ...q, ...data } : q))
             : theme
-        );
-        return next;
-      });
+        ),
+      }));
     },
     []
   );

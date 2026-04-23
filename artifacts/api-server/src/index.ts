@@ -4,6 +4,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { setupGame } from "./game";
 import { setupWheel } from "./wheel";
+import { setupQuiz } from "./quiz";
 
 const rawPort = process.env["PORT"];
 
@@ -33,6 +34,7 @@ const io = new SocketIOServer(server, {
 
 const { adminReset } = setupGame(io);
 setupWheel(io);
+setupQuiz(io);
 
 // Page visit counters (in-memory)
 const visitCounts: Record<string, number> = {};
