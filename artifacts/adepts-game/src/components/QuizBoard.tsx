@@ -7,6 +7,7 @@ const BASE = import.meta.env.BASE_URL;
 const THEME_ICONS: Record<string, string> = {
   "боссы": `${BASE}bossy.png`,
   "пасхалки": `${BASE}pashalki.png`,
+  "цитаты и фразы": `${BASE}quotes.png`,
   "лор world of warcraft": `${BASE}lor-wow.png`,
   "лор wow": `${BASE}lor-wow2.png`,
   "всратый косплей": `${BASE}cosplay.png`,
