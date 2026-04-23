@@ -104,13 +104,27 @@ export function QuizBoard({
               </span>
             )}
 
-            {/* Theme icon — right side, full height */}
+            {/* Theme icon — right side, 90% height, floating animation */}
             {THEME_ICONS[theme.toLowerCase()] && (
-              <img
+              <motion.img
                 src={THEME_ICONS[theme.toLowerCase()]}
                 alt=""
-                className="absolute right-0 top-0 h-full w-auto object-contain pointer-events-none select-none"
-                style={{ filter: "drop-shadow(0 0 2px hsla(40,90%,50%,0.15))" }}
+                className="absolute right-0 w-auto object-contain pointer-events-none select-none"
+                style={{
+                  height: "90%",
+                  top: "5%",
+                  filter: "drop-shadow(0 0 2px hsla(40,90%,50%,0.15))",
+                }}
+                animate={{
+                  y: [0, -5, 0, 3, 0],
+                  rotate: [0, 1.5, 0, -1, 0],
+                }}
+                transition={{
+                  duration: 3.5 + (tIdx % 3) * 0.4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: tIdx * 0.25,
+                }}
               />
             )}
           </motion.div>
