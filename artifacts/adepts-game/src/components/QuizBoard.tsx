@@ -111,15 +111,29 @@ export function QuizBoard({
                 alt=""
                 className="absolute right-0 w-auto object-contain pointer-events-none select-none"
                 style={{
-                  height: "95%",
-                  top: "2.5%",
-                  maskImage: "linear-gradient(to left, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
-                  WebkitMaskImage: "linear-gradient(to left, transparent 0%, rgba(0,0,0,0.6) 28%, black 58%)",
-                  filter: "drop-shadow(2px 0 12px hsla(280,60%,30%,0.5))",
+                  height: "90%",
+                  top: "5%",
                 }}
                 initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                  filter: [
+                    "drop-shadow(0 0 4px hsla(45,100%,60%,0.3)) drop-shadow(0 0 8px hsla(45,100%,60%,0.1))",
+                    "drop-shadow(0 0 8px hsla(45,100%,65%,0.7)) drop-shadow(0 0 16px hsla(45,100%,55%,0.35))",
+                    "drop-shadow(0 0 4px hsla(45,100%,60%,0.3)) drop-shadow(0 0 8px hsla(45,100%,60%,0.1))",
+                  ],
+                }}
+                transition={{
+                  opacity: { delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" },
+                  x: { delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" },
+                  filter: {
+                    delay: tIdx * 0.15,
+                    duration: 2.8 + (tIdx % 4) * 0.3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }}
               />
             )}
           </motion.div>
