@@ -91,15 +91,26 @@ export function QuizBoard({
                   <motion.button
                     key={qIdx}
                     initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: tIdx * 0.07 + qIdx * 0.04,
-                      type: "spring",
-                      damping: 22,
-                      stiffness: 200,
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      transition: {
+                        delay: tIdx * 0.07 + qIdx * 0.04,
+                        type: "spring",
+                        damping: 22,
+                        stiffness: 200,
+                      },
                     }}
-                    whileHover={!q.used ? { scale: 1.06, y: -3 } : {}}
-                    whileTap={!q.used ? { scale: 0.94 } : {}}
+                    whileHover={!q.used ? {
+                      scale: 1.06,
+                      y: -3,
+                      transition: { type: "tween", duration: 0.08, ease: "easeOut" },
+                    } : {}}
+                    whileTap={!q.used ? {
+                      scale: 0.94,
+                      transition: { type: "tween", duration: 0.06 },
+                    } : {}}
+                    transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
                     onClick={() => onQuestionClick(tIdx, qIdx)}
                     className={`
                       relative w-full h-full rounded-xl border flex items-center justify-center
