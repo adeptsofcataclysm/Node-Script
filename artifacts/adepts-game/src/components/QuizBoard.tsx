@@ -114,7 +114,7 @@ export function QuizBoard({
                     onClick={() => onQuestionClick(tIdx, qIdx)}
                     className={`
                       relative w-full h-full rounded-xl border flex items-center justify-center
-                      font-display text-3xl font-bold transition-all duration-300
+                      font-display text-3xl font-bold transition-colors duration-150
                       ${q.used
                         ? "bg-background/20 border-border/50 text-muted-foreground/30 cursor-not-allowed"
                         : "bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] cursor-pointer"
