@@ -75,7 +75,7 @@ const DEFAULT_STATE: GameState = {
     [
       { text: "", questionUrl: "/cosplay-100-question.jpg", answerText: "", answerUrl: "", used: false },
       { text: "", questionUrl: "/cosplay-200-question.jpg", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "/cosplay-300-question.jpg", answerText: "", answerUrl: "", used: false },
       { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
       { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
     ],
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 22;
+const DATA_VERSION = 23;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
