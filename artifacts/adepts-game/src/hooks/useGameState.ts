@@ -74,7 +74,7 @@ const DEFAULT_STATE: GameState = {
     // Всратый косплей
     [
       { text: "", questionUrl: "/cosplay-100-question.jpg", answerText: "", answerUrl: "/cosplay-100-answer.jpg", used: false },
-      { text: "", questionUrl: "/cosplay-200-question.jpg", answerText: "", answerUrl: "", used: false },
+      { text: "", questionUrl: "/cosplay-200-question.jpg", answerText: "", answerUrl: "/cosplay-200-answer.jpg", used: false },
       { text: "", questionUrl: "/cosplay-300-question.jpg", answerText: "", answerUrl: "", used: false },
       { text: "", questionUrl: "/cosplay-400-question.jpg", answerText: "", answerUrl: "", used: false },
       { text: "", questionUrl: "/cosplay-500-question.jpg", answerText: "", answerUrl: "", used: false },
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 26;
+const DATA_VERSION = 27;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
