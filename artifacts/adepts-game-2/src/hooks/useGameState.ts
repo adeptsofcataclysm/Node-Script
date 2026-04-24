@@ -79,7 +79,7 @@ const DEFAULT_STATE: GameState = {
         text: "Как известно, у Адептов когда-то был творец эпохальных разборов на рейдовые подземелья. Какие-то доделаны до конца, а какие-то заброшены. Так вот, если бы сейчас появился эпохальный обзор на Осаду Оргримара, то каким по счёту он бы был?",
         questionUrl: "",
         answerText: "10-й\n\nЧто было:\n1) Чёрный храм\n2) Плато Солнечного Колодца\n3) Ульдуар\n4) Цитадель Ледяной Короны\n5) Твердыня Крыла Тьмы\n6) Сумеречный Бастион\n7) Трон Четырёх Ветров\n8) Огненные Просторы\n9) Душа Дракона",
-        answerUrl: gd("1g-BJX79Z5rZDcK185Of0wm1ym8wW01qm"),
+        answerUrl: `${BASE}tactics-400-answer.png`,
         used: false,
       },
       {
@@ -293,7 +293,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 3;
+const DATA_VERSION = 4;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
