@@ -266,7 +266,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Опишите эту способность:",
-        questionUrl: gd("1sf98Ii28Bi4AQca3M_EpsoV8lOEqT6Lu"),
+        questionUrl: "/abilities-300-question.png",
         answerText: "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
         answerUrl: "",
         used: false,
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 18;
+const DATA_VERSION = 19;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
