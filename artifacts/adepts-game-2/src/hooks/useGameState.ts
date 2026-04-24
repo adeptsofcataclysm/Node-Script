@@ -215,7 +215,7 @@ const DEFAULT_STATE: GameState = {
         text: "Добейтесь того, чтобы пираты из шайки Кровавого Паруса начали относиться к вам с уважением, а обитатели Пиратской бухты, Круговзора, Прибамбасска, Кебестана, Ярморки Новолуния и поместья Чёрного Ворона стали вас превозносить.",
         questionUrl: "",
         answerText: "Чокнутый",
-        answerUrl: gd("1-hlTrDLFPmtG4g_Gnsz4YEZUs5XIBH1c"),
+        answerUrl: "/feats-200-answer.png",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 13;
+const DATA_VERSION = 14;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
