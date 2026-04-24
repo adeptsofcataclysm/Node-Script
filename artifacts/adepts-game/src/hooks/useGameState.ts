@@ -84,7 +84,7 @@ const DEFAULT_STATE: GameState = {
       { text: "100", questionUrl: "", answerText: "100", answerUrl: "", used: false },
       { text: "200", questionUrl: "", answerText: "200", answerUrl: "", used: false },
       { text: "300", questionUrl: "", answerText: "300", answerUrl: "", used: false },
-      { text: "", questionUrl: "/freebie-400-question.mp4", answerText: "Колесо Адептов", answerUrl: "/freebie-400-question.png", used: false },
+      { text: "", questionUrl: "/freebie-400-question.mp4", answerText: "Вы получаете 3 крутки Колеса Адептов", answerUrl: "/freebie-400-question.png", used: false },
       { text: "Ящик пандоры", questionUrl: "", answerText: "Ящик пандоры", answerUrl: "", used: false },
     ],
     // Локации
@@ -108,7 +108,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 46;
+const DATA_VERSION = 47;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
