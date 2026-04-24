@@ -83,7 +83,7 @@ function Fireworks({ active }: { active: boolean }) {
     };
 
     const explode = (x: number, y: number, color: string) => {
-      const count = 90 + Math.floor(Math.random() * 40);
+      const count = 55 + Math.floor(Math.random() * 25);
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
         const speed = 1.5 + Math.random() * 6;
@@ -102,36 +102,38 @@ function Fireworks({ active }: { active: boolean }) {
       }
     };
 
+    const MAX_SPARKS = 700;
+
     let frame = 0;
     const animate = () => {
       animRef.current = requestAnimationFrame(animate);
       ctx.clearRect(0, 0, W, H);
       frame++;
 
-      if (frame % 22 === 0) launchRocket();
+      if (frame % 25 === 0) launchRocket();
 
       // Rockets
       rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
       for (const r of rocketsRef.current) {
         r.trail.push({ x: r.x, y: r.y });
-        if (r.trail.length > 12) r.trail.shift();
+        if (r.trail.length > 8) r.trail.shift();
         r.y += r.vy;
         r.vy += 0.22;
 
-        // Draw trail
-        for (let i = 0; i < r.trail.length; i++) {
-          const t = r.trail[i];
-          const alpha = (i / r.trail.length) * 0.7;
+        // Trail as single polyline
+        if (r.trail.length > 1) {
           ctx.beginPath();
-          ctx.arc(t.x, t.y, 2.5 * (i / r.trail.length), 0, Math.PI * 2);
-          ctx.fillStyle = r.color;
-          ctx.globalAlpha = alpha;
-          ctx.fill();
+          ctx.moveTo(r.trail[0].x, r.trail[0].y);
+          for (let i = 1; i < r.trail.length; i++) ctx.lineTo(r.trail[i].x, r.trail[i].y);
+          ctx.strokeStyle = r.color;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.5;
+          ctx.stroke();
         }
-        // Draw head
+        // Head
         ctx.globalAlpha = 1;
         ctx.beginPath();
-        ctx.arc(r.x, r.y, 3.5, 0, Math.PI * 2);
+        ctx.arc(r.x, r.y, 3, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
         ctx.fill();
 
@@ -141,36 +143,47 @@ function Fireworks({ active }: { active: boolean }) {
         }
       }
 
-      // Sparks
-      sparksRef.current = sparksRef.current.filter((s) => s.alpha > 0.02);
+      // Trim sparks if too many
+      if (sparksRef.current.length > MAX_SPARKS) {
+        sparksRef.current = sparksRef.current.slice(sparksRef.current.length - MAX_SPARKS);
+      }
+      sparksRef.current = sparksRef.current.filter((s) => s.alpha > 0.03);
+
+      // Group sparks by color for batched drawing
+      const byColor = new Map<string, Spark[]>();
       for (const s of sparksRef.current) {
         s.tail.push({ x: s.x, y: s.y });
-        if (s.tail.length > 7) s.tail.shift();
+        if (s.tail.length > 5) s.tail.shift();
         s.x += s.vx;
         s.y += s.vy;
         s.vy += 0.1;
         s.vx *= 0.98;
-        s.alpha *= 0.958;
+        s.alpha *= 0.96;
+        if (!byColor.has(s.color)) byColor.set(s.color, []);
+        byColor.get(s.color)!.push(s);
+      }
 
-        // Draw tail
-        for (let i = 0; i < s.tail.length; i++) {
-          const t = s.tail[i];
-          const a = s.alpha * (i / s.tail.length) * 0.5;
+      // Draw all tails batched per color
+      for (const [color, sparks] of byColor) {
+        ctx.fillStyle = color;
+        for (const s of sparks) {
+          const tlen = s.tail.length;
+          for (let i = 0; i < tlen; i++) {
+            const t = s.tail[i];
+            const r = s.size * 0.3 * ((i + 1) / tlen);
+            ctx.globalAlpha = s.alpha * ((i + 1) / tlen) * 0.35;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        // Draw heads batched per color
+        for (const s of sparks) {
+          ctx.globalAlpha = s.alpha;
           ctx.beginPath();
-          ctx.arc(t.x, t.y, s.size * 0.4 * (i / s.tail.length), 0, Math.PI * 2);
-          ctx.fillStyle = s.color;
-          ctx.globalAlpha = a;
+          ctx.arc(s.x, s.y, s.size * 0.5, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Draw head with glow
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = s.color;
-        ctx.globalAlpha = s.alpha;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size * 0.5, 0, Math.PI * 2);
-        ctx.fillStyle = s.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
       }
       ctx.globalAlpha = 1;
     };
