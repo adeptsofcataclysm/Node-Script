@@ -3,7 +3,6 @@ import type { WheelResultData } from "./useWheelSocket";
 
 const BASE = "/wsounds/";
 
-// Exact mapping from original site (script.js)
 const SEGMENT_SOUNDS: Record<string, { file: string; volume: number }> = {
   "Рассказать стишок": { file: "win.mp3",          volume: 0.6 },
   "-500":              { file: "500propil.mp3",     volume: 0.6 },
@@ -18,23 +17,23 @@ const SEGMENT_SOUNDS: Record<string, { file: string; volume: number }> = {
   "+100":              { file: "100plussound.mp3",   volume: 0.7 },
 };
 
-function playOnce(file: string, volume: number) {
+function stopAudio(a: HTMLAudioElement | null) {
+  if (!a) return;
+  try { a.pause(); a.currentTime = 0; } catch { /* ignore */ }
+}
+
+function playOnce(file: string, volume: number): HTMLAudioElement | null {
   try {
     const a = new Audio(BASE + file);
     a.volume = volume;
     a.play().catch(() => {});
-  } catch { /* ignore */ }
-}
-
-function stopAll(audios: (HTMLAudioElement | null)[]) {
-  for (const a of audios) {
-    if (!a) continue;
-    try { a.pause(); a.currentTime = 0; } catch { /* ignore */ }
-  }
+    return a;
+  } catch { return null; }
 }
 
 export function useWheelSounds(isSpinning: boolean, result: WheelResultData | null) {
-  const spinRef = useRef<HTMLAudioElement | null>(null);
+  const spinRef   = useRef<HTMLAudioElement | null>(null);
+  const resultRef = useRef<HTMLAudioElement | null>(null);
 
   // Spin sound — looped while spinning
   useEffect(() => {
@@ -45,30 +44,32 @@ export function useWheelSounds(isSpinning: boolean, result: WheelResultData | nu
       a.play().catch(() => {});
       spinRef.current = a;
     } else {
-      if (spinRef.current) {
-        spinRef.current.pause();
-        spinRef.current.currentTime = 0;
-        spinRef.current = null;
-      }
+      stopAudio(spinRef.current);
+      spinRef.current = null;
     }
     return () => {
-      if (spinRef.current) {
-        spinRef.current.pause();
-        spinRef.current = null;
-      }
+      stopAudio(spinRef.current);
+      spinRef.current = null;
     };
   }, [isSpinning]);
 
-  // Result sound
+  // Result sound — play on arrive, stop on dismiss (result → null)
   useEffect(() => {
-    if (!result) return;
-    // Stop any lingering result sounds
-    // Match label (trim trailing space like "+300 ")
+    if (!result) {
+      stopAudio(resultRef.current);
+      resultRef.current = null;
+      return;
+    }
+    stopAudio(resultRef.current);
     const label = result.label.trim();
     const entry = SEGMENT_SOUNDS[result.label] ?? SEGMENT_SOUNDS[label];
     if (entry) {
-      playOnce(entry.file, entry.volume);
+      resultRef.current = playOnce(entry.file, entry.volume);
     }
+    return () => {
+      stopAudio(resultRef.current);
+      resultRef.current = null;
+    };
   }, [result]);
 
   // Mallet interaction sounds (Host only)
