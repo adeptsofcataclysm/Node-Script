@@ -96,7 +96,7 @@ const DEFAULT_STATE: GameState = {
         text: "Есть особое достижение на каменных стражах в ПМШ. В чём суть этого достижения?",
         questionUrl: "",
         answerText: "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
-        answerUrl: gd("16fKN23vgiYGc8m79nSBClW_1-cZNs1vd"),
+        answerUrl: `${BASE}pets-100-answer.png`,
         used: false,
       },
       {
@@ -293,7 +293,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
