@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
-const BASE = import.meta.env.BASE_URL;
-
 export type Player = {
   id: string;
   name: string;
@@ -72,21 +70,21 @@ const DEFAULT_STATE: GameState = {
         text: "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
         questionUrl: "",
         answerText: "Тадиус (-----БОСС++++)",
-        answerUrl: `${BASE}tactics-300-answer.png`,
+        answerUrl: "/tactics-300-answer.png",
         used: false,
       },
       {
         text: "Как известно, у Адептов когда-то был творец эпохальных разборов на рейдовые подземелья. Какие-то доделаны до конца, а какие-то заброшены. Так вот, если бы сейчас появился эпохальный обзор на Осаду Оргримара, то каким по счёту он бы был?",
         questionUrl: "",
         answerText: "10-й\n\nЧто было:\n1) Чёрный храм\n2) Плато Солнечного Колодца\n3) Ульдуар\n4) Цитадель Ледяной Короны\n5) Твердыня Крыла Тьмы\n6) Сумеречный Бастион\n7) Трон Четырёх Ветров\n8) Огненные Просторы\n9) Душа Дракона",
-        answerUrl: `${BASE}tactics-400-answer.png`,
+        answerUrl: "/tactics-400-answer.png",
         used: false,
       },
       {
         text: "Перед походом в Чёрный Храм адептов просили полететь в забытый город ради семечка колючечника. Ради какого босса, и зачем?",
         questionUrl: "",
         answerText: "Матушка Шахраз. Чтобы её стяжка 3-х игроков иногда прокала на этих мобов с семечек.",
-        answerUrl: `${BASE}tactics-500-answer.png`,
+        answerUrl: "/tactics-500-answer.png",
         used: false,
       },
     ],
@@ -96,7 +94,7 @@ const DEFAULT_STATE: GameState = {
         text: "Есть особое достижение на каменных стражах в ПМШ. В чём суть этого достижения?",
         questionUrl: "",
         answerText: "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
-        answerUrl: `${BASE}pets-100-answer.png`,
+        answerUrl: "/pets-100-answer.png",
         used: false,
       },
       {
@@ -155,7 +153,7 @@ const DEFAULT_STATE: GameState = {
         text: "В каком рейде нужно убить некоторое количество треша, чтобы заспавнился босс?",
         questionUrl: "",
         answerText: "Огненные просторы",
-        answerUrl: `${BASE}trash-400-answer.png`,
+        answerUrl: "/trash-400-answer.png",
         used: false,
       },
       {
@@ -293,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 7;
+const DATA_VERSION = 8;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
