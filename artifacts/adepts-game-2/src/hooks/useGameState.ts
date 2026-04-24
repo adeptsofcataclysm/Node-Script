@@ -191,7 +191,7 @@ const DEFAULT_STATE: GameState = {
         text: "Кто это сказал?\n«От вас будет пахнуть огнём!»",
         questionUrl: "",
         answerText: "Киирилл",
-        answerUrl: gd("1Hm54AnqlUJluP3-j32_BRgswqlsph7lv"),
+        answerUrl: "/quotes-400-answer.mp4",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 11;
+const DATA_VERSION = 12;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
