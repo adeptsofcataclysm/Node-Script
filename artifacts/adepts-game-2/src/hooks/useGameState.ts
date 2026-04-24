@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
+const BASE = import.meta.env.BASE_URL;
+
 export type Player = {
   id: string;
   name: string;
@@ -70,7 +72,7 @@ const DEFAULT_STATE: GameState = {
         text: "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
         questionUrl: "",
         answerText: "Тадиус (-----БОСС++++)",
-        answerUrl: gd("1aofYocyraeNimpvUBot_meMPOynw2R1o"),
+        answerUrl: `${BASE}tactics-300-answer.png`,
         used: false,
       },
       {
@@ -291,7 +293,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 1;
+const DATA_VERSION = 2;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
