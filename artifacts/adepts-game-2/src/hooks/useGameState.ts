@@ -177,7 +177,7 @@ const DEFAULT_STATE: GameState = {
         text: "Дополните фразу:\n[...]. Я...этого...не хотела.",
         questionUrl: "",
         answerText: "",
-        answerUrl: gd("1YxVFWtpdvQ4f4mTFNi247RZ2UirbGOuH"),
+        answerUrl: "/quotes-200-answer.mp4",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 9;
+const DATA_VERSION = 10;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
