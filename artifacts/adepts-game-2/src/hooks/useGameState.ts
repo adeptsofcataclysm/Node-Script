@@ -155,7 +155,7 @@ const DEFAULT_STATE: GameState = {
         text: "В каком рейде нужно убить некоторое количество треша, чтобы заспавнился босс?",
         questionUrl: "",
         answerText: "Огненные просторы",
-        answerUrl: gd("1pmww42WHN0YKDbEhhG20eog1j4eoiDhR"),
+        answerUrl: `${BASE}trash-400-answer.png`,
         used: false,
       },
       {
@@ -293,7 +293,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 4;
+const DATA_VERSION = 5;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
