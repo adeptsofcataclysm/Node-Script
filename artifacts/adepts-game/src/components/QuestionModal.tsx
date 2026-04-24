@@ -313,18 +313,20 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
-                            <motion.p
-                              key={text}
-                              initial={{ opacity: 0, y: 28, scale: 0.96 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
-                              style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
-                            >
-                              {text || "—"}
-                            </motion.p>
-                          </div>
+                          {text && (
+                            <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
+                              <motion.p
+                                key={text}
+                                initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
+                                style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
+                              >
+                                {text}
+                              </motion.p>
+                            </div>
+                          )}
                         </>
                       )}
                     </motion.div>
