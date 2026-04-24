@@ -86,7 +86,7 @@ function Fireworks({ active }: { active: boolean }) {
       const count = 55 + Math.floor(Math.random() * 25);
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
-        const speed = 1.5 + Math.random() * 6;
+        const speed = 0.8 + Math.random() * 3.2;
         const sparkColor = Math.random() < 0.3
           ? FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)]
           : color;
@@ -158,7 +158,7 @@ function Fireworks({ active }: { active: boolean }) {
         s.y += s.vy;
         s.vy += 0.1;
         s.vx *= 0.98;
-        s.alpha *= 0.96;
+        s.alpha *= 0.975;
         if (!byColor.has(s.color)) byColor.set(s.color, []);
         byColor.get(s.color)!.push(s);
       }
@@ -566,7 +566,7 @@ export function QuestionModal({
                                 <img
                                   src={resolveUrl(answerUrl)}
                                   alt="Answer media"
-                                  className="w-auto rounded-xl object-contain shadow-lg"
+                                  className={`w-auto rounded-xl object-contain${isCelebration ? "" : " shadow-lg"}`}
                                   style={{
                                     maxHeight: "clamp(100px, 24vh, 320px)",
                                     maxWidth: "100%",
