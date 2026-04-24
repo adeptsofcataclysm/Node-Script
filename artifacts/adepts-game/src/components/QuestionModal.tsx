@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Trophy, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,149 @@ type Confetti = {
   x: number; y: number; vx: number; vy: number;
   w: number; h: number; color: string; rotation: number; rotSpeed: number; alpha: number;
 };
+
+const SPRAY_ANGLES = [-105, -95, -90, -85, -75, -100, -80];
+const SPRAY_DISTS  = [  70,   80,  90,  80,  70,   55,  60];
+
+function ChampagneBottle({ side, startDelay }: { side: "left" | "right"; startDelay: number }) {
+  const [popPhase, setPopPhase] = useState(-1);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPopPhase(0), startDelay);
+    return () => clearTimeout(t);
+  }, [startDelay]);
+
+  useEffect(() => {
+    if (popPhase < 0) return;
+    const id = setTimeout(() => setPopPhase(p => p + 1), 3800);
+    return () => clearTimeout(id);
+  }, [popPhase]);
+
+  const flip = side === "right";
+
+  const particles = useMemo(() =>
+    SPRAY_ANGLES.map((deg, i) => ({
+      id: i,
+      rad: deg * (Math.PI / 180),
+      dist: SPRAY_DISTS[i],
+      delay: 0.12 + i * 0.04,
+      color: ["#ffd700", "#ffffff", "#a8d8ff", "#ffe4b5", "#c8f0c8", "#ffc0cb", "#e0c8ff"][i % 7],
+    })),
+  []);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: "clamp(30px, 8vh, 120px)",
+        [flip ? "right" : "left"]: "clamp(10px, 3vw, 60px)",
+        zIndex: 9998,
+        pointerEvents: "none",
+        transform: flip ? "scaleX(-1)" : "none",
+      }}
+    >
+      {/* Bottle */}
+      <motion.div
+        animate={{ rotate: [-6, -9, -6, -9, -6] }}
+        transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg width="90" height="220" viewBox="0 0 90 220" overflow="visible">
+          {/* Bottle body */}
+          <path
+            d="M22 210 Q8 185 10 130 L14 95 Q17 68 26 56 L27 36 Q27 24 34 22 L56 22 Q63 24 63 36 L64 56 Q73 68 76 95 L80 130 Q82 185 68 210 Z"
+            fill="#1d6b30"
+            stroke="#0f4020"
+            strokeWidth="1.5"
+          />
+          {/* Bottle shine */}
+          <path
+            d="M20 150 Q18 125 22 105 L25 80 Q27 65 33 58"
+            fill="none"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+          {/* Label */}
+          <rect x="17" y="115" width="56" height="66" rx="5" fill="#f2dfa0" stroke="#c8a830" strokeWidth="1.5" />
+          <rect x="20" y="118" width="50" height="60" rx="4" fill="#f5e8b0" />
+          <text x="45" y="136" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#5a3010" fontFamily="serif">🍾</text>
+          <text x="45" y="150" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#3a1a08" fontFamily="serif">ШАМПАН</text>
+          <text x="45" y="162" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#3a1a08" fontFamily="serif">СКОЕ</text>
+          <text x="45" y="174" textAnchor="middle" fontSize="6" fill="#8a5020" fontFamily="serif">ADEPTS</text>
+          {/* Foil */}
+          <path
+            d="M27 36 L63 36 L65 56 L25 56 Z"
+            fill="#d4a820"
+            stroke="#b8901a"
+            strokeWidth="1"
+          />
+          <path
+            d="M26 44 L64 44"
+            stroke="#b8901a"
+            strokeWidth="0.8"
+          />
+          {/* Neck */}
+          <rect x="34" y="18" width="22" height="20" rx="4" fill="#257a38" stroke="#0f4020" strokeWidth="1" />
+          {/* Cork */}
+          {popPhase >= 0 && (
+            <motion.g
+              key={popPhase}
+              initial={{ y: 0, x: 0, rotate: 0, opacity: 1 }}
+              animate={{
+                y:       [0, -4,  -80, -170],
+                x:       [0,  0,  -30,  -55],
+                rotate:  [0,  0,  -55, -110],
+                opacity: [1,  1,   0.9,   0],
+              }}
+              transition={{
+                times: [0, 0.08, 0.5, 1],
+                duration: 1.4,
+                ease: "easeOut",
+              }}
+            >
+              <rect x="37" y="4" width="16" height="17" rx="3" fill="#c8a050" stroke="#a07830" strokeWidth="1" />
+              <line x1="37" y1="10" x2="53" y2="10" stroke="#b09040" strokeWidth="0.8" />
+              <line x1="37" y1="14" x2="53" y2="14" stroke="#b09040" strokeWidth="0.8" />
+            </motion.g>
+          )}
+          {/* Spray particles */}
+          {popPhase >= 0 && particles.map((p) => (
+            <motion.circle
+              key={`${popPhase}-${p.id}`}
+              cx={45}
+              cy={18}
+              r={4}
+              fill={p.color}
+              fillOpacity={0.95}
+              initial={{ opacity: 0, r: 2 }}
+              animate={{
+                cx: [45, 45 + Math.cos(p.rad) * p.dist * 0.4, 45 + Math.cos(p.rad) * p.dist],
+                cy: [18, 18 + Math.sin(p.rad) * p.dist * 0.4, 18 + Math.sin(p.rad) * p.dist],
+                opacity: [0, 1, 0],
+                r: [2, 4, 2],
+              }}
+              transition={{
+                delay: 0.22 + p.delay,
+                duration: 1.1,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </svg>
+      </motion.div>
+    </div>
+  );
+}
+
+function ChampagneBottles({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <>
+      <ChampagneBottle side="left"  startDelay={400}  />
+      <ChampagneBottle side="right" startDelay={1200} />
+    </>
+  );
+}
 
 function Fireworks({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -421,6 +564,7 @@ export function QuestionModal({
 
   return (
     <>
+      <ChampagneBottles active={showFireworks} />
       <Fireworks active={showFireworks} />
     <AnimatePresence>
       {isOpen && (
