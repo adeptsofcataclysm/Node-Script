@@ -709,7 +709,7 @@ export function QuestionModal({
                   {isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
-                      onClick={() => window.open(window.location.origin + "/", "_blank")}
+                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
                       className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                     >
                       🎡 Колесо Адептов
