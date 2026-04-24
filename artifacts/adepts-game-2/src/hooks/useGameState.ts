@@ -235,7 +235,7 @@ const DEFAULT_STATE: GameState = {
       {
         text: "Назовите великий подвиг, связанный с этой фигуркой.",
         questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/289826-%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%BD%D0%B0%D1%8F-%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%BA%D0%B0-%D0%B2%D0%B5%D1%80%D0%B1%D0%BB%D1%8E%D0%B4%D0%B0.jpg",
-        answerText: "«Странная фигурка верблюда». В Ульдуме при нажатии вас отправляет в «Дымящиеся озёра» вызволять верблюда из лап Дормуса.\nПодвиг называется — Странник вечных песков.",
+        answerText: "Перед нами на картинке \"Странная фигурка верблюда\". Фигурку можно найти в Ульдуме, при нажатии на фигурку вас отправляет в \"Дымящиеся озёра\", где вам предстоит силой вызволить посеревшего от страха верблюда из лап Дормуса.\nПодвиг за освобождение верблюда из лап Дормуса называется - \"Странник вечных песков\".",
         answerUrl: "",
         used: false,
       },
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 15;
+const DATA_VERSION = 16;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
