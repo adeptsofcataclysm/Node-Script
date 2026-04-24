@@ -33,27 +33,33 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-const FIREWORK_COLORS = [
-  "#FFD700","#FF6B6B","#4ECDC4","#45B7D1","#96CEB4",
-  "#FFEAA7","#DDA0DD","#98FB98","#FF69B4","#FFA07A","#B0E0E6","#FF4500",
+const FW_COLORS = [
+  "#FFD700","#FF4444","#44DDFF","#FF44FF","#44FF88",
+  "#FF8844","#FFFFFF","#FFAA00","#AA44FF","#44FFFF",
 ];
 
-type FParticle = {
+type Rocket = {
+  x: number; y: number; vy: number;
+  color: string; trail: { x: number; y: number }[];
+  exploded: boolean;
+};
+
+type Spark = {
   x: number; y: number; vx: number; vy: number;
-  color: string; alpha: number; size: number;
-  type: "spark" | "confetti";
-  rotation: number; rotationSpeed: number;
+  color: string; alpha: number; size: number; tail: { x: number; y: number }[];
 };
 
 function Fireworks({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>();
-  const particlesRef = useRef<FParticle[]>([]);
+  const rocketsRef = useRef<Rocket[]>([]);
+  const sparksRef = useRef<Spark[]>([]);
 
   useEffect(() => {
     if (!active) {
       if (animRef.current) cancelAnimationFrame(animRef.current);
-      particlesRef.current = [];
+      rocketsRef.current = [];
+      sparksRef.current = [];
       return;
     }
     const canvas = canvasRef.current;
@@ -63,34 +69,35 @@ function Fireworks({ active }: { active: boolean }) {
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    const W = canvas.width, H = canvas.height;
 
-    const burst = (x: number, y: number) => {
-      for (let i = 0; i < 70; i++) {
-        const angle = (Math.PI * 2 * i) / 70 + Math.random() * 0.25;
-        const speed = 2 + Math.random() * 7;
-        particlesRef.current.push({
-          x, y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 2,
-          color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
-          alpha: 1, size: 3 + Math.random() * 4,
-          type: "spark", rotation: 0, rotationSpeed: 0,
-        });
-      }
+    const launchRocket = () => {
+      rocketsRef.current.push({
+        x: W * (0.15 + Math.random() * 0.7),
+        y: H,
+        vy: -(10 + Math.random() * 7),
+        color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
+        trail: [],
+        exploded: false,
+      });
     };
 
-    const confetti = () => {
-      for (let i = 0; i < 6; i++) {
-        particlesRef.current.push({
-          x: Math.random() * canvas.width,
-          y: -10,
-          vx: (Math.random() - 0.5) * 4,
-          vy: 2 + Math.random() * 5,
-          color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
-          alpha: 1, size: 7 + Math.random() * 7,
-          type: "confetti",
-          rotation: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() - 0.5) * 0.25,
+    const explode = (x: number, y: number, color: string) => {
+      const count = 90 + Math.floor(Math.random() * 40);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
+        const speed = 1.5 + Math.random() * 6;
+        const sparkColor = Math.random() < 0.3
+          ? FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)]
+          : color;
+        sparksRef.current.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: sparkColor,
+          alpha: 1,
+          size: 2.5 + Math.random() * 2.5,
+          tail: [],
         });
       }
     };
@@ -98,36 +105,78 @@ function Fireworks({ active }: { active: boolean }) {
     let frame = 0;
     const animate = () => {
       animRef.current = requestAnimationFrame(animate);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, W, H);
       frame++;
-      if (frame % 35 === 0) burst(Math.random() * canvas.width, Math.random() * canvas.height * 0.65);
-      if (frame < 240) confetti();
-      particlesRef.current = particlesRef.current.filter((p) => p.alpha > 0.02);
-      for (const p of particlesRef.current) {
-        p.x += p.vx; p.y += p.vy; p.vy += 0.12;
-        p.alpha *= p.type === "spark" ? 0.962 : 0.9985;
-        p.rotation += p.rotationSpeed;
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        if (p.type === "confetti") {
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rotation);
-          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-        } else {
+
+      if (frame % 22 === 0) launchRocket();
+
+      // Rockets
+      rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
+      for (const r of rocketsRef.current) {
+        r.trail.push({ x: r.x, y: r.y });
+        if (r.trail.length > 12) r.trail.shift();
+        r.y += r.vy;
+        r.vy += 0.22;
+
+        // Draw trail
+        for (let i = 0; i < r.trail.length; i++) {
+          const t = r.trail[i];
+          const alpha = (i / r.trail.length) * 0.7;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+          ctx.arc(t.x, t.y, 2.5 * (i / r.trail.length), 0, Math.PI * 2);
+          ctx.fillStyle = r.color;
+          ctx.globalAlpha = alpha;
           ctx.fill();
         }
-        ctx.restore();
+        // Draw head
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        if (r.vy >= -1) {
+          r.exploded = true;
+          explode(r.x, r.y, r.color);
+        }
       }
+
+      // Sparks
+      sparksRef.current = sparksRef.current.filter((s) => s.alpha > 0.02);
+      for (const s of sparksRef.current) {
+        s.tail.push({ x: s.x, y: s.y });
+        if (s.tail.length > 7) s.tail.shift();
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.1;
+        s.vx *= 0.98;
+        s.alpha *= 0.958;
+
+        // Draw tail
+        for (let i = 0; i < s.tail.length; i++) {
+          const t = s.tail[i];
+          const a = s.alpha * (i / s.tail.length) * 0.5;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, s.size * 0.4 * (i / s.tail.length), 0, Math.PI * 2);
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = a;
+          ctx.fill();
+        }
+        // Draw head with glow
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = s.color;
+        ctx.globalAlpha = s.alpha;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
     };
 
-    const w = canvas.width; const h = canvas.height;
-    const delays = [[w * 0.25, h * 0.25, 0],[w * 0.75, h * 0.2, 180],[w * 0.5, h * 0.4, 360],
-                    [w * 0.15, h * 0.5, 540],[w * 0.85, h * 0.35, 700],[w * 0.5, h * 0.2, 900],
-                    [w * 0.3, h * 0.6, 1100],[w * 0.7, h * 0.55, 1300]];
-    delays.forEach(([x, y, d]) => setTimeout(() => burst(x, y), d));
+    // Immediate first bursts
+    [0, 300, 600, 900, 1200, 1500].forEach((d) => setTimeout(launchRocket, d));
     animate();
 
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
