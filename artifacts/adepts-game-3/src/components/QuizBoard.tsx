@@ -2,6 +2,20 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Question } from "../hooks/useGameState";
 
+const BASE = import.meta.env.BASE_URL;
+
+const THEME_ICONS: Record<string, string> = {
+  "боссы": `${BASE}bossy.png`,
+  "пасхалки": `${BASE}pashalki.png`,
+  "цитаты и фразы": `${BASE}quotes.png`,
+  "лор world of warcraft": `${BASE}lor-wow.png`,
+  "лор wow": `${BASE}lor-wow2.png`,
+  "халява": `${BASE}freebie.png`,
+  "локации": `${BASE}locations.png`,
+  "профессии": `${BASE}professions.png`,
+  "всратый косплей": `${BASE}cosplay.png`,
+};
+
 interface QuizBoardProps {
   themes: string[];
   questions: Question[][];
@@ -32,7 +46,7 @@ export function QuizBoard({
               damping: 22,
               stiffness: 180,
             }}
-            className="w-1/4 relative flex items-center rounded-xl overflow-hidden cursor-text group"
+            className="w-[21%] relative flex items-center rounded-xl overflow-hidden cursor-text group"
             style={{
               background: "linear-gradient(105deg, hsla(270,40%,12%,0.95) 0%, hsla(270,30%,9%,0.7) 100%)",
               borderLeft: "3px solid hsla(280,65%,58%,0.85)",
@@ -54,42 +68,51 @@ export function QuizBoard({
               transition={{ duration: 0.3 }}
             />
 
-            {/* Decorative glow dot */}
-            <div
-              className="absolute left-3 w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{
-                background: "hsla(280,65%,70%,0.9)",
-                boxShadow: "0 0 8px 2px hsla(280,65%,60%,0.6)",
-              }}
-            />
+            {/* Centered content: text + icon as a unit */}
+            <div className="flex items-center justify-center gap-2 w-full px-3">
+              {editingTheme === tIdx ? (
+                <input
+                  autoFocus
+                  value={theme}
+                  onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
+                  onBlur={() => setEditingTheme(null)}
+                  onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
+                  className="flex-1 bg-transparent outline-none uppercase tracking-widest text-foreground text-center"
+                  style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
+                  placeholder={`Тема ${tIdx + 1}`}
+                />
+              ) : (
+                <span
+                  className="uppercase tracking-widest text-foreground truncate select-none text-center"
+                  style={{
+                    fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
+                    fontFamily: "WarCraft, sans-serif",
+                    textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
+                  }}
+                >
+                  {theme || <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
+                </span>
+              )}
 
-            {editingTheme === tIdx ? (
-              <input
-                autoFocus
-                value={theme}
-                onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
-                onBlur={() => setEditingTheme(null)}
-                onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
-                className="w-full bg-transparent outline-none pl-7 pr-3 uppercase tracking-widest text-foreground"
-                style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
-                placeholder={`Тема ${tIdx + 1}`}
-              />
-            ) : (
-              <span
-                className="pl-7 pr-3 uppercase tracking-widest text-foreground truncate select-none"
-                style={{
-                  fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
-                  fontFamily: "WarCraft, sans-serif",
-                  textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
-                }}
-              >
-                {theme || <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
-              </span>
-            )}
+              {THEME_ICONS[theme.toLowerCase()] && (
+                <motion.img
+                  src={THEME_ICONS[theme.toLowerCase()]}
+                  alt=""
+                  className="flex-shrink-0 w-auto object-contain pointer-events-none select-none"
+                  style={{
+                    height: "3.2rem",
+                    filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
+                  }}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: tIdx * 0.07, duration: 0.45, ease: "easeOut" }}
+                />
+              )}
+            </div>
           </motion.div>
 
           {/* Question point cells */}
-          <div className="w-3/4 grid grid-cols-5 gap-2">
+          <div className="flex-1 grid grid-cols-5 gap-2">
             {questions[tIdx].map((q, qIdx) => {
               const points = (qIdx + 1) * 100;
               return (
