@@ -275,7 +275,7 @@ const DEFAULT_STATE: GameState = {
         text: "Назовите абилку по описанию:\nДруид получает одну из способностей связанного с ним класса. Выбор зависит от специализации. Цель также получает одну из способностей друида. Время действия — 1 ч. Эффект сохраняется после смерти.",
         questionUrl: "",
         answerText: "Симбиоз.",
-        answerUrl: gd("1Po6nyVvlXcI2kSQZVvjj_RNK_Z-pU4Vd"),
+        answerUrl: "/abilities-400-answer.png",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 20;
+const DATA_VERSION = 21;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
