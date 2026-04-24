@@ -259,7 +259,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Как называют всё это вот?",
-        questionUrl: gd("1rZYkRGIqQGrwf_1SmyPoZqjYgg8rvEwd"),
+        questionUrl: "/abilities-200-question.png",
         answerText: "Лужи",
         answerUrl: "",
         used: false,
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 17;
+const DATA_VERSION = 18;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
