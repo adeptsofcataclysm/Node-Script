@@ -33,6 +33,116 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
+const FIREWORK_COLORS = [
+  "#FFD700","#FF6B6B","#4ECDC4","#45B7D1","#96CEB4",
+  "#FFEAA7","#DDA0DD","#98FB98","#FF69B4","#FFA07A","#B0E0E6","#FF4500",
+];
+
+type FParticle = {
+  x: number; y: number; vx: number; vy: number;
+  color: string; alpha: number; size: number;
+  type: "spark" | "confetti";
+  rotation: number; rotationSpeed: number;
+};
+
+function Fireworks({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>();
+  const particlesRef = useRef<FParticle[]>([]);
+
+  useEffect(() => {
+    if (!active) {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      particlesRef.current = [];
+      return;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const burst = (x: number, y: number) => {
+      for (let i = 0; i < 70; i++) {
+        const angle = (Math.PI * 2 * i) / 70 + Math.random() * 0.25;
+        const speed = 2 + Math.random() * 7;
+        particlesRef.current.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2,
+          color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
+          alpha: 1, size: 3 + Math.random() * 4,
+          type: "spark", rotation: 0, rotationSpeed: 0,
+        });
+      }
+    };
+
+    const confetti = () => {
+      for (let i = 0; i < 6; i++) {
+        particlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: -10,
+          vx: (Math.random() - 0.5) * 4,
+          vy: 2 + Math.random() * 5,
+          color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
+          alpha: 1, size: 7 + Math.random() * 7,
+          type: "confetti",
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.25,
+        });
+      }
+    };
+
+    let frame = 0;
+    const animate = () => {
+      animRef.current = requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
+      if (frame % 35 === 0) burst(Math.random() * canvas.width, Math.random() * canvas.height * 0.65);
+      if (frame < 240) confetti();
+      particlesRef.current = particlesRef.current.filter((p) => p.alpha > 0.02);
+      for (const p of particlesRef.current) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12;
+        p.alpha *= p.type === "spark" ? 0.962 : 0.9985;
+        p.rotation += p.rotationSpeed;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        if (p.type === "confetti") {
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    };
+
+    const w = canvas.width; const h = canvas.height;
+    const delays = [[w * 0.25, h * 0.25, 0],[w * 0.75, h * 0.2, 180],[w * 0.5, h * 0.4, 360],
+                    [w * 0.15, h * 0.5, 540],[w * 0.85, h * 0.35, 700],[w * 0.5, h * 0.2, 900],
+                    [w * 0.3, h * 0.6, 1100],[w * 0.7, h * 0.55, 1300]];
+    delays.forEach(([x, y, d]) => setTimeout(() => burst(x, y), d));
+    animate();
+
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [active]);
+
+  if (!active) return null;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 9999, width: "100vw", height: "100vh" }}
+    />
+  );
+}
+
 function adaptiveFontSize(str: string): string {
   const len = str.length;
   if (len <= 30)  return "clamp(1.8rem, 6vh, 3.75rem)";
@@ -122,7 +232,9 @@ export function QuestionModal({
   const [answerUrl, setAnswerUrl] = useState("");
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
+  const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isCelebration = themeName === "Халява" && points === 400;
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -153,10 +265,12 @@ export function QuestionModal({
       setAwarded(null);
       setStage("question");
       setIsEditing(false);
+      setShowFireworks(false);
       startTimer();
     } else {
       stopTimer();
       setCountdown(TIMER_SECONDS);
+      setShowFireworks(false);
     }
     return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,6 +302,7 @@ export function QuestionModal({
     stopTimer();
     setStage("answer");
     setIsEditing(false);
+    if (isCelebration) setShowFireworks(true);
   };
 
   const questionFontSizeStyle = adaptiveFontSize(text);
@@ -195,6 +310,8 @@ export function QuestionModal({
   const answerWords = answerText.split(/\s+/).filter(Boolean);
 
   return (
+    <>
+      <Fireworks active={showFireworks} />
     <AnimatePresence>
       {isOpen && (
         <>
@@ -383,7 +500,14 @@ export function QuestionModal({
                                   src={resolveUrl(answerUrl)}
                                   alt="Answer media"
                                   className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={{ maxHeight: "clamp(100px, 24vh, 320px)", maxWidth: "100%" }}
+                                  style={{
+                                    maxHeight: "clamp(100px, 24vh, 320px)",
+                                    maxWidth: "100%",
+                                    ...(isCelebration ? {
+                                      filter: "drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35))",
+                                      animation: "celebrationGlow 1.4s ease-in-out infinite alternate",
+                                    } : {}),
+                                  }}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                                 />
                               )}
@@ -541,5 +665,6 @@ export function QuestionModal({
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }
