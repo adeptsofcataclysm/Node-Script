@@ -339,7 +339,7 @@ export function QuestionModal({
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isCelebration = themeName === "Халява" && points === 400;
+  const isCelebration = (themeName === "Халява" && points === 400) || (themeName === "Пасхалки" && points === 300);
 
   const stopTimer = () => {
     if (intervalRef.current) {
