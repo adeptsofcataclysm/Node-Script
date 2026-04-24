@@ -184,7 +184,7 @@ const DEFAULT_STATE: GameState = {
         text: "Дополните цитату:\nНе бывает в игре багов [...]",
         questionUrl: "",
         answerText: "",
-        answerUrl: gd("1jzUyYr-0bVoxTh3wO7GnpG6AEmfXYkTZ"),
+        answerUrl: "/quotes-300-answer.mp4",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 10;
+const DATA_VERSION = 11;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
