@@ -280,7 +280,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Почему тут аж три камня здоровья?",
-        questionUrl: gd("1rTL5adwkPzLUjGqVCFF25705oyEguFLr"),
+        questionUrl: "/abilities-500-question.png",
         answerText: "Когда-то у варлока были разные уровни заклинания для камней здоровья. Эти камушки не стакались между собой в инвентаре.",
         answerUrl: "",
         used: false,
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 19;
+const DATA_VERSION = 20;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
