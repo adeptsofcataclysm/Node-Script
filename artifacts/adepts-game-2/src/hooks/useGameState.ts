@@ -208,7 +208,7 @@ const DEFAULT_STATE: GameState = {
         text: "Ачивка называется — «Крутостью мне заложило уши!». Что нужно было сделать, чтобы получить данную ачивку?",
         questionUrl: "",
         answerText: "Победить Синестру в героическом режиме с первой попытки, не допустив смерти ни одного из участников рейда.",
-        answerUrl: gd("1uiiDsyLXRA5XjfqD5-D7j5b9lBxyFG28"),
+        answerUrl: "/feats-100-answer.png",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 12;
+const DATA_VERSION = 13;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
