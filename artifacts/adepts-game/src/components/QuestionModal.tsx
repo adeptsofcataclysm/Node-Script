@@ -129,13 +129,15 @@ function Fireworks({ active }: { active: boolean }) {
     const MAX_SPARKS = 700;
 
     let frame = 0;
+    const startTime = performance.now();
     const animate = () => {
       animRef.current = requestAnimationFrame(animate);
       ctx.clearRect(0, 0, W, H);
       frame++;
 
+      const elapsed = performance.now() - startTime;
       if (frame % 25 === 0) launchRocket();
-      spawnConfetti();
+      if (elapsed < 12000) spawnConfetti();
 
       // Rockets
       rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
