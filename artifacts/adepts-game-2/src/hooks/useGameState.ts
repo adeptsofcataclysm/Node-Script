@@ -338,7 +338,15 @@ export function useGameState() {
 
     socket.on("sync", (incoming: GameState) => {
       skipEmitRef.current = true;
-      setState(incoming);
+      setState({
+        ...incoming,
+        questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
+          themeQs.map((defaultQ, qIdx) => ({
+            ...defaultQ,
+            used: incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used,
+          }))
+        ),
+      });
     });
 
     return () => {
