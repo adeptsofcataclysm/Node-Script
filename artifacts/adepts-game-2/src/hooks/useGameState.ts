@@ -229,7 +229,7 @@ const DEFAULT_STATE: GameState = {
         text: "Назовите ачивку, для которой нужно убить всех лидеров фракции противника в их столицах. Наградой будет огромный Чёрный боевой медведь.",
         questionUrl: "",
         answerText: "За Альянс!",
-        answerUrl: gd("19r1lgm-MiXOyUuUpEzAGvdZwSR7o_zFA"),
+        answerUrl: "/feats-400-answer.png",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 14;
+const DATA_VERSION = 15;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
