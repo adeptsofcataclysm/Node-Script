@@ -49,17 +49,24 @@ type Spark = {
   color: string; alpha: number; size: number; tail: { x: number; y: number }[];
 };
 
+type Confetti = {
+  x: number; y: number; vx: number; vy: number;
+  w: number; h: number; color: string; rotation: number; rotSpeed: number; alpha: number;
+};
+
 function Fireworks({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>();
   const rocketsRef = useRef<Rocket[]>([]);
   const sparksRef = useRef<Spark[]>([]);
+  const confettiRef = useRef<Confetti[]>([]);
 
   useEffect(() => {
     if (!active) {
       if (animRef.current) cancelAnimationFrame(animRef.current);
       rocketsRef.current = [];
       sparksRef.current = [];
+      confettiRef.current = [];
       return;
     }
     const canvas = canvasRef.current;
@@ -102,6 +109,23 @@ function Fireworks({ active }: { active: boolean }) {
       }
     };
 
+    const spawnConfetti = () => {
+      for (let i = 0; i < 4; i++) {
+        confettiRef.current.push({
+          x: Math.random() * W,
+          y: -12,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: 1.5 + Math.random() * 3,
+          w: 8 + Math.random() * 10,
+          h: 5 + Math.random() * 6,
+          color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.12,
+          alpha: 1,
+        });
+      }
+    };
+
     const MAX_SPARKS = 700;
 
     let frame = 0;
@@ -111,6 +135,7 @@ function Fireworks({ active }: { active: boolean }) {
       frame++;
 
       if (frame % 25 === 0) launchRocket();
+      spawnConfetti();
 
       // Rockets
       rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
@@ -185,6 +210,22 @@ function Fireworks({ active }: { active: boolean }) {
           ctx.fill();
         }
       }
+      // Confetti
+      confettiRef.current = confettiRef.current.filter((c) => c.y < H + 20);
+      for (const c of confettiRef.current) {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vx += (Math.random() - 0.5) * 0.15;
+        c.rotation += c.rotSpeed;
+        ctx.save();
+        ctx.globalAlpha = c.alpha;
+        ctx.fillStyle = c.color;
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rotation);
+        ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+        ctx.restore();
+      }
+
       ctx.globalAlpha = 1;
     };
 
