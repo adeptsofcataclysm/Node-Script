@@ -738,7 +738,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-6 lg:px-8 pt-4 lg:pt-6 flex justify-center"
+                              className={`flex justify-center ${isCelebration ? "px-4 lg:px-6 pt-6 lg:pt-10" : "px-6 lg:px-8 pt-4 lg:pt-6"}`}
                             >
                               {isVideo(answerUrl) ? (
                                 <video
@@ -755,7 +755,7 @@ export function QuestionModal({
                                   alt="Answer media"
                                   className={`w-auto rounded-xl object-contain${isCelebration ? "" : " shadow-lg"}`}
                                   style={{
-                                    maxHeight: "clamp(100px, 24vh, 320px)",
+                                    maxHeight: isCelebration ? "clamp(160px, 38vh, 460px)" : "clamp(100px, 24vh, 320px)",
                                     maxWidth: "100%",
                                     ...(isCelebration ? {
                                       filter: "drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35))",
@@ -767,7 +767,7 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-3 lg:py-6">
+                          <div className={`flex flex-col items-center justify-center ${isCelebration ? "px-8 lg:px-16 py-6 lg:py-10" : "px-8 lg:px-12 py-3 lg:py-6"}`}>
                             <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
                               {answerWords.map((word, i) => (
                                 <motion.span
@@ -781,7 +781,7 @@ export function QuestionModal({
                                     stiffness: 300,
                                   }}
                                   className="font-display text-primary glow-text leading-tight"
-                                  style={{ fontSize: answerFontSizeStyle }}
+                                  style={{ fontSize: isCelebration ? "clamp(2rem, 5.5vh, 4rem)" : answerFontSizeStyle }}
                                 >
                                   {word}
                                 </motion.span>
@@ -791,8 +791,8 @@ export function QuestionModal({
                         </>
                       )}
 
-                      {/* Award points */}
-                      <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
+                      {/* Award points — hidden for celebration */}
+                      {!isCelebration && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Trophy className="w-4 h-4 text-primary" />
                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -840,7 +840,7 @@ export function QuestionModal({
                             );
                           })}
                         </div>
-                      </div>
+                      </div>}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -892,7 +892,7 @@ export function QuestionModal({
                 </div>
 
                 {/* Right */}
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   {stage === "question" ? (
                     <Button
                       size="lg"
@@ -901,6 +901,14 @@ export function QuestionModal({
                     >
                       <Eye className="w-5 h-5" />
                       Показать ответ
+                    </Button>
+                  ) : isCelebration ? (
+                    <Button
+                      size="lg"
+                      onClick={() => window.open(window.location.origin + "/", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
+                    >
+                      🎡 Колесо Адептов
                     </Button>
                   ) : (
                     <Button
