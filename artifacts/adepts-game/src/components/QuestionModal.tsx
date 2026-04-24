@@ -302,7 +302,12 @@ export function QuestionModal({
     stopTimer();
     setStage("answer");
     setIsEditing(false);
-    if (isCelebration) setShowFireworks(true);
+    if (isCelebration) {
+      setShowFireworks(true);
+      const audio = new Audio(import.meta.env.BASE_URL + "freebie-400-answer.mp3");
+      audio.volume = 0.85;
+      audio.play().catch(() => {});
+    }
   };
 
   const questionFontSizeStyle = adaptiveFontSize(text);
