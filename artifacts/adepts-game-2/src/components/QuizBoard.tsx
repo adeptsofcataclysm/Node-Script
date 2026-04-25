@@ -6,6 +6,7 @@ const BASE = import.meta.env.BASE_URL;
 
 const THEME_DISPLAY: Record<string, string> = {
   "великие подвиги": "Великие\nподвиги",
+  "дед прими таблетки": "Дед прими\nтаблетки",
 };
 
 const THEME_ICONS: Record<string, string> = {
