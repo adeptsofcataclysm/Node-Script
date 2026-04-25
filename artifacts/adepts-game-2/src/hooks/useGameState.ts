@@ -242,7 +242,7 @@ const DEFAULT_STATE: GameState = {
     ],
     // НаЯборот
     [
-      { text: "Солнцетень", questionUrl: "/nayaborot-100-question.webp", answerText: "Луносет", answerUrl: "", used: false },
+      { text: "Солнцетень", questionUrl: "", answerText: "Луносет", answerUrl: "/nayaborot-100-question.webp", used: false },
       { text: "Равнины пространства", questionUrl: "", answerText: "Пещеры времени", answerUrl: "", used: false },
       { text: "Мокрая компашка", questionUrl: "", answerText: "Пылающий легион", answerUrl: "", used: false },
       { text: "Слив конца", questionUrl: "", answerText: "Источник вечности", answerUrl: "", used: false },
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 22;
+const DATA_VERSION = 23;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
