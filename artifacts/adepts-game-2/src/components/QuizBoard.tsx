@@ -16,6 +16,10 @@ const THEME_ICONS: Record<string, string> = {
   "всратый косплей": `${BASE}cosplay.png`,
   "тактики": `${BASE}tactics-icon.png`,
   "треш": `${BASE}trash-icon.png`,
+  "петомцы": `${BASE}pets-icon.png`,
+  "великие подвиги": `${BASE}feats-icon.png`,
+  "наяборот": `${BASE}nayaborot-icon.png`,
+  "абилки": `${BASE}abilities-icon.png`,
 };
 
 interface QuizBoardProps {
