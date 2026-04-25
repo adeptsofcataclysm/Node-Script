@@ -245,7 +245,7 @@ const DEFAULT_STATE: GameState = {
       { text: "Солнцетень", questionUrl: "", answerText: "Луносет", answerUrl: "/nayaborot-100-question.webp", used: false },
       { text: "Равнины пространства", questionUrl: "", answerText: "Пещеры времени", answerUrl: "/nayaborot-200-answer.jpg", used: false },
       { text: "Мокрая компашка", questionUrl: "", answerText: "Пылающий легион", answerUrl: "/nayaborot-300-answer.webp", used: false },
-      { text: "Слив конца", questionUrl: "", answerText: "Источник вечности", answerUrl: "", used: false },
+      { text: "Слив конца", questionUrl: "", answerText: "Источник вечности", answerUrl: "/nayaborot-400-answer.jpg", used: false },
       { text: "Квадростоп Наполнения", questionUrl: "", answerText: "Круговерть Путоты", answerUrl: "/nayaborot-500-answer.jpg", used: false },
     ],
     // Абилки
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 26;
+const DATA_VERSION = 27;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
