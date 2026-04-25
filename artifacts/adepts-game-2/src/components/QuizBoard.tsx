@@ -4,6 +4,10 @@ import { Question } from "../hooks/useGameState";
 
 const BASE = import.meta.env.BASE_URL;
 
+const THEME_DISPLAY: Record<string, string> = {
+  "великие подвиги": "Великие\nподвиги",
+};
+
 const THEME_ICONS: Record<string, string> = {
   "боссы": `${BASE}bossy.png`,
   "пасхалки": `${BASE}pashalki.png`,
@@ -89,14 +93,16 @@ export function QuizBoard({
                 />
               ) : (
                 <span
-                  className="uppercase tracking-widest text-foreground truncate select-none text-center"
+                  className="uppercase tracking-widest text-foreground select-none text-center whitespace-pre-line leading-tight"
                   style={{
                     fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)",
                     fontFamily: "WarCraft, sans-serif",
                     textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
                   }}
                 >
-                  {theme || <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
+                  {theme
+                    ? (THEME_DISPLAY[theme.toLowerCase()] ?? theme)
+                    : <span className="text-muted-foreground/40">Тема {tIdx + 1}</span>}
                 </span>
               )}
 
