@@ -19,6 +19,7 @@ const THEME_ICONS: Record<string, string> = {
   "локации": `${BASE}locations.png`,
   "профессии": `${BASE}professions.png`,
   "всратый косплей": `${BASE}cosplay.png`,
+  "дед прими таблетки": `${BASE}ded-icon.png`,
   "тактики": `${BASE}tactics-icon.png`,
   "треш": `${BASE}trash-icon.png`,
   "петомцы": `${BASE}pets-icon.png`,
