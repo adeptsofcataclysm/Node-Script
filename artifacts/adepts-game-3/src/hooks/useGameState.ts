@@ -67,7 +67,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "К чему была приурочена эта гифка?",
-        questionUrl: gd("1fNORfGSc_upJNK3oW-GNp8W8fCh2eM0e"),
+        questionUrl: "/lor-400-question.gif",
         answerText: "Переезд гильдии с сервера Рок-Делар на Пламегор (бля там написано «АдеТПы»)",
         answerUrl: "",
         used: false,
@@ -321,7 +321,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
