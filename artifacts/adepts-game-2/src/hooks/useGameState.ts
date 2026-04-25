@@ -170,7 +170,7 @@ const DEFAULT_STATE: GameState = {
         text: "Что заиграет после этого?\n— Trifiling gnome! Your arrogance will be your undoing!\n— But i'm in charge here...\n— [...]",
         questionUrl: "",
         answerText: "",
-        answerUrl: gd("1xOPOAvweFM8IDl3tiHV67jAqUDrCx7mD"),
+        answerUrl: "/quotes-100-answer.mp4",
         used: false,
       },
       {
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 27;
+const DATA_VERSION = 28;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
