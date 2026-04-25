@@ -137,7 +137,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "В Зангартопи на одном из грибов можно найти интересное место. К какому произведению может быть эта пасхалка?",
-        questionUrl: gd("1w5McZ0KJAVkchXb5dCLikxLQ_FsjvzEX"),
+        questionUrl: "/easter-200-question.png",
         answerText: "Алиса в стране чудес",
         answerUrl: gd("1w5McZ0KJAVkchXb5dCLikxLQ_FsjvzEX"),
         used: false,
@@ -321,7 +321,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 3;
+const DATA_VERSION = 4;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
