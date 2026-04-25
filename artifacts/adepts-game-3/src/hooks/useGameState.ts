@@ -82,11 +82,41 @@ const DEFAULT_STATE: GameState = {
     ],
     // Всратый косплей
     [
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      {
+        text: "Угадайте персонажа по косплею:",
+        questionUrl: gd("1roBbEGJevfoz2cjKW7JFTEIojAMujkGM"),
+        answerText: "Пандарен",
+        answerUrl: "https://mir-s3-cdn-cf.behance.net/project_modules/hd_webp/42b0ab50391213.560881a922da1.jpg",
+        used: false,
+      },
+      {
+        text: "Угадайте персонажа по косплею:",
+        questionUrl: gd("1sREVtyUAWuEKPXpFifVHyi4rM-2HdfaA"),
+        answerText: "Гулдан",
+        answerUrl: "https://cs19.pikabu.ru/s/2025/12/20/13/6ljew2eq.webp",
+        used: false,
+      },
+      {
+        text: "Угадайте персонажа по косплею:",
+        questionUrl: gd("1f5pqd7N7cH86GmMpaFGTpXzXlXrOxbY6"),
+        answerText: "Артас",
+        answerUrl: "https://static.wikia.nocookie.net/wowpedia/images/8/8b/Lich_King.jpg/revision/latest/scale-to-width-down/985?cb=20220516215225",
+        used: false,
+      },
+      {
+        text: "Угадайте персонажа по косплею:",
+        questionUrl: gd("1MmRlwxfnJzBsWWCTkdgYrEbJFxukwgPr"),
+        answerText: "Шаман",
+        answerUrl: gd("1wc3TBwRHsDVxe1lsPBftMamfVrTQAmAE"),
+        used: false,
+      },
+      {
+        text: "Угадайте персонажа по косплею:",
+        questionUrl: "https://s.13.cl/sites/default/files/inline-images/2021-01/south-park-wow-cosplayer-1609791777871.jpg",
+        answerText: "Jarod Nandin — самый знаменитый косплей по WoW.\nКосплей на задрота WoW.",
+        answerUrl: "https://i.redd.it/rtxt1hffn0r31.jpg",
+        used: false,
+      },
     ],
     // Маунты
     [
@@ -321,7 +351,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 4;
+const DATA_VERSION = 5;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
