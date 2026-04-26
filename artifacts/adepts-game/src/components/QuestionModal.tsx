@@ -320,6 +320,39 @@ function CountdownTimer({ seconds }: { seconds: number }) {
   );
 }
 
+function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void }) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[200] flex items-center justify-center cursor-pointer select-none"
+      onClick={onDismiss}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.25 } }}
+    >
+      <motion.img
+        src={resolveUrl(url)}
+        alt=""
+        draggable={false}
+        initial={{ x: "55vw", y: "45vh", scale: 0.05, rotate: -12 }}
+        animate={{
+          x: 0,
+          y: 0,
+          scale: [0.05, 1.18, 1.0],
+          rotate: [-12, 4, 0],
+          transition: {
+            duration: 0.85,
+            ease: [0.22, 1, 0.36, 1],
+            scale: { times: [0, 0.72, 1] },
+            rotate: { times: [0, 0.72, 1] },
+          },
+        }}
+        exit={{ scale: 0, opacity: 0, transition: { duration: 0.28, ease: "easeIn" } }}
+        style={{ maxWidth: "78vw", maxHeight: "78vh", objectFit: "contain", pointerEvents: "none" }}
+      />
+    </motion.div>
+  );
+}
+
 export function QuestionModal({
   isOpen,
   themeName,
@@ -338,6 +371,7 @@ export function QuestionModal({
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [splashDismissed, setSplashDismissed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isCelebration = (themeName === "Халява" && points === 400) || (themeName === "Пасхалки" && points === 300);
 
@@ -371,6 +405,7 @@ export function QuestionModal({
       setStage("question");
       setIsEditing(false);
       setShowFireworks(false);
+      setSplashDismissed(false);
       startTimer();
     } else {
       stopTimer();
@@ -432,6 +467,14 @@ export function QuestionModal({
             className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50"
             onClick={handleClose}
           />
+          <AnimatePresence>
+            {question.splashUrl && !splashDismissed && (
+              <SplashOverlay
+                url={question.splashUrl}
+                onDismiss={() => setSplashDismissed(true)}
+              />
+            )}
+          </AnimatePresence>
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 24 }}
