@@ -516,6 +516,7 @@ export function QuestionModal({
   const [splashDismissed, setSplashDismissed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isCelebration = (themeName === "Халява" && points === 400) || (themeName === "Пасхалки" && points === 300);
+  const isPandora = themeName === "Халява" && points === 500;
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -620,12 +621,29 @@ export function QuestionModal({
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 24 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
+              animate={isPandora
+                ? { scale: 1, opacity: 1, y: 0, x: [0, -12, 12, -9, 9, -5, 5, -2, 2, 0] }
+                : { scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0, y: 24 }}
-              transition={{ type: "spring", damping: 26, stiffness: 320 }}
-              className="w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col"
+              transition={isPandora
+                ? { duration: 0.55, times: [0, 0.1, 0.2, 0.3, 0.4, 0.55, 0.7, 0.82, 0.92, 1] }
+                : { type: "spring", damping: 26, stiffness: 320 }}
+              className="relative w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col"
               style={{ maxHeight: "94vh" }}
             >
+              {isPandora && stage === "question" && (
+                <motion.div
+                  className="absolute inset-0 rounded-2xl pointer-events-none z-20"
+                  animate={{
+                    boxShadow: [
+                      "inset 0 0 0px 0px rgba(220,38,38,0), 0 0 0px 0px rgba(220,38,38,0)",
+                      "inset 0 0 55px 12px rgba(220,38,38,0.55), 0 0 60px 12px rgba(220,38,38,0.35)",
+                      "inset 0 0 0px 0px rgba(220,38,38,0), 0 0 0px 0px rgba(220,38,38,0)",
+                    ],
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
               {/* Header */}
               <div className="flex-shrink-0 flex items-center justify-between px-5 lg:px-8 py-3 lg:py-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-4 lg:gap-6">
@@ -899,7 +917,17 @@ export function QuestionModal({
               <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-4 border-t border-border/60 bg-muted/20 grid grid-cols-3 items-center gap-4">
                 {/* Left */}
                 <div className="flex justify-start">
-                  {isCelebration && stage === "answer" ? (
+                  {isPandora ? (
+                    <a
+                      href="https://node-script--gg22last.replit.app/spectate"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-red-600/50 bg-red-950/40 text-red-400 hover:bg-red-900/60 hover:text-red-300 transition-colors shadow-[0_0_12px_hsla(0,80%,40%,0.3)]"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Спектейт
+                    </a>
+                  ) : isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
                       onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
