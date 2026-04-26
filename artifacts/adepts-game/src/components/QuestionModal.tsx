@@ -674,9 +674,9 @@ export function QuestionModal({
                           src={resolveUrl(question.headerUrl)}
                           alt=""
                           className="object-contain select-none pointer-events-none"
-                          style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
+                          style={{ width: "53px", height: "53px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
                         />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
+                        <span className="text-[11.5px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
                           1 крутка
                         </span>
                       </div>
