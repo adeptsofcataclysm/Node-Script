@@ -333,17 +333,17 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
         src={resolveUrl(url)}
         alt=""
         draggable={false}
-        initial={{ x: "55vw", y: "45vh", scale: 0.05, rotate: -12 }}
+        initial={{ x: 500, y: -320, scale: 0.08, rotate: -30 }}
         animate={{
-          x: 0,
-          y: 0,
-          scale: [0.05, 1.18, 1.0],
-          rotate: [-12, 4, 0],
+          x: [500, 700, 0, -700, 0],
+          y: [-320, 0, 600, 0, 0],
+          scale: [0.08, 0.3, 0.65, 0.9, 1.0],
+          rotate: [-30, 30, 90, 150, 0],
           transition: {
-            duration: 0.85,
-            ease: [0.22, 1, 0.36, 1],
-            scale: { times: [0, 0.72, 1] },
-            rotate: { times: [0, 0.72, 1] },
+            duration: 1.5,
+            ease: "easeInOut",
+            times: [0, 0.25, 0.5, 0.75, 1.0],
+            scale: { times: [0, 0.25, 0.5, 0.75, 1.0] },
           },
         }}
         exit={{ scale: 0, opacity: 0, transition: { duration: 0.28, ease: "easeIn" } }}
