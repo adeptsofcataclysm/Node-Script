@@ -926,7 +926,7 @@ export function QuestionModal({
                       href="https://node-script--gg22last.replit.app/spectate"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-red-600/50 bg-red-950/40 text-red-400 hover:bg-red-900/60 hover:text-red-300 transition-colors shadow-[0_0_12px_hsla(0,80%,40%,0.3)]"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-purple-500/60 bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 hover:text-purple-200 transition-colors shadow-[0_0_12px_hsla(280,70%,50%,0.35)]"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Ящик пандоры
@@ -956,7 +956,7 @@ export function QuestionModal({
 
                 {/* Center — timer (only on question stage, hidden for splash cards) */}
                 <div className="flex justify-center">
-                  {stage === "question" && !question.splashUrl && (
+                  {stage === "question" && !question.splashUrl && !isPandora && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
