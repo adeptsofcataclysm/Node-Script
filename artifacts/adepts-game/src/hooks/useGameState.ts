@@ -46,7 +46,7 @@ const DEFAULT_STATE: GameState = {
       { text: "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.", questionUrl: "", answerText: "Атрамед", answerUrl: "/bossy-200-answer.jpg", used: false },
       { text: "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.", questionUrl: "", answerText: "Валестраз", answerUrl: "/bossy-300-answer.webp", used: false },
       { text: "Назовите этого босса?", questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/945708-controlling-the-elements.jpg", answerText: "Ал'акир", answerUrl: "", used: false },
-      { text: "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...", questionUrl: "", answerText: "Алгалона", answerUrl: "/bossy-500-answer.jpg", used: false },
+      { text: "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...", questionUrl: "", answerText: "Алгалона", answerUrl: "/bossy-500-answer.jpg", used: false, splashUrl: "/raccoon.png" },
     ],
     // Пасхалки
     [
@@ -109,7 +109,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 53;
+const DATA_VERSION = 54;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
