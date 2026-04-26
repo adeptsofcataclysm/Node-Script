@@ -667,17 +667,20 @@ export function QuestionModal({
                     />
                   )}
                   {question.headerUrl && (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <img
-                        src={resolveUrl(question.headerUrl)}
-                        alt=""
-                        className="object-contain select-none pointer-events-none"
-                        style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
-                      />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
-                        1 крутка
-                      </span>
-                    </div>
+                    <>
+                      <span className="font-display text-2xl lg:text-4xl text-primary glow-text leading-none">+</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <img
+                          src={resolveUrl(question.headerUrl)}
+                          alt=""
+                          className="object-contain select-none pointer-events-none"
+                          style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
+                        />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
+                          1 крутка
+                        </span>
+                      </div>
+                    </>
                   )}
                   <div className="flex items-center gap-2 ml-2">
                     <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${stage === "question" ? "bg-primary/20 text-primary border-primary/50" : "bg-muted/30 text-muted-foreground border-border"}`}>
