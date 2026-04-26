@@ -922,15 +922,30 @@ export function QuestionModal({
                 {/* Left */}
                 <div className="flex justify-start">
                   {isPandora ? (
-                    <a
-                      href="https://node-script--gg22last.replit.app/spectate"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-purple-500/60 bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 hover:text-purple-200 transition-colors shadow-[0_0_12px_hsla(280,70%,50%,0.35)]"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Ящик пандоры
-                    </a>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <a
+                        href="https://node-script--gg22last.replit.app/spectate"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-purple-500/60 bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 hover:text-purple-200 transition-colors shadow-[0_0_12px_hsla(280,70%,50%,0.35)]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Ящик пандоры
+                      </a>
+                      {question.used && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            onUpdate({ text, answerText, answerUrl, used: false });
+                            onClose();
+                          }}
+                          className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
+                        >
+                          Сделать карточку активной
+                        </Button>
+                      )}
+                    </div>
                   ) : isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
