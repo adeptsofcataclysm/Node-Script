@@ -400,14 +400,19 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
 
       if (t < 0.98) {
         const sparkCount = Math.round(6 + t * 20);
+        const currentScale = 0.05 + 0.95 * t;
+        const maxRadius = Math.min(canvas.width * 0.39, canvas.height * 0.39);
+        const raccoonRadius = maxRadius * currentScale;
         for (let k = 0; k < sparkCount; k++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 0.6 + Math.random() * 4;
+          const spawnAngle = Math.random() * Math.PI * 2;
+          const speed = 0.8 + Math.random() * 3.5;
+          const spawnX = cx + Math.cos(spawnAngle) * raccoonRadius;
+          const spawnY = cy + Math.sin(spawnAngle) * raccoonRadius;
           particlesRef.current.push({
-            x: cx + (Math.random() - 0.5) * 20,
-            y: cy + (Math.random() - 0.5) * 20,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 1.0,
+            x: spawnX,
+            y: spawnY,
+            vx: Math.cos(spawnAngle) * speed + (Math.random() - 0.5) * 1.5,
+            vy: Math.sin(spawnAngle) * speed - 0.8 + (Math.random() - 0.5) * 1.5,
             alpha: 1,
             size: 2 + Math.random() * 5,
             color: MAGIC_COLORS[Math.floor(Math.random() * MAGIC_COLORS.length)],
