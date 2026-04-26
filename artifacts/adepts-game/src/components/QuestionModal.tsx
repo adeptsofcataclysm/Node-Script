@@ -325,8 +325,8 @@ function CountdownTimer({ seconds }: { seconds: number }) {
 const SPIRAL = (() => {
   const rotations = 2;
   const steps = 48;
-  const rxMax = 850; // wide horizontal axis for ellipse
-  const ryMax = 480; // shorter vertical axis
+  const rxMax = 960; // wide horizontal axis for ellipse
+  const ryMax = 560; // shorter vertical axis
   const xs: number[] = [];
   const ys: number[] = [];
   const scales: number[] = [];
@@ -399,7 +399,8 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
       const cy = canvas.height / 2 + pos.y;
 
       if (t < 0.98) {
-        for (let k = 0; k < 6; k++) {
+        const sparkCount = Math.round(3 + t * 10);
+        for (let k = 0; k < sparkCount; k++) {
           const angle = Math.random() * Math.PI * 2;
           const speed = 0.6 + Math.random() * 4;
           particlesRef.current.push({
