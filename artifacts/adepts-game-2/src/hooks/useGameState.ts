@@ -157,7 +157,7 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "",
+        text: "Ящик Пандоры",
         questionUrl: "/halyava-500-question.mp4",
         answerText: "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
         answerUrl: "",
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 30;
+const DATA_VERSION = 31;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
