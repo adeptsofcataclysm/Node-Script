@@ -517,6 +517,7 @@ export function QuestionModal({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isCelebration = (themeName === "Халява" && points === 400) || (themeName === "Пасхалки" && points === 300);
   const isPandora = themeName === "Халява" && points === 500;
+  const isWheelCard = !!question.headerUrl;
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -663,6 +664,14 @@ export function QuestionModal({
                       alt=""
                       className="object-contain select-none pointer-events-none"
                       style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}
+                    />
+                  )}
+                  {question.headerUrl && (
+                    <img
+                      src={resolveUrl(question.headerUrl)}
+                      alt=""
+                      className="object-contain select-none pointer-events-none"
+                      style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
                     />
                   )}
                   <div className="flex items-center gap-2 ml-2">
@@ -948,6 +957,14 @@ export function QuestionModal({
                         </Button>
                       )}
                     </div>
+                  ) : isWheelCard && stage === "answer" ? (
+                    <Button
+                      size="lg"
+                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
+                    >
+                      🎡 Колесо Адептов
+                    </Button>
                   ) : isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
