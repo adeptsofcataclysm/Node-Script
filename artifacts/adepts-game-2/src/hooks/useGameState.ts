@@ -157,8 +157,8 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "СЕКРЕТНЫЙ ВОПРОС-ИВЕНТ!!!\nТебе даётся 30 сек. Вспомни и назови такие энкаунтеры, в которых значительная (или почти вся) часть сражения завязана на битве с трешом. Чем больше битв назовёшь — тем больше очков получишь. Что считается а что не считается — дело ведущего. Обсуждению не подлежит!!!!",
-        questionUrl: "",
+        text: "",
+        questionUrl: "/halyava-500-question.mp4",
         answerText: "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
         answerUrl: "",
         used: false,
@@ -291,7 +291,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 29;
+const DATA_VERSION = 30;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
