@@ -320,6 +320,30 @@ function CountdownTimer({ seconds }: { seconds: number }) {
   );
 }
 
+// Archimedean spiral: 2 full clockwise rotations, 24 steps per rotation = 48 segments
+// First circle is elliptical (wide x, shorter y), shrinks proportionally to center
+const SPIRAL = (() => {
+  const rotations = 2;
+  const steps = 48;
+  const rxMax = 850; // wide horizontal axis for ellipse
+  const ryMax = 480; // shorter vertical axis
+  const xs: number[] = [];
+  const ys: number[] = [];
+  const scales: number[] = [];
+  const times: number[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const theta = t * rotations * 2 * Math.PI;
+    const rx = rxMax * (1 - t);
+    const ry = ryMax * (1 - t);
+    xs.push(Math.round(rx * Math.sin(theta)));
+    ys.push(Math.round(-ry * Math.cos(theta)));
+    scales.push(Math.round((0.05 + 0.95 * t) * 100) / 100);
+    times.push(Math.round(t * 10000) / 10000);
+  }
+  return { xs, ys, scales, times };
+})();
+
 function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void }) {
   return (
     <motion.div
@@ -333,16 +357,16 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
         src={resolveUrl(url)}
         alt=""
         draggable={false}
-        initial={{ x: 0, y: -900, scale: 0.05, rotate: 0 }}
+        initial={{ x: SPIRAL.xs[0], y: SPIRAL.ys[0], scale: 0.05, rotate: 0 }}
         animate={{
-          x:     [0, 596, 788, 517, 0, -437, -563, -358,   0, 278, 338, 199,  0, -119, -113, -40, 0],
-          y:     [-900, -596, 0, 517, 675, 437, 0, -358, -450, -278, 0, 199, 225, 119, 0, -40, 0],
-          scale: [0.05, 0.11, 0.17, 0.23, 0.29, 0.35, 0.41, 0.47, 0.53, 0.58, 0.64, 0.70, 0.76, 0.82, 0.88, 0.94, 1.0],
+          x: SPIRAL.xs,
+          y: SPIRAL.ys,
+          scale: SPIRAL.scales,
           rotate: 0,
           transition: {
-            duration: 3.0,
+            duration: 3.5,
             ease: "linear",
-            times: [0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375, 1.0],
+            times: SPIRAL.times,
           },
         }}
         exit={{ scale: 0, opacity: 0, transition: { duration: 0.28, ease: "easeIn" } }}
