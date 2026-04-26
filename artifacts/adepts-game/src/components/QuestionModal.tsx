@@ -648,6 +648,14 @@ export function QuestionModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {question.splashUrl && (
+                    <img
+                      src={resolveUrl(question.splashUrl)}
+                      alt=""
+                      className="w-10 h-10 object-contain mr-1 select-none pointer-events-none"
+                      style={{ filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -914,9 +922,9 @@ export function QuestionModal({
                   ) : null}
                 </div>
 
-                {/* Center — timer (only on question stage) */}
+                {/* Center — timer (only on question stage, hidden for splash cards) */}
                 <div className="flex justify-center">
-                  {stage === "question" && (
+                  {stage === "question" && !question.splashUrl && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
