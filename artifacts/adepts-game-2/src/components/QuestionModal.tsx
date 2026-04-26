@@ -123,6 +123,7 @@ export function QuestionModal({
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isPandora = themeName === "Треш" && points === 500;
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -208,17 +209,36 @@ export function QuestionModal({
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 24 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
+              animate={isPandora
+                ? { scale: 1, opacity: 1, y: 0, x: [0, -12, 12, -9, 9, -5, 5, -2, 2, 0] }
+                : { scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0, y: 24 }}
-              transition={{ type: "spring", damping: 26, stiffness: 320 }}
-              className="w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col"
+              transition={isPandora
+                ? { duration: 0.55, times: [0, 0.1, 0.2, 0.3, 0.4, 0.55, 0.7, 0.82, 0.92, 1] }
+                : { type: "spring", damping: 26, stiffness: 320 }}
+              className="relative w-full max-w-5xl bg-card border-2 border-accent/40 rounded-2xl shadow-[0_0_80px_hsla(280,65%,50%,0.2)] pointer-events-auto overflow-hidden flex flex-col"
               style={{ maxHeight: "94vh" }}
             >
+              {isPandora && stage === "question" && (
+                <motion.div
+                  className="absolute inset-0 rounded-2xl pointer-events-none z-20"
+                  animate={{
+                    boxShadow: [
+                      "inset 0 0 0px 0px rgba(147,51,234,0), 0 0 0px 0px rgba(147,51,234,0)",
+                      "inset 0 0 55px 12px rgba(147,51,234,0.55), 0 0 60px 12px rgba(147,51,234,0.35)",
+                      "inset 0 0 0px 0px rgba(147,51,234,0), 0 0 0px 0px rgba(147,51,234,0)",
+                    ],
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
               {/* Header */}
               <div className="flex-shrink-0 flex items-center justify-between px-5 lg:px-8 py-3 lg:py-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-4 lg:gap-6">
                   <div>
-                    <div className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-0.5">
+                    <div className={`text-xs font-bold uppercase tracking-[0.2em] mb-0.5 ${isPandora ? "text-purple-400" : "text-accent"}`}
+                      style={isPandora ? { textShadow: "0 0 10px hsla(280,70%,60%,0.7)" } : undefined}
+                    >
                       {themeName}
                     </div>
                     <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
@@ -470,7 +490,32 @@ export function QuestionModal({
               <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-4 border-t border-border/60 bg-muted/20 grid grid-cols-3 items-center gap-4">
                 {/* Left */}
                 <div className="flex justify-start">
-                  {question.used && (
+                  {isPandora ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <a
+                        href="https://node-script--gg22last.replit.app/spectate"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-purple-500/60 bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 hover:text-purple-200 transition-colors shadow-[0_0_12px_hsla(280,70%,50%,0.35)]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Ящик пандоры
+                      </a>
+                      {question.used && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            onUpdate({ text, answerText, answerUrl, used: false });
+                            onClose();
+                          }}
+                          className="font-bold tracking-wide text-muted-foreground hover:text-foreground"
+                        >
+                          Сделать карточку активной
+                        </Button>
+                      )}
+                    </div>
+                  ) : question.used ? (
                     <Button
                       variant="outline"
                       size="lg"
@@ -482,12 +527,12 @@ export function QuestionModal({
                     >
                       Сделать карточку активной
                     </Button>
-                  )}
+                  ) : null}
                 </div>
 
-                {/* Center — timer (only on question stage) */}
+                {/* Center — timer (only on question stage, hidden for Pandora) */}
                 <div className="flex justify-center">
-                  {stage === "question" && (
+                  {stage === "question" && !isPandora && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -513,7 +558,7 @@ export function QuestionModal({
 
                 {/* Right */}
                 <div className="flex justify-end">
-                  {stage === "question" ? (
+                  {stage === "question" && !isPandora ? (
                     <Button
                       size="lg"
                       onClick={handleShowAnswer}
@@ -529,7 +574,7 @@ export function QuestionModal({
                       onClick={handleSkip}
                       className="font-bold tracking-wide text-base"
                     >
-                      Никто не ответил — закрыть
+                      {isPandora ? "Закрыть" : "Никто не ответил — закрыть"}
                     </Button>
                   )}
                 </div>
