@@ -636,9 +636,9 @@ export function QuestionModal({
                   className="absolute inset-0 rounded-2xl pointer-events-none z-20"
                   animate={{
                     boxShadow: [
-                      "inset 0 0 0px 0px rgba(220,38,38,0), 0 0 0px 0px rgba(220,38,38,0)",
-                      "inset 0 0 55px 12px rgba(220,38,38,0.55), 0 0 60px 12px rgba(220,38,38,0.35)",
-                      "inset 0 0 0px 0px rgba(220,38,38,0), 0 0 0px 0px rgba(220,38,38,0)",
+                      "inset 0 0 0px 0px rgba(147,51,234,0), 0 0 0px 0px rgba(147,51,234,0)",
+                      "inset 0 0 55px 12px rgba(147,51,234,0.55), 0 0 60px 12px rgba(147,51,234,0.35)",
+                      "inset 0 0 0px 0px rgba(147,51,234,0), 0 0 0px 0px rgba(147,51,234,0)",
                     ],
                   }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -648,7 +648,9 @@ export function QuestionModal({
               <div className="flex-shrink-0 flex items-center justify-between px-5 lg:px-8 py-3 lg:py-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-4 lg:gap-6">
                   <div>
-                    <div className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-0.5">
+                    <div className={`text-xs font-bold uppercase tracking-[0.2em] mb-0.5 ${isPandora ? "text-purple-400" : "text-accent"}`}
+                      style={isPandora ? { textShadow: "0 0 10px hsla(280,70%,60%,0.7)" } : undefined}
+                    >
                       {themeName}
                     </div>
                     <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
