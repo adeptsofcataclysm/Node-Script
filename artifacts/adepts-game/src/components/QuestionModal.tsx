@@ -588,7 +588,7 @@ export function QuestionModal({
     if (isCelebration) {
       setShowFireworks(true);
       const audio = new Audio(import.meta.env.BASE_URL + "freebie-400-answer.mp3");
-      audio.volume = 0.6;
+      audio.volume = 0.5;
       audio.play().catch(() => {});
     }
   };
