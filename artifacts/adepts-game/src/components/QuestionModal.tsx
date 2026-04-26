@@ -728,9 +728,13 @@ export function QuestionModal({
                                   src={resolveUrl(question.questionUrl)}
                                   controls
                                   autoPlay
+                                  playsInline
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
                                   style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
+                                  onLoadedData={(e) => {
+                                    (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+                                  }}
                                 />
                               ) : (
                                 <img
@@ -925,7 +929,7 @@ export function QuestionModal({
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-red-600/50 bg-red-950/40 text-red-400 hover:bg-red-900/60 hover:text-red-300 transition-colors shadow-[0_0_12px_hsla(0,80%,40%,0.3)]"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Спектейт
+                      Ящик пандоры
                     </a>
                   ) : isCelebration && stage === "answer" ? (
                     <Button
@@ -978,7 +982,7 @@ export function QuestionModal({
 
                 {/* Right */}
                 <div className="flex justify-end gap-2">
-                  {stage === "question" ? (
+                  {stage === "question" && !isPandora ? (
                     <Button
                       size="lg"
                       onClick={handleShowAnswer}
