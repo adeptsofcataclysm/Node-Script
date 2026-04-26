@@ -1024,7 +1024,7 @@ export function QuestionModal({
                       onClick={handleSkip}
                       className="font-bold tracking-wide text-base"
                     >
-                      Никто не ответил — закрыть
+                      {isPandora ? "Закрыть" : "Никто не ответил — закрыть"}
                     </Button>
                   )}
                 </div>
