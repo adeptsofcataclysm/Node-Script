@@ -399,7 +399,7 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
       const cy = canvas.height / 2 + pos.y;
 
       if (t < 0.98) {
-        const sparkCount = Math.round(3 + t * 10);
+        const sparkCount = Math.round(6 + t * 20);
         for (let k = 0; k < sparkCount; k++) {
           const angle = Math.random() * Math.PI * 2;
           const speed = 0.6 + Math.random() * 4;
