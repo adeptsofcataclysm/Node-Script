@@ -637,6 +637,14 @@ export function QuestionModal({
                       {points}
                     </div>
                   </div>
+                  {question.splashUrl && (
+                    <img
+                      src={resolveUrl(question.splashUrl)}
+                      alt=""
+                      className="object-contain select-none pointer-events-none"
+                      style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}
+                    />
+                  )}
                   <div className="flex items-center gap-2 ml-2">
                     <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${stage === "question" ? "bg-primary/20 text-primary border-primary/50" : "bg-muted/30 text-muted-foreground border-border"}`}>
                       Вопрос
@@ -648,14 +656,6 @@ export function QuestionModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  {question.splashUrl && (
-                    <img
-                      src={resolveUrl(question.splashUrl)}
-                      alt=""
-                      className="w-10 h-10 object-contain mr-1 select-none pointer-events-none"
-                      style={{ filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}
-                    />
-                  )}
                   <Button
                     variant="ghost"
                     size="icon"
