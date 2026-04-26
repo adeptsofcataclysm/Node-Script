@@ -344,7 +344,116 @@ const SPIRAL = (() => {
   return { xs, ys, scales, times };
 })();
 
+type SparkParticle = {
+  x: number; y: number;
+  vx: number; vy: number;
+  alpha: number; size: number;
+  color: string; life: number; decay: number;
+};
+
+const MAGIC_COLORS = ["#FFD700","#FFFFFF","#FF88FF","#44FFFF","#FFAA44","#FF44AA","#BBFFAA","#FF6644"];
+const SPLASH_DURATION = 3500;
+
+function interpolateSpiral(t: number) {
+  const times = SPIRAL.times;
+  let i = times.length - 2;
+  for (let j = 0; j < times.length - 1; j++) {
+    if (t <= times[j + 1]) { i = j; break; }
+  }
+  const seg = times[i + 1] === times[i] ? 0 : (t - times[i]) / (times[i + 1] - times[i]);
+  return {
+    x: SPIRAL.xs[i] + (SPIRAL.xs[i + 1] - SPIRAL.xs[i]) * seg,
+    y: SPIRAL.ys[i] + (SPIRAL.ys[i + 1] - SPIRAL.ys[i]) * seg,
+  };
+}
+
 function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<SparkParticle[]>([]);
+  const rafRef = useRef<number | undefined>(undefined);
+  const startRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    startRef.current = performance.now();
+    particlesRef.current = [];
+
+    const loop = () => {
+      rafRef.current = requestAnimationFrame(loop);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const elapsed = performance.now() - startRef.current;
+      const t = Math.min(elapsed / SPLASH_DURATION, 1);
+      const pos = interpolateSpiral(t);
+      const cx = canvas.width / 2 + pos.x;
+      const cy = canvas.height / 2 + pos.y;
+
+      if (t < 0.98) {
+        for (let k = 0; k < 6; k++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.6 + Math.random() * 4;
+          particlesRef.current.push({
+            x: cx + (Math.random() - 0.5) * 20,
+            y: cy + (Math.random() - 0.5) * 20,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1.0,
+            alpha: 1,
+            size: 2 + Math.random() * 5,
+            color: MAGIC_COLORS[Math.floor(Math.random() * MAGIC_COLORS.length)],
+            life: 0,
+            decay: 0.016 + Math.random() * 0.024,
+          });
+        }
+      }
+
+      const alive: SparkParticle[] = [];
+      for (const p of particlesRef.current) {
+        p.life += p.decay;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1;
+        p.vx *= 0.97;
+        p.size *= 0.97;
+        p.alpha = Math.max(0, 1 - p.life);
+        if (p.life < 1 && p.size > 0.3) {
+          alive.push(p);
+          ctx.save();
+          ctx.globalAlpha = p.alpha * 0.85;
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = p.color;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = p.alpha * 0.55;
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#FFFFFF";
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.38, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      particlesRef.current = alive;
+    };
+
+    loop();
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
   return (
     <motion.div
       className="fixed inset-0 z-[200] flex items-center justify-center cursor-pointer select-none"
@@ -353,6 +462,10 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.25 } }}
     >
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none"
+      />
       <motion.img
         src={resolveUrl(url)}
         alt=""
@@ -370,7 +483,7 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
           },
         }}
         exit={{ scale: 0, opacity: 0, transition: { duration: 0.28, ease: "easeIn" } }}
-        style={{ maxWidth: "78vw", maxHeight: "78vh", objectFit: "contain", pointerEvents: "none" }}
+        style={{ maxWidth: "78vw", maxHeight: "78vh", objectFit: "contain", pointerEvents: "none", position: "relative" }}
       />
     </motion.div>
   );
