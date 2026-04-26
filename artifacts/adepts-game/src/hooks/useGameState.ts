@@ -50,7 +50,7 @@ const DEFAULT_STATE: GameState = {
     ],
     // Пасхалки
     [
-      { text: "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.", questionUrl: "", answerText: "Харрисон Джонс", answerUrl: "/pashalki-100-answer.jpg", used: false },
+      { text: "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.", questionUrl: "", answerText: "Харрисон Джонс", answerUrl: "/pashalki-100-answer.jpg", used: false, splashUrl: "/raccoon.png" },
       { text: "В ЛБРС рука робота около лавы — к чему эта пасхалка?", questionUrl: "", answerText: "Терминатор 2", answerUrl: "/pashalki-200-answer.jpg", used: false },
       { text: "", questionUrl: "/pashalki-300-question.mp4", answerText: "Вы получаете 3 крутки Колеса Адептов", answerUrl: "/freebie-400-question.png", used: false },
       { text: "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?", questionUrl: "", answerText: "Остаться в живых (Lost)", answerUrl: "/pashalki-400-answer.jpg", used: false },
@@ -70,7 +70,7 @@ const DEFAULT_STATE: GameState = {
       { text: "Чем закончилась Первая война против орды?", questionUrl: "", answerText: "Разрушением Штормграда", answerUrl: "/lor-wow-200-answer.jpg", used: false },
       { text: "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?", questionUrl: "", answerText: "Иллидан", answerUrl: "/lor-wow-300-answer.jpg", used: false },
       { text: "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?", questionUrl: "", answerText: "Дух Жизни", answerUrl: "/lor-wow-400-answer.webp", used: false },
-      { text: "Какое событие изображено на картинке?", questionUrl: "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg", answerText: "Битва у Врат Гнева", answerUrl: "", used: false },
+      { text: "Какое событие изображено на картинке?", questionUrl: "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg", answerText: "Битва у Врат Гнева", answerUrl: "", used: false, splashUrl: "/raccoon.png" },
     ],
     // Всратый косплей
     [
@@ -99,7 +99,7 @@ const DEFAULT_STATE: GameState = {
     // Профессии
     [
       { text: "«Гоблинская» и «Гномская» — о какой профессии идёт речь?", questionUrl: "", answerText: "Инженерия", answerUrl: "/professions-100-answer.png", used: false },
-      { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "/professions-200-answer.png", used: false },
+      { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "/professions-200-answer.png", used: false, splashUrl: "/raccoon.png" },
       { text: "Какая новая профессия появилась в WotLK?", questionUrl: "", answerText: "Начертание", answerUrl: "/professions-300-answer.png", used: false },
       { text: "С помощью какой профессии призывался один из боссов в дополнении TBC?", questionUrl: "", answerText: "Рыбалка", answerUrl: "/professions-400-answer.png", used: false },
       { text: "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.", questionUrl: "", answerText: "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.", answerUrl: "/professions-500-answer.png", used: false },
@@ -109,7 +109,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 54;
+const DATA_VERSION = 55;
 const ROOM = "adepts-game";
 
 function loadInitialState(): GameState {
