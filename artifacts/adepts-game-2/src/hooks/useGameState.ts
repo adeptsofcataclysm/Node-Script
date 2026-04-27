@@ -62,11 +62,12 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "Однажды игрок в WoW поспорил, что напишет самую короткую и самую всеобъемлющую тактику, которой можно описать каждого босса в игре. Он выйграл спор, написав...",
-        questionUrl: "",
-        answerText: "Красное бей, зелёное хиль.",
-        answerUrl: "",
+        text: "",
+        questionUrl: "/freebie-400-question.mp4",
+        answerText: "Вы получаете 3 крутки Колеса Адептов",
+        answerUrl: "/freebie-400-question.png",
         used: false,
+        headerUrl: "/wheel.png",
       },
       {
         text: "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
@@ -200,11 +201,12 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "Там был вопрос про Ониксию и фразу из видео. Но! Этот вопрос уже есть в раунде 1.",
-        questionUrl: "",
-        answerText: "",
-        answerUrl: "",
+        text: "",
+        questionUrl: "/freebie-400-question.mp4",
+        answerText: "Вы получаете 3 крутки Колеса Адептов",
+        answerUrl: "/freebie-400-question.png",
         used: false,
+        headerUrl: "/wheel.png",
       },
     ],
     // Великие подвиги (дрочивки)
@@ -298,7 +300,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 33;
+const DATA_VERSION = 34;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
