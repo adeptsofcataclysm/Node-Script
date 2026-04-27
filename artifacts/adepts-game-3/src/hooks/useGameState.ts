@@ -263,10 +263,10 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "— Много здоровья\n— Требователен к гиру\n— Примитивные, но очень важные механики\nМногие игроки в комьюнити описывают некоторых боссов с подобным дизайном как...",
+        text: "Босс, которого надо только хилить.",
         questionUrl: "",
-        answerText: "Patchwerk style bosses",
-        answerUrl: "https://preview.redd.it/i-made-a-quick-list-of-abilities-for-both-gearcheck-bosses-v0-n9zd7fec69061.png?auto=webp&s=fc0b65fed2384d4219e6f388cefd43f7a3cef2c4",
+        answerText: "Валитрия Сноходица",
+        answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/151037-valithria-dreamwalker.jpg",
         used: false,
       },
     ],
@@ -351,7 +351,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 7;
+const DATA_VERSION = 8;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
