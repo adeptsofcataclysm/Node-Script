@@ -224,7 +224,7 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "В течение одного сохранённого рейда убейте всех боссов в Наксрамасе и рейде на 10 игроков, не допустив смерти ни одного участника рейда.",
+        text: "В течение одного сохранённого рейда убейте всех боссов в Наксрамасе на 10 игроков, не допустив смерти ни одного участника рейда.",
         questionUrl: "",
         answerText: "Неумирающий",
         answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/409843-%D0%BD%D0%B5%D1%83%D0%BC%D0%B8%D1%80%D0%B0%D1%8E%D1%89%D0%B8%D0%B9.jpg",
@@ -298,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 43;
+const DATA_VERSION = 44;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
