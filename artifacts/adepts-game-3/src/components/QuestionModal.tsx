@@ -372,18 +372,20 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
-                            <motion.p
-                              key={text}
-                              initial={{ opacity: 0, y: 28, scale: 0.96 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                              className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
-                              style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
-                            >
-                              {text || "—"}
-                            </motion.p>
-                          </div>
+                          {text && (
+                            <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
+                              <motion.p
+                                key={text}
+                                initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
+                                style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
+                              >
+                                {text}
+                              </motion.p>
+                            </div>
+                          )}
                         </>
                       )}
                     </motion.div>
@@ -536,9 +538,8 @@ export function QuestionModal({
                   {isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
-                      onClick={() => window.open("https://wheelofnames.com/ru/", "_blank")}
-                      className="font-bold tracking-wide gap-2 text-base px-6"
-                      style={{ background: "linear-gradient(135deg,#7c3aed,#db2777)", color: "#fff" }}
+                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                     >
                       🎡 Колесо Адептов
                     </Button>
@@ -593,6 +594,15 @@ export function QuestionModal({
                     >
                       <Eye className="w-5 h-5" />
                       Показать ответ
+                    </Button>
+                  ) : isCelebration ? (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={handleSkip}
+                      className="font-bold tracking-wide text-base"
+                    >
+                      Закрыть
                     </Button>
                   ) : (
                     <Button
