@@ -256,10 +256,10 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "Босс, которого надо только хилить.",
+        text: "Первый раз этот босс встречается нам в подземелье «Пик Чёрной горы». По сюжету он даёт приказ Вождю Ренду Черноруку расправиться с вами. Назовите этого босса.",
         questionUrl: "",
-        answerText: "Валитрия Сноходица",
-        answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/151037-valithria-dreamwalker.jpg",
+        answerText: "Нефариан",
+        answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/152109-%D0%BB%D0%BE%D1%80%D0%B4-%D0%B2%D0%B8%D0%BA%D1%82%D0%BE%D1%80-%D0%BD%D0%B5%D1%84%D0%B0%D1%80%D0%B8%D0%B9.jpg",
         used: false,
       },
       {
@@ -351,7 +351,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 8;
+const DATA_VERSION = 9;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
