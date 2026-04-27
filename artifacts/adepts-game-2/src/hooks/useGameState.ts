@@ -84,7 +84,7 @@ const DEFAULT_STATE: GameState = {
         splashUrl: "/raccoon.png",
       },
       {
-        text: "Перед походом в Чёрный Храм адептов просили полететь в забытый город ради семечка колючечника. Ради какого босса, и зачем?",
+        text: "Перед походом в \"Чёрный Храм\" Адептов просили полететь в Забытый город за семенами колючечника. Для какого босса нужен был этот расходник и как его применяли?",
         questionUrl: "",
         answerText: "Матушка Шахраз. Чтобы её стяжка 3-х игроков иногда прокала на этих мобов с семечек.",
         answerUrl: "/tactics-500-answer.png",
@@ -298,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 37;
+const DATA_VERSION = 38;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
