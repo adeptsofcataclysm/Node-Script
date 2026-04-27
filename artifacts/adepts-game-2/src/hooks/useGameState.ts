@@ -149,7 +149,7 @@ const DEFAULT_STATE: GameState = {
       {
         text: "Назовите рейдовое подземелье, в котором вообще нет треша как такового.",
         questionUrl: "",
-        answerText: "(1)Испытание крестоносца, (2)Око вечности(где Малигос летает),\n(3)Трон четырёх ветров (Алакир), (4)Терраса вечной весны",
+        answerText: "(1)Испытание крестоносца, (2)Око вечности(где Малигос летает),\n(3)Трончетырёх ветров (Алакир).",
         answerUrl: "",
         used: false,
       },
@@ -298,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 42;
+const DATA_VERSION = 43;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
