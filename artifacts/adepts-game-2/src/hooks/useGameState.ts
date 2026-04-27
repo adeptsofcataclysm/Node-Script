@@ -57,7 +57,7 @@ const DEFAULT_STATE: GameState = {
       {
         text: "🎉СЕКРЕТНЫЙ ВОПРОС-ИВЕНТ🎉\n\nКарусель, карусель!\nКто успель - тот присель\nВот такая наша \nкарусеееееееель!\n\nВспомни и назови такие энкаунтеры, в тактике которых рейд должен двигаться по кругу. \nЗа каждый верный ответ получаешь по 100 очков.",
         questionUrl: "",
-        answerText: "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
+        answerText: "1) К'тун\n2) Скрытень из глубин\n3) Малигос\n4) Мимирон\n5) Лич кинг (3 фаза)\n6) Халион\n7) Халфий\n8) Гибель Нефариана\n9) Хагара\n10) Императорский визирь Зор'лок\n11) Гаралон\n12) Вечные Защитники\n13) Дуруму Позабытый\n14) Изначалий",
         answerUrl: "",
         used: false,
       },
@@ -300,7 +300,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 34;
+const DATA_VERSION = 35;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
