@@ -445,7 +445,10 @@ export function QuestionModal({
                                   style={{
                                     maxHeight: isCelebration ? "clamp(160px, 38vh, 460px)" : "clamp(100px, 24vh, 320px)",
                                     maxWidth: "100%",
-                                    ...(isCelebration ? { animation: "celebrationGlow 1.1s ease-in-out infinite alternate" } : {}),
+                                    ...(isCelebration ? {
+                                      filter: "drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35))",
+                                      animation: "celebrationGlow 1.4s ease-in-out infinite alternate",
+                                    } : {}),
                                   }}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                                 />

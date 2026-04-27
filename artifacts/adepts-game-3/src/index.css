@@ -153,9 +153,9 @@
 
 @keyframes celebrationGlow {
   from {
-    box-shadow: 0 0 18px 4px hsla(45, 93%, 47%, 0.55), 0 0 40px 10px hsla(45, 93%, 47%, 0.25);
+    filter: drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35));
   }
   to {
-    box-shadow: 0 0 32px 10px hsla(45, 93%, 47%, 0.85), 0 0 70px 20px hsla(45, 93%, 47%, 0.45);
+    filter: drop-shadow(0 0 28px hsla(45,100%,65%,1)) drop-shadow(0 0 60px hsla(45,100%,55%,0.85)) drop-shadow(0 0 100px hsla(45,100%,50%,0.5));
   }
 }
