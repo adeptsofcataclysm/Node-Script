@@ -43,7 +43,7 @@ type Confetti = { x: number; y: number; vx: number; vy: number; w: number; h: nu
 
 function Fireworks({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>();
+  const animRef = useRef<number | null>(null);
   const rocketsRef = useRef<Rocket[]>([]);
   const sparksRef = useRef<Spark[]>([]);
   const confettiRef = useRef<Confetti[]>([]);

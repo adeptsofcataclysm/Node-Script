@@ -186,6 +186,7 @@ export function GamePage() {
     } else {
       audio.pause();
       audio.currentTime = 0;
+      return undefined;
     }
   }, [gameReady]);
 
@@ -265,7 +266,7 @@ export function GamePage() {
   const turnColor = PLAYER_COLORS[turn] ?? "#9b59b6";
   const eliminatedName = shotResult?.isBang
     ? (playerNames[String(shotResult.playerIndex)] || `P${shotResult.playerIndex + 1}`)
-    : null;
+    : "";
 
   return (
     <div className="game-root flex flex-col items-center relative overflow-hidden">

@@ -56,14 +56,14 @@ type Confetti = {
 
 function Fireworks({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>();
+  const animRef = useRef<number | null>(null);
   const rocketsRef = useRef<Rocket[]>([]);
   const sparksRef = useRef<Spark[]>([]);
   const confettiRef = useRef<Confetti[]>([]);
 
   useEffect(() => {
     if (!active) {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
+      if (animRef.current != null) cancelAnimationFrame(animRef.current);
       rocketsRef.current = [];
       sparksRef.current = [];
       confettiRef.current = [];
@@ -235,7 +235,7 @@ function Fireworks({ active }: { active: boolean }) {
     [0, 300, 600, 900, 1200, 1500].forEach((d) => setTimeout(launchRocket, d));
     animate();
 
-    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+    return () => { if (animRef.current != null) cancelAnimationFrame(animRef.current); };
   }, [active]);
 
   if (!active) return null;
