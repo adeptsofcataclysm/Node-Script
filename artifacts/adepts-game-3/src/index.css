@@ -150,3 +150,12 @@
 .card-shine {
   box-shadow: 0 0 15px hsla(280, 65%, 50%, 0.3);
 }
+
+@keyframes celebrationGlow {
+  from {
+    box-shadow: 0 0 18px 4px hsla(45, 93%, 47%, 0.55), 0 0 40px 10px hsla(45, 93%, 47%, 0.25);
+  }
+  to {
+    box-shadow: 0 0 32px 10px hsla(45, 93%, 47%, 0.85), 0 0 70px 20px hsla(45, 93%, 47%, 0.45);
+  }
+}

@@ -33,6 +33,53 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
+const FW_COLORS = [
+  "#FFD700","#FF4444","#44DDFF","#FF44FF","#44FF88",
+  "#FF8844","#FFFFFF","#FFAA00","#AA44FF","#44FFFF",
+];
+type Rocket = { x: number; y: number; vy: number; color: string; trail: { x: number; y: number }[]; exploded: boolean; };
+type Spark = { x: number; y: number; vx: number; vy: number; color: string; alpha: number; size: number; tail: { x: number; y: number }[]; };
+type Confetti = { x: number; y: number; vx: number; vy: number; w: number; h: number; color: string; rotation: number; rotSpeed: number; alpha: number; };
+
+function Fireworks({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>();
+  const rocketsRef = useRef<Rocket[]>([]);
+  const sparksRef = useRef<Spark[]>([]);
+  const confettiRef = useRef<Confetti[]>([]);
+  useEffect(() => {
+    if (!active) { if (animRef.current) cancelAnimationFrame(animRef.current); rocketsRef.current = []; sparksRef.current = []; confettiRef.current = []; return; }
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const W = canvas.width, H = canvas.height;
+    const launchRocket = () => { rocketsRef.current.push({ x: W * (0.15 + Math.random() * 0.7), y: H, vy: -(10 + Math.random() * 7), color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], trail: [], exploded: false }); };
+    const explode = (x: number, y: number, color: string) => { const count = 55 + Math.floor(Math.random() * 25); for (let i = 0; i < count; i++) { const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15; const speed = 0.8 + Math.random() * 3.2; const sparkColor = Math.random() < 0.3 ? FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)] : color; sparksRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: sparkColor, alpha: 1, size: 2.5 + Math.random() * 2.5, tail: [] }); } };
+    const spawnConfetti = () => { for (let i = 0; i < 4; i++) { confettiRef.current.push({ x: Math.random() * W, y: -12, vx: (Math.random() - 0.5) * 2.5, vy: 1.5 + Math.random() * 3, w: 8 + Math.random() * 10, h: 5 + Math.random() * 6, color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.12, alpha: 1 }); } };
+    const MAX_SPARKS = 700; let frame = 0; const startTime = performance.now();
+    const animate = () => {
+      animRef.current = requestAnimationFrame(animate); ctx.clearRect(0, 0, W, H); frame++;
+      const elapsed = performance.now() - startTime;
+      if (frame % 25 === 0) launchRocket(); if (elapsed < 12000) spawnConfetti();
+      rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
+      for (const r of rocketsRef.current) { r.trail.push({ x: r.x, y: r.y }); if (r.trail.length > 8) r.trail.shift(); r.y += r.vy; r.vy += 0.22; if (r.trail.length > 1) { ctx.beginPath(); ctx.moveTo(r.trail[0].x, r.trail[0].y); for (let i = 1; i < r.trail.length; i++) ctx.lineTo(r.trail[i].x, r.trail[i].y); ctx.strokeStyle = r.color; ctx.lineWidth = 2; ctx.globalAlpha = 0.5; ctx.stroke(); } ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(r.x, r.y, 3, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill(); if (r.vy >= -1) { r.exploded = true; explode(r.x, r.y, r.color); } }
+      if (sparksRef.current.length > MAX_SPARKS) sparksRef.current = sparksRef.current.slice(sparksRef.current.length - MAX_SPARKS);
+      sparksRef.current = sparksRef.current.filter((s) => s.alpha > 0.03);
+      const byColor = new Map<string, Spark[]>();
+      for (const s of sparksRef.current) { s.tail.push({ x: s.x, y: s.y }); if (s.tail.length > 5) s.tail.shift(); s.x += s.vx; s.y += s.vy; s.vy += 0.1; s.vx *= 0.98; s.alpha *= 0.975; if (!byColor.has(s.color)) byColor.set(s.color, []); byColor.get(s.color)!.push(s); }
+      for (const [color, sparks] of byColor) { ctx.fillStyle = color; for (const s of sparks) { const tlen = s.tail.length; for (let i = 0; i < tlen; i++) { const t = s.tail[i]; const r = s.size * 0.3 * ((i + 1) / tlen); ctx.globalAlpha = s.alpha * ((i + 1) / tlen) * 0.35; ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI * 2); ctx.fill(); } } for (const s of sparks) { ctx.globalAlpha = s.alpha; ctx.beginPath(); ctx.arc(s.x, s.y, s.size * 0.5, 0, Math.PI * 2); ctx.fill(); } }
+      confettiRef.current = confettiRef.current.filter((c) => c.y < H + 20);
+      for (const c of confettiRef.current) { c.x += c.vx; c.y += c.vy; c.vx += (Math.random() - 0.5) * 0.15; c.rotation += c.rotSpeed; ctx.save(); ctx.globalAlpha = c.alpha; ctx.fillStyle = c.color; ctx.translate(c.x, c.y); ctx.rotate(c.rotation); ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.restore(); }
+      ctx.globalAlpha = 1;
+    };
+    [0, 300, 600, 900, 1200, 1500].forEach((d) => setTimeout(launchRocket, d));
+    animate();
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [active]);
+  if (!active) return null;
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999, width: "100vw", height: "100vh" }} />;
+}
+
 function adaptiveFontSize(str: string): string {
   const len = str.length;
   if (len <= 30)  return "clamp(1.8rem, 6vh, 3.75rem)";
@@ -122,7 +169,9 @@ export function QuestionModal({
   const [answerUrl, setAnswerUrl] = useState("");
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
+  const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isCelebration = (themeName === "Зацени Look" && points === 500) || (themeName === "Боссы" && points === 200);
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -153,10 +202,12 @@ export function QuestionModal({
       setAwarded(null);
       setStage("question");
       setIsEditing(false);
+      setShowFireworks(false);
       startTimer();
     } else {
       stopTimer();
       setCountdown(TIMER_SECONDS);
+      setShowFireworks(false);
     }
     return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,6 +239,12 @@ export function QuestionModal({
     stopTimer();
     setStage("answer");
     setIsEditing(false);
+    if (isCelebration) {
+      setShowFireworks(true);
+      const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    }
   };
 
   const questionFontSizeStyle = adaptiveFontSize(text);
@@ -195,6 +252,8 @@ export function QuestionModal({
   const answerWords = answerText.split(/\s+/).filter(Boolean);
 
   return (
+    <>
+    <Fireworks active={showFireworks} />
     <AnimatePresence>
       {isOpen && (
         <>
@@ -365,7 +424,7 @@ export function QuestionModal({
                               initial={{ opacity: 0, scale: 0.97 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1, duration: 0.35 }}
-                              className="px-6 lg:px-8 pt-4 lg:pt-6 flex justify-center"
+                              className={`flex justify-center ${isCelebration ? "px-4 lg:px-6 pt-6 lg:pt-10" : "px-6 lg:px-8 pt-4 lg:pt-6"}`}
                             >
                               {isVideo(answerUrl) ? (
                                 <video
@@ -380,14 +439,18 @@ export function QuestionModal({
                                 <img
                                   src={resolveUrl(answerUrl)}
                                   alt="Answer media"
-                                  className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={{ maxHeight: "clamp(100px, 24vh, 320px)", maxWidth: "100%" }}
+                                  className={`w-auto rounded-xl object-contain${isCelebration ? "" : " shadow-lg"}`}
+                                  style={{
+                                    maxHeight: isCelebration ? "clamp(160px, 38vh, 460px)" : "clamp(100px, 24vh, 320px)",
+                                    maxWidth: "100%",
+                                    ...(isCelebration ? { animation: "celebrationGlow 1.1s ease-in-out infinite alternate" } : {}),
+                                  }}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                                 />
                               )}
                             </motion.div>
                           )}
-                          <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-3 lg:py-6">
+                          <div className={`flex flex-col items-center justify-center ${isCelebration ? "px-8 lg:px-16 py-6 lg:py-10" : "px-8 lg:px-12 py-3 lg:py-6"}`}>
                             <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center">
                               {answerWords.map((word, i) => (
                                 <motion.span
@@ -401,7 +464,7 @@ export function QuestionModal({
                                     stiffness: 300,
                                   }}
                                   className="font-display text-primary glow-text leading-tight"
-                                  style={{ fontSize: answerFontSizeStyle }}
+                                  style={{ fontSize: isCelebration ? "clamp(2rem, 5.5vh, 4rem)" : answerFontSizeStyle }}
                                 >
                                   {word}
                                 </motion.span>
@@ -412,7 +475,7 @@ export function QuestionModal({
                       )}
 
                       {/* Award points */}
-                      <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
+                      {!isCelebration && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Trophy className="w-4 h-4 text-primary" />
                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -460,7 +523,7 @@ export function QuestionModal({
                             );
                           })}
                         </div>
-                      </div>
+                      </div>}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -470,7 +533,16 @@ export function QuestionModal({
               <div className="flex-shrink-0 px-5 lg:px-8 py-3 lg:py-4 border-t border-border/60 bg-muted/20 grid grid-cols-3 items-center gap-4">
                 {/* Left */}
                 <div className="flex justify-start">
-                  {question.used && (
+                  {isCelebration && stage === "answer" ? (
+                    <Button
+                      size="lg"
+                      onClick={() => window.open("https://wheelofnames.com/ru/", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6"
+                      style={{ background: "linear-gradient(135deg,#7c3aed,#db2777)", color: "#fff" }}
+                    >
+                      🎡 Колесо Адептов
+                    </Button>
+                  ) : question.used && (
                     <Button
                       variant="outline"
                       size="lg"
@@ -485,9 +557,9 @@ export function QuestionModal({
                   )}
                 </div>
 
-                {/* Center — timer (only on question stage) */}
+                {/* Center — timer (only on question stage, not for celebration) */}
                 <div className="flex justify-center">
-                  {stage === "question" && (
+                  {stage === "question" && !isCelebration && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -539,5 +611,6 @@ export function QuestionModal({
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }

@@ -226,9 +226,9 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "",
-        questionUrl: "",
-        answerText: "",
-        answerUrl: "",
+        questionUrl: "/freebie-400-question.mp4",
+        answerText: "Вы получаете 3 крутки Колеса Адептов",
+        answerUrl: "/freebie-400-question.png",
         used: false,
       },
     ],
@@ -242,10 +242,10 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "После победы над этим боссом, в благодарность, он благословляет рейд и дарует бафф для упрощения следующего энкаунтера (в героическом режиме).\nНазовите этого босса?",
-        questionUrl: "",
-        answerText: "Лей Ши",
-        answerUrl: "https://www.guiaswow.com/wp-content/uploads/2012/11/guia-lei-shi.jpg",
+        text: "",
+        questionUrl: "/freebie-400-question.mp4",
+        answerText: "Вы получаете 3 крутки Колеса Адептов",
+        answerUrl: "/freebie-400-question.png",
         used: false,
       },
       {
@@ -351,7 +351,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 10;
+const DATA_VERSION = 11;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
