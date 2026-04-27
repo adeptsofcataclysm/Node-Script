@@ -67,7 +67,6 @@ const DEFAULT_STATE: GameState = {
         answerText: "Вы получаете 3 крутки Колеса Адептов",
         answerUrl: "/freebie-400-question.png",
         used: false,
-        headerUrl: "/wheel.png",
       },
       {
         text: "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
@@ -206,7 +205,6 @@ const DEFAULT_STATE: GameState = {
         answerText: "Вы получаете 3 крутки Колеса Адептов",
         answerUrl: "/freebie-400-question.png",
         used: false,
-        headerUrl: "/wheel.png",
       },
     ],
     // Великие подвиги (дрочивки)
@@ -300,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 35;
+const DATA_VERSION = 36;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 

@@ -568,6 +568,7 @@ export function QuestionModal({
                               )}
                             </motion.div>
                           )}
+                          {text && (
                           <div className="flex flex-col items-center justify-center px-8 lg:px-12 py-4 lg:py-8">
                             <motion.p
                               key={text}
@@ -577,9 +578,10 @@ export function QuestionModal({
                               className="font-display text-center leading-snug tracking-wide text-foreground whitespace-pre-wrap"
                               style={{ fontSize: questionFontSizeStyle, textShadow: "0 0 60px hsla(280,65%,70%,0.12)" }}
                             >
-                              {text || "—"}
+                              {text}
                             </motion.p>
                           </div>
+                          )}
                         </>
                       )}
                     </motion.div>
