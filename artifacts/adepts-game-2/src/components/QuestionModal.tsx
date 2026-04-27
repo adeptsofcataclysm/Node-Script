@@ -33,6 +33,99 @@ function isVideo(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
+// ── Spiral + SplashOverlay ──────────────────────────────────────────────────
+const MAGIC_COLORS = ["#FFD700","#FFFFFF","#FF88FF","#44FFFF","#FFAA44","#FF44AA","#BBFFAA","#FF6644"];
+const SPLASH_DURATION = 3500;
+
+const SPIRAL = (() => {
+  const rotations = 2, steps = 48, rxMax = 960, ryMax = 560;
+  const xs: number[] = [], ys: number[] = [], scales: number[] = [], times: number[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, theta = t * rotations * 2 * Math.PI;
+    const rx = rxMax * (1 - t), ry = ryMax * (1 - t);
+    xs.push(Math.round(rx * Math.sin(theta)));
+    ys.push(Math.round(-ry * Math.cos(theta)));
+    scales.push(Math.round((0.05 + 0.95 * t) * 100) / 100);
+    times.push(Math.round(t * 10000) / 10000);
+  }
+  return { xs, ys, scales, times };
+})();
+
+type SparkParticle = { x: number; y: number; vx: number; vy: number; alpha: number; size: number; color: string; life: number; decay: number; };
+
+function interpolateSpiral(t: number) {
+  const times = SPIRAL.times;
+  let i = times.length - 2;
+  for (let j = 0; j < times.length - 1; j++) { if (t <= times[j + 1]) { i = j; break; } }
+  const seg = times[i + 1] === times[i] ? 0 : (t - times[i]) / (times[i + 1] - times[i]);
+  return { x: SPIRAL.xs[i] + (SPIRAL.xs[i + 1] - SPIRAL.xs[i]) * seg, y: SPIRAL.ys[i] + (SPIRAL.ys[i + 1] - SPIRAL.ys[i]) * seg };
+}
+
+function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<SparkParticle[]>([]);
+  const rafRef = useRef<number | undefined>(undefined);
+  const startRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener("resize", resize);
+    startRef.current = performance.now();
+    particlesRef.current = [];
+
+    const loop = () => {
+      rafRef.current = requestAnimationFrame(loop);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const elapsed = performance.now() - startRef.current;
+      const t = Math.min(elapsed / SPLASH_DURATION, 1);
+      const pos = interpolateSpiral(t);
+      const cx = canvas.width / 2 + pos.x, cy = canvas.height / 2 + pos.y;
+      if (t < 0.98) {
+        const sparkCount = Math.round(6 + t * 20);
+        const currentScale = 0.05 + 0.95 * t;
+        const maxRadius = Math.min(canvas.width * 0.39, canvas.height * 0.39);
+        const raccoonRadius = maxRadius * currentScale;
+        for (let k = 0; k < sparkCount; k++) {
+          const spawnAngle = Math.random() * Math.PI * 2, speed = 0.8 + Math.random() * 3.5;
+          const spawnX = cx + Math.cos(spawnAngle) * raccoonRadius, spawnY = cy + Math.sin(spawnAngle) * raccoonRadius;
+          particlesRef.current.push({ x: spawnX, y: spawnY, vx: Math.cos(spawnAngle) * speed + (Math.random() - 0.5) * 1.5, vy: Math.sin(spawnAngle) * speed - 0.8 + (Math.random() - 0.5) * 1.5, alpha: 1, size: 2 + Math.random() * 5, color: MAGIC_COLORS[Math.floor(Math.random() * MAGIC_COLORS.length)], life: 0, decay: 0.016 + Math.random() * 0.024 });
+        }
+      }
+      const alive: SparkParticle[] = [];
+      for (const p of particlesRef.current) {
+        p.life += p.decay; p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.vx *= 0.97; p.size *= 0.97; p.alpha = Math.max(0, 1 - p.life);
+        if (p.life < 1 && p.size > 0.3) {
+          alive.push(p);
+          ctx.save(); ctx.globalAlpha = p.alpha * 0.85; ctx.shadowBlur = 14; ctx.shadowColor = p.color; ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = p.alpha * 0.55; ctx.shadowBlur = 0; ctx.fillStyle = "#FFFFFF";
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 0.38, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        }
+      }
+      particlesRef.current = alive;
+    };
+    loop();
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); window.removeEventListener("resize", resize); };
+  }, []);
+
+  return (
+    <motion.div className="fixed inset-0 z-[200] flex items-center justify-center cursor-pointer select-none" onClick={onDismiss} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.25 } }}>
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+      <motion.img src={resolveUrl(url)} alt="" draggable={false}
+        initial={{ x: SPIRAL.xs[0], y: SPIRAL.ys[0], scale: 0.05, rotate: 0 }}
+        animate={{ x: SPIRAL.xs, y: SPIRAL.ys, scale: SPIRAL.scales, rotate: 0, transition: { duration: 3.5, ease: "linear", times: SPIRAL.times } }}
+        exit={{ scale: 0, opacity: 0, transition: { duration: 0.28, ease: "easeIn" } }}
+        style={{ maxWidth: "78vw", maxHeight: "78vh", objectFit: "contain", pointerEvents: "none", position: "relative" }}
+      />
+    </motion.div>
+  );
+}
+
 const FW_COLORS = [
   "#FFD700","#FF4444","#44DDFF","#FF44FF","#44FF88",
   "#FF8844","#FFFFFF","#FFAA00","#AA44FF","#44FFFF",
@@ -220,6 +313,7 @@ export function QuestionModal({
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [splashDismissed, setSplashDismissed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPandora = themeName === "Треш" && points === 500;
   const isCelebration = (themeName === "Цитаты и Фразы" && points === 500) || (themeName === "Тактики" && points === 200);
@@ -254,6 +348,7 @@ export function QuestionModal({
       setStage("question");
       setIsEditing(false);
       setShowFireworks(false);
+      setSplashDismissed(false);
       startTimer();
     } else {
       stopTimer();
@@ -305,6 +400,11 @@ export function QuestionModal({
   return (
     <>
       <Fireworks active={showFireworks} />
+      <AnimatePresence>
+        {isOpen && question.splashUrl && !splashDismissed && (
+          <SplashOverlay url={question.splashUrl} onDismiss={() => setSplashDismissed(true)} />
+        )}
+      </AnimatePresence>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -370,6 +470,14 @@ export function QuestionModal({
                           </span>
                         </div>
                       </>
+                    )}
+                    {question.splashUrl && (
+                      <img
+                        src={resolveUrl(question.splashUrl)}
+                        alt=""
+                        className="object-contain select-none pointer-events-none"
+                        style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}
+                      />
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-2">
@@ -682,7 +790,7 @@ export function QuestionModal({
 
                 {/* Center — timer (only on question stage, hidden for Pandora) */}
                 <div className="flex justify-center">
-                  {stage === "question" && !isPandora && (
+                  {stage === "question" && !isPandora && !question.splashUrl && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}

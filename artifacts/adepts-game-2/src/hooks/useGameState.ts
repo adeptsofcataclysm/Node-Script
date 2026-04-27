@@ -14,6 +14,7 @@ export type Question = {
   answerUrl: string;
   used: boolean;
   headerUrl?: string;
+  splashUrl?: string;
 };
 
 export type GameState = {
@@ -80,6 +81,7 @@ const DEFAULT_STATE: GameState = {
         answerText: "10-й\n\nЧто было:\n1) Чёрный храм\n2) Плато Солнечного Колодца\n3) Ульдуар\n4) Цитадель Ледяной Короны\n5) Твердыня Крыла Тьмы\n6) Сумеречный Бастион\n7) Трон Четырёх Ветров\n8) Огненные Просторы\n9) Душа Дракона",
         answerUrl: "/tactics-400-answer.png",
         used: false,
+        splashUrl: "/raccoon.png",
       },
       {
         text: "Перед походом в Чёрный Храм адептов просили полететь в забытый город ради семечка колючечника. Ради какого босса, и зачем?",
@@ -97,6 +99,7 @@ const DEFAULT_STATE: GameState = {
         answerText: "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
         answerUrl: "/pets-100-answer.png",
         used: false,
+        splashUrl: "/raccoon.png",
       },
       {
         text: "В WoW TBC Classic чернокнижникам в середине патча дали нового питомца. Какого?",
@@ -180,6 +183,7 @@ const DEFAULT_STATE: GameState = {
         answerText: "",
         answerUrl: "/quotes-200-answer.mp4",
         used: false,
+        splashUrl: "/raccoon.png",
       },
       {
         text: "Дополните цитату:\nНе бывает в игре багов [...]",
@@ -225,6 +229,7 @@ const DEFAULT_STATE: GameState = {
         answerText: "Неумирающий",
         answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/409843-%D0%BD%D0%B5%D1%83%D0%BC%D0%B8%D1%80%D0%B0%D1%8E%D1%89%D0%B8%D0%B9.jpg",
         used: false,
+        splashUrl: "/raccoon.png",
       },
       {
         text: "Назовите ачивку, для которой нужно убить всех лидеров фракции противника в их столицах. Наградой будет огромный Чёрный боевой медведь.",
@@ -269,6 +274,7 @@ const DEFAULT_STATE: GameState = {
         text: "Опишите эту способность:",
         questionUrl: "/abilities-300-question.png",
         answerText: "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
+        splashUrl: "/raccoon.png",
         answerUrl: "",
         used: false,
       },
@@ -292,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 32;
+const DATA_VERSION = 33;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
