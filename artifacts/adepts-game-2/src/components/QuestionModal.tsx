@@ -235,15 +235,33 @@ export function QuestionModal({
               {/* Header */}
               <div className="flex-shrink-0 flex items-center justify-between px-5 lg:px-8 py-3 lg:py-4 border-b border-border/60 bg-muted/20">
                 <div className="flex items-center gap-4 lg:gap-6">
-                  <div>
-                    <div className={`text-xs font-bold uppercase tracking-[0.2em] mb-0.5 ${isPandora ? "text-purple-400" : "text-accent"}`}
-                      style={isPandora ? { textShadow: "0 0 10px hsla(280,70%,60%,0.7)" } : undefined}
-                    >
-                      {themeName}
+                  <div className="flex items-center gap-2 lg:gap-3">
+                    <div>
+                      <div className={`text-xs font-bold uppercase tracking-[0.2em] mb-0.5 ${isPandora ? "text-purple-400" : "text-accent"}`}
+                        style={isPandora ? { textShadow: "0 0 10px hsla(280,70%,60%,0.7)" } : undefined}
+                      >
+                        {themeName}
+                      </div>
+                      <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
+                        {points}
+                      </div>
                     </div>
-                    <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
-                      {points}
-                    </div>
+                    {question.headerUrl && (
+                      <>
+                        <span className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">+</span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <img
+                            src={resolveUrl(question.headerUrl)}
+                            alt=""
+                            className="object-contain select-none pointer-events-none"
+                            style={{ width: "53px", height: "53px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
+                          />
+                          <span className="text-[11.5px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
+                            1 крутка
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 ml-2">
                     <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${stage === "question" ? "bg-primary/20 text-primary border-primary/50" : "bg-muted/30 text-muted-foreground border-border"}`}>
@@ -515,6 +533,14 @@ export function QuestionModal({
                         </Button>
                       )}
                     </div>
+                  ) : question.headerUrl && stage === "answer" ? (
+                    <Button
+                      size="lg"
+                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
+                    >
+                      🎡 Колесо Адептов
+                    </Button>
                   ) : question.used ? (
                     <Button
                       variant="outline"
