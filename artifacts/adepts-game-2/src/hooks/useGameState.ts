@@ -201,7 +201,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "",
-        questionUrl: "/freebie-400-question.mp4",
+        questionUrl: "/quotes-500-question.mp4",
         answerText: "Вы получаете 3 крутки Колеса Адептов",
         answerUrl: "/freebie-400-question.png",
         used: false,
@@ -298,7 +298,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 38;
+const DATA_VERSION = 39;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
