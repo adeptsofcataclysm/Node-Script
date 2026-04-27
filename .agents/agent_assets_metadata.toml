@@ -1,0 +1,20 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "CaQA6lZi47QHmtDvUfdyp"
+uri = "file://screenshots/game1.jpg"
+type = "image"
+title = "Игра 1 — Самый Душный 3.0"
+
+[[outputs]]
+id = "3aqn7Ct5cVvXnhYsn4vht"
+uri = "file://screenshots/game2.jpg"
+type = "image"
+title = "Игра 2 — adepts-game-2"
+
+[[outputs]]
+id = "aWHQi-eE3D7HVZIwW6o03"
+uri = "file://screenshots/roulette.jpg"
+type = "image"
+title = "Колесо Адептов"
