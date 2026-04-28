@@ -94,8 +94,7 @@ jobs:
             exit 0
           fi
           PORT="${DEPLOY_PORT:-22}"
-          # -tt: allocate a TTY (helps if sudoers has requiretty; CI has no TTY by default)
           # Passwordless sudo (NOPASSWD) for the exact path is still required; see repo deploy/restart-workspace.sh
-          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes \
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
             bash -lc "cd $(printf %q "$DEPLOY_PATH") && $DEPLOY_COMMAND"
