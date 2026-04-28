@@ -51,7 +51,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col text-foreground overflow-hidden">
+    <div className="adepts-quiz-theme h-screen flex flex-col text-foreground overflow-hidden">
       {/* Hidden video preloader */}
       <div style={{ display: "none" }} aria-hidden="true">
         {videoUrls.map((url) => (
@@ -68,7 +68,7 @@ export default function Home() {
         <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
-        <span className="text-sm font-display tracking-wider text-primary/70 border border-primary/30 px-3 py-1.5 rounded">
+        <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
           Adepts-game
         </span>
       </header>

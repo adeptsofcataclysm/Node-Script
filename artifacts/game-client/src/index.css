@@ -42,6 +42,7 @@
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
+  --font-display: var(--app-font-display);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -78,6 +79,7 @@
   --app-font-sans: 'Arial', sans-serif;
   --app-font-serif: 'Arial', sans-serif;
   --app-font-mono: 'Courier New', monospace;
+  --app-font-display: 'Arial', sans-serif;
   --radius: 0rem;
 
   --primary-border: hsl(var(--primary));
@@ -149,4 +151,76 @@
   pointer-events: none;
   user-select: none;
   animation: corner-glow 2.6s ease-in-out infinite;
+}
+
+/**
+ * Classic adepts quiz look (gradient, gold primary, Cinzel / Space Grotesk).
+ * Scoped so Host / roulette / other games keep the default theme.
+ */
+.adepts-quiz-theme {
+  --app-font-sans: "Space Grotesk", system-ui, sans-serif;
+  --app-font-display: "Cinzel", "Times New Roman", serif;
+
+  --background: 260 40% 5%;
+  --foreground: 210 40% 98%;
+  --border: 260 30% 15%;
+  --input: 260 30% 15%;
+  --ring: 45 93% 47%;
+  --card: 260 40% 7%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 260 30% 15%;
+  --popover: 260 40% 7%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 260 30% 15%;
+  --primary: 45 93% 47%;
+  --primary-foreground: 260 40% 5%;
+  --secondary: 270 50% 15%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 260 30% 12%;
+  --muted-foreground: 260 20% 65%;
+  --accent: 280 65% 50%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+
+  --radius: 0.25rem;
+
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d1a1a 100%);
+  background-attachment: fixed;
+}
+
+.adepts-quiz-theme .glow-text {
+  text-shadow:
+    0 0 10px hsla(45, 93%, 47%, 0.5),
+    0 0 20px hsla(45, 93%, 47%, 0.3);
+}
+
+@keyframes adepts-quiz-badge-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px hsla(45, 93%, 47%, 0.2);
+    border-color: hsla(45, 93%, 47%, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 16px hsla(45, 93%, 47%, 0.45);
+    border-color: hsla(45, 93%, 47%, 0.7);
+  }
+}
+
+@keyframes adepts-quiz-badge-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+.adepts-quiz-badge {
+  animation:
+    adepts-quiz-badge-glow 2.6s ease-in-out infinite,
+    adepts-quiz-badge-float 3.2s ease-in-out infinite;
 }
