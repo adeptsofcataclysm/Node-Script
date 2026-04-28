@@ -34,7 +34,7 @@ PrivateTmp=yes
 ProtectSystem=strict
 # Writable tree for the deployed app (database files, etc.)
 ReadWritePaths=/home/adept/node_app
-ProtectHome=yes
+ProtectHome=false
 
 [Install]
 WantedBy=multi-user.target
