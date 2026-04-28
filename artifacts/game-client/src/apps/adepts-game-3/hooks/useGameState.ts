@@ -13,6 +13,7 @@ export type Question = {
   answerText: string;
   answerUrl: string;
   used: boolean;
+  splashUrl?: string;
 };
 
 export type GameState = {
@@ -63,6 +64,7 @@ const DEFAULT_STATE: GameState = {
         questionUrl: "",
         answerText: "Экселенс",
         answerUrl: "",
+        splashUrl: "/raccoon.png",
         used: false,
       },
       {
@@ -115,6 +117,7 @@ const DEFAULT_STATE: GameState = {
         questionUrl: "https://s.13.cl/sites/default/files/inline-images/2021-01/south-park-wow-cosplayer-1609791777871.jpg",
         answerText: "Jarod Nandin — самый знаменитый косплей по WoW.\nКосплей на задрота WoW.",
         answerUrl: "https://i.redd.it/rtxt1hffn0r31.jpg",
+        splashUrl: "/raccoon.png",
         used: false,
       },
     ],
@@ -215,6 +218,7 @@ const DEFAULT_STATE: GameState = {
         questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/33806-%D0%BA%D1%80%D0%BE%D0%BC%D0%BA%D0%B0-%D0%BA%D0%B0%D1%82%D0%B0%D0%BA%D0%BB%D0%B8%D0%B7%D0%BC%D0%B0.jpg",
         answerText: "Кромка Катаклизма",
         answerUrl: gd("1xHf3TlyN7tStHu31AgdeMjn0lxwxIG5m"),
+        splashUrl: "/raccoon.png",
         used: false,
       },
       {
@@ -284,6 +288,7 @@ const DEFAULT_STATE: GameState = {
         questionUrl: "",
         answerText: "Спорегар",
         answerUrl: "https://static.wikia.nocookie.net/wow/images/4/49/Sporeggar_Concept_Art_Peter_Lee.jpg/revision/latest?cb=20131115184120&path-prefix=ru",
+        splashUrl: "/raccoon.png",
         used: false,
       },
       {
@@ -343,6 +348,7 @@ const DEFAULT_STATE: GameState = {
         questionUrl: "",
         answerText: "Подготовка к открытию Врат Ан'киража",
         answerUrl: gd("17AFs6awvOAhukzbHGvCyslHPkOm4f_Dt"),
+        splashUrl: "/raccoon.png",
         used: false,
       },
     ],
@@ -351,9 +357,31 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 11;
+const DATA_VERSION = 12;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
+
+function restoreRaccoonCards(state: GameState): GameState {
+  const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
+  const raccoonCards: Array<[number, number]> = [
+    [0, 2], // Лор Адептов 300
+    [1, 4], // Всратый косплей 500
+    [4, 2], // Зацени Look 300
+    [6, 1], // Фракции 200
+    [7, 4], // События в WoW 500
+  ];
+
+  for (const [themeIdx, questionIdx] of raccoonCards) {
+    if (nextQuestions[themeIdx]?.[questionIdx]) {
+      nextQuestions[themeIdx][questionIdx] = {
+        ...nextQuestions[themeIdx][questionIdx],
+        splashUrl: "/raccoon.png",
+      };
+    }
+  }
+
+  return { ...state, questions: nextQuestions };
+}
 
 function loadInitialState(): GameState {
   try {
@@ -367,11 +395,11 @@ function loadInitialState(): GameState {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...parsed, players };
+      return restoreRaccoonCards({ ...parsed, players });
     }
-    return { ...DEFAULT_STATE, players };
+    return restoreRaccoonCards({ ...DEFAULT_STATE, players });
   } catch {
-    return DEFAULT_STATE;
+    return restoreRaccoonCards(DEFAULT_STATE);
   }
 }
 
