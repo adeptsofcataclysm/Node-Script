@@ -1,0 +1,97 @@
+# Build the workspace on GitHub-hosted Linux and sync the tree to a remote server over SSH.
+#
+# Required repository secrets:
+#   DEPLOY_HOST       — hostname or IP
+#   DEPLOY_USER       — SSH user (e.g. deploy)
+#   DEPLOY_SSH_KEY    — private key (PEM), full multiline content
+#   DEPLOY_PATH       — absolute path on the server (e.g. /var/www/game)
+#
+# Optional:
+#   DEPLOY_PORT       — SSH port (default 22)
+#   DEPLOY_COMMAND    — command to run after rsync (e.g. sudo systemctl restart myapp). If unset, only files are synced.
+
+name: Build and deploy
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -e
+          PORT="${DEPLOY_PORT:-22}"
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Rsync to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${DEPLOY_PORT:-22}"
+          # Sync project without .git; --delete removes files on server that no longer exist in the tree
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            -e "ssh -p ${PORT} -o StrictHostKeyChecking=yes" \
+            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+
+      - name: Remote post-deploy command
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_COMMAND }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_COMMAND}" ]; then
+            echo "DEPLOY_COMMAND is not set; skipping remote command."
+            exit 0
+          fi
+          PORT="${DEPLOY_PORT:-22}"
+          # shell over SSH: cd then run your restart script or systemctl
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            bash -lc "cd $(printf %q "$DEPLOY_PATH") && $DEPLOY_COMMAND"
