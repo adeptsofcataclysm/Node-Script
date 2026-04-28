@@ -165,14 +165,15 @@ const DEFAULT_STATE: GameState = {
         text: "В канализации Даларана вы можете найти пасхалку к известному мульт-сериалу. Какому?",
         questionUrl: "",
         answerText: "Черепашки-ниндзя",
-        answerUrl: "https://images.cybersport.ru/images/as-is/plain/8e/8ea3f54ef99a2e90ed1ef1f34bcc085f.gif@jpg",
+        // Без @jpg: иначе CDN отдаёт image/jpeg — один кадр, «гифка не играет»
+        answerUrl: "https://images.cybersport.ru/images/as-is/plain/8e/8ea3f54ef99a2e90ed1ef1f34bcc085f.gif",
         used: false,
       },
       {
-        text: "В Зангартопи на одном из грибов можно найти интересное место. К какому произведению может быть эта пасхалка?",
-        questionUrl: "/easter-200-question.png",
-        answerText: "Алиса в стране чудес",
-        answerUrl: gd("1w5McZ0KJAVkchXb5dCLikxLQ_FsjvzEX"),
+        text: "Ящик Пандоры",
+        questionUrl: "/halyava-500-question.mp4",
+        answerText: "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
+        answerUrl: "",
         used: false,
       },
       {
@@ -357,7 +358,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 12;
+const DATA_VERSION = 14;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
@@ -378,6 +379,32 @@ function restoreRaccoonCards(state: GameState): GameState {
         splashUrl: "/raccoon.png",
       };
     }
+  }
+
+  if (nextQuestions[3]?.[1]) {
+    nextQuestions[3][1] = {
+      ...nextQuestions[3][1],
+      text: "Ящик Пандоры",
+      questionUrl: "/halyava-500-question.mp4",
+    };
+  }
+
+  // Лор Адептов 400 — канонический медиа-файл в public (локальные .png/.jpg → .gif)
+  if (nextQuestions[0]?.[3]) {
+    const q = nextQuestions[0][3];
+    const u = (q.questionUrl || "").toLowerCase();
+    if (/lor-400-question\.(png|jpg|gif)$/i.test(u) && !u.startsWith("http")) {
+      nextQuestions[0][3] = { ...q, questionUrl: "/lor-400-question.gif" };
+    }
+  }
+
+  // Пасхалки 100 — старый URL с @jpg = статичный JPEG
+  if (nextQuestions[3]?.[0]?.answerUrl?.includes("8ea3f54ef99a2e90ed1ef1f34bcc085f.gif@jpg")) {
+    const q = nextQuestions[3][0];
+    nextQuestions[3][0] = {
+      ...q,
+      answerUrl: "https://images.cybersport.ru/images/as-is/plain/8e/8ea3f54ef99a2e90ed1ef1f34bcc085f.gif",
+    };
   }
 
   return { ...state, questions: nextQuestions };
