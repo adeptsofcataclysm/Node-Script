@@ -16,4 +16,4 @@
 set -euo pipefail
 
 systemctl restart game-api
-systemctl reload game-frontend
+systemctl restart game-frontend

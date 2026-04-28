@@ -26,7 +26,7 @@ Environment=PORT=3000
 Environment=LOG_LEVEL=info
 # Optional: if you skip Nginx and serve the Vite dist from the API, set:
 #Environment=WEB_STATIC_ROOT=/var/www/Node-Script/artifacts/game-client/dist/public
-ExecStart=/usr/bin/node --enable-source-maps /home/adept/node_app/artifacts/api-server/dist/index.mjs
+ExecStart=/usr/local/bin/node --enable-source-maps /home/adept/node_app/artifacts/api-server/dist/index.mjs
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=yes
