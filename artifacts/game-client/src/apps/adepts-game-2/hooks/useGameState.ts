@@ -302,6 +302,19 @@ const DATA_VERSION = 44;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 
+function restoreLegacyPandoraVideos(state: GameState): GameState {
+  const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
+
+  if (nextQuestions[3]?.[4]) {
+    nextQuestions[3][4] = {
+      ...nextQuestions[3][4],
+      questionUrl: "/halyava-500-question.mp4",
+    };
+  }
+
+  return { ...state, questions: nextQuestions };
+}
+
 function loadInitialState(): GameState {
   try {
     const storedPlayers = localStorage.getItem(PLAYERS_KEY);
@@ -311,17 +324,17 @@ function loadInitialState(): GameState {
     if (storedVersion !== String(DATA_VERSION)) {
       localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
       localStorage.removeItem(STORAGE_KEY);
-      return { ...DEFAULT_STATE, players };
+      return restoreLegacyPandoraVideos({ ...DEFAULT_STATE, players });
     }
 
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...parsed, players };
+      return restoreLegacyPandoraVideos({ ...parsed, players });
     }
-    return { ...DEFAULT_STATE, players };
+    return restoreLegacyPandoraVideos({ ...DEFAULT_STATE, players });
   } catch {
-    return DEFAULT_STATE;
+    return restoreLegacyPandoraVideos(DEFAULT_STATE);
   }
 }
 

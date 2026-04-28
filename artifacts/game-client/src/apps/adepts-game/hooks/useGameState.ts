@@ -110,8 +110,48 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 57;
+const DATA_VERSION = 58;
 const ROOM = "adepts-game";
+
+function restoreLegacyWheelCards(state: GameState): GameState {
+  const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
+
+  if (nextQuestions[1]?.[2]) {
+    nextQuestions[1][2] = {
+      ...nextQuestions[1][2],
+      text: "",
+      questionUrl: "/pashalki-300-question.mp4",
+      answerText: "Вы получаете 3 крутки Колеса Адептов",
+      answerUrl: "/freebie-400-question.png",
+    };
+  }
+
+  if (nextQuestions[1]?.[0]) {
+    nextQuestions[1][0] = {
+      ...nextQuestions[1][0],
+      splashUrl: "/raccoon.png",
+    };
+  }
+
+  if (nextQuestions[5]?.[3]) {
+    nextQuestions[5][3] = {
+      ...nextQuestions[5][3],
+      text: "",
+      questionUrl: "/freebie-400-question.mp4",
+      answerText: "Вы получаете 3 крутки Колеса Адептов",
+      answerUrl: "/freebie-400-question.png",
+    };
+  }
+
+  if (nextQuestions[5]?.[4]) {
+    nextQuestions[5][4] = {
+      ...nextQuestions[5][4],
+      questionUrl: "/halyava-500-question.mp4",
+    };
+  }
+
+  return { ...state, questions: nextQuestions };
+}
 
 function loadInitialState(): GameState {
   try {
@@ -121,14 +161,14 @@ function loadInitialState(): GameState {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed.dataVersion !== DATA_VERSION) {
-        return { ...DEFAULT_STATE, players, dataVersion: DATA_VERSION };
+        return restoreLegacyWheelCards({ ...DEFAULT_STATE, players, dataVersion: DATA_VERSION });
       }
-      return { ...parsed, players };
+      return restoreLegacyWheelCards({ ...parsed, players });
     }
   } catch (err) {
     console.error("Failed to load state", err);
   }
-  return { ...DEFAULT_STATE, dataVersion: DATA_VERSION };
+  return restoreLegacyWheelCards({ ...DEFAULT_STATE, dataVersion: DATA_VERSION });
 }
 
 export function useGameState() {

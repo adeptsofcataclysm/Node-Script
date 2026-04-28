@@ -155,20 +155,20 @@ function Fireworks({ active }: { active: boolean }) {
     canvas.height = window.innerHeight;
     const W = canvas.width, H = canvas.height;
     const launchRocket = () => {
-      rocketsRef.current.push({ x: W * (0.15 + Math.random() * 0.7), y: H, vy: -(10 + Math.random() * 7), color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], trail: [], exploded: false });
+      rocketsRef.current.push({ x: W * (0.15 + Math.random() * 0.7), y: H, vy: -(7 + Math.random() * 4.5), color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], trail: [], exploded: false });
     };
     const explode = (x: number, y: number, color: string) => {
       const count = 55 + Math.floor(Math.random() * 25);
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
-        const speed = 0.8 + Math.random() * 3.2;
+        const speed = 0.45 + Math.random() * 2.1;
         const sparkColor = Math.random() < 0.3 ? FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)] : color;
         sparksRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: sparkColor, alpha: 1, size: 2.5 + Math.random() * 2.5, tail: [] });
       }
     };
     const spawnConfetti = () => {
-      for (let i = 0; i < 4; i++) {
-        confettiRef.current.push({ x: Math.random() * W, y: -12, vx: (Math.random() - 0.5) * 2.5, vy: 1.5 + Math.random() * 3, w: 8 + Math.random() * 10, h: 5 + Math.random() * 6, color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.12, alpha: 1 });
+      for (let i = 0; i < 3; i++) {
+        confettiRef.current.push({ x: Math.random() * W, y: -12, vx: (Math.random() - 0.5) * 1.6, vy: 0.9 + Math.random() * 1.9, w: 8 + Math.random() * 10, h: 5 + Math.random() * 6, color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)], rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.12, alpha: 1 });
       }
     };
     const MAX_SPARKS = 700;
@@ -179,13 +179,13 @@ function Fireworks({ active }: { active: boolean }) {
       ctx.clearRect(0, 0, W, H);
       frame++;
       const elapsed = performance.now() - startTime;
-      if (frame % 25 === 0) launchRocket();
-      if (elapsed < 12000) spawnConfetti();
+      if (frame % 40 === 0) launchRocket();
+      if (elapsed < 14000) spawnConfetti();
       rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
       for (const r of rocketsRef.current) {
         r.trail.push({ x: r.x, y: r.y });
         if (r.trail.length > 8) r.trail.shift();
-        r.y += r.vy; r.vy += 0.22;
+        r.y += r.vy * 0.72; r.vy += 0.14;
         if (r.trail.length > 1) {
           ctx.beginPath(); ctx.moveTo(r.trail[0].x, r.trail[0].y);
           for (let i = 1; i < r.trail.length; i++) ctx.lineTo(r.trail[i].x, r.trail[i].y);
@@ -199,7 +199,7 @@ function Fireworks({ active }: { active: boolean }) {
       const byColor = new Map<string, Spark[]>();
       for (const s of sparksRef.current) {
         s.tail.push({ x: s.x, y: s.y }); if (s.tail.length > 5) s.tail.shift();
-        s.x += s.vx; s.y += s.vy; s.vy += 0.1; s.vx *= 0.98; s.alpha *= 0.975;
+        s.x += s.vx; s.y += s.vy * 0.72; s.vy += 0.06; s.vx *= 0.985; s.alpha *= 0.982;
         if (!byColor.has(s.color)) byColor.set(s.color, []); byColor.get(s.color)!.push(s);
       }
       for (const [color, sparks] of byColor) {
@@ -209,7 +209,7 @@ function Fireworks({ active }: { active: boolean }) {
       }
       confettiRef.current = confettiRef.current.filter((c) => c.y < H + 20);
       for (const c of confettiRef.current) {
-        c.x += c.vx; c.y += c.vy; c.vx += (Math.random() - 0.5) * 0.15; c.rotation += c.rotSpeed;
+        c.x += c.vx; c.y += c.vy * 0.74; c.vx += (Math.random() - 0.5) * 0.08; c.rotation += c.rotSpeed;
         ctx.save(); ctx.globalAlpha = c.alpha; ctx.fillStyle = c.color; ctx.translate(c.x, c.y); ctx.rotate(c.rotation); ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.restore();
       }
       ctx.globalAlpha = 1;
@@ -545,9 +545,13 @@ export function QuestionModal({
                                   src={resolveUrl(question.questionUrl)}
                                   controls
                                   autoPlay
+                                  playsInline
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
                                   style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
+                                  onLoadedData={(e) => {
+                                    (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+                                  }}
                                 />
                               ) : (
                                 <img
@@ -659,10 +663,10 @@ export function QuestionModal({
                                   initial={{ opacity: 0, y: 32, scale: 0.8 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{
-                                    delay: i * 0.07,
-                                    type: "spring",
-                                    damping: 16,
-                                    stiffness: 300,
+                                    delay: i * (isCelebration ? 0.14 : 0.07),
+                                    ...(isCelebration
+                                      ? { duration: 0.55, ease: "easeOut" }
+                                      : { type: "spring", damping: 16, stiffness: 300 }),
                                   }}
                                   className="font-display text-primary glow-text leading-tight"
                                   style={{ fontSize: isCelebration ? "clamp(2rem, 5.5vh, 4rem)" : answerFontSizeStyle }}

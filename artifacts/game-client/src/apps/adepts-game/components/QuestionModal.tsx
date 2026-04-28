@@ -82,7 +82,7 @@ function Fireworks({ active }: { active: boolean }) {
       rocketsRef.current.push({
         x: W * (0.15 + Math.random() * 0.7),
         y: H,
-        vy: -(10 + Math.random() * 7),
+        vy: -(7 + Math.random() * 4.5),
         color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
         trail: [],
         exploded: false,
@@ -93,7 +93,7 @@ function Fireworks({ active }: { active: boolean }) {
       const count = 55 + Math.floor(Math.random() * 25);
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
-        const speed = 0.8 + Math.random() * 3.2;
+        const speed = 0.45 + Math.random() * 2.1;
         const sparkColor = Math.random() < 0.3
           ? FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)]
           : color;
@@ -110,12 +110,12 @@ function Fireworks({ active }: { active: boolean }) {
     };
 
     const spawnConfetti = () => {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 3; i++) {
         confettiRef.current.push({
           x: Math.random() * W,
           y: -12,
-          vx: (Math.random() - 0.5) * 2.5,
-          vy: 1.5 + Math.random() * 3,
+          vx: (Math.random() - 0.5) * 1.6,
+          vy: 0.9 + Math.random() * 1.9,
           w: 8 + Math.random() * 10,
           h: 5 + Math.random() * 6,
           color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
@@ -136,16 +136,16 @@ function Fireworks({ active }: { active: boolean }) {
       frame++;
 
       const elapsed = performance.now() - startTime;
-      if (frame % 25 === 0) launchRocket();
-      if (elapsed < 12000) spawnConfetti();
+      if (frame % 40 === 0) launchRocket();
+      if (elapsed < 14000) spawnConfetti();
 
       // Rockets
       rocketsRef.current = rocketsRef.current.filter((r) => !r.exploded);
       for (const r of rocketsRef.current) {
         r.trail.push({ x: r.x, y: r.y });
         if (r.trail.length > 8) r.trail.shift();
-        r.y += r.vy;
-        r.vy += 0.22;
+        r.y += r.vy * 0.72;
+        r.vy += 0.14;
 
         // Trail as single polyline
         if (r.trail.length > 1) {
@@ -182,10 +182,10 @@ function Fireworks({ active }: { active: boolean }) {
         s.tail.push({ x: s.x, y: s.y });
         if (s.tail.length > 5) s.tail.shift();
         s.x += s.vx;
-        s.y += s.vy;
-        s.vy += 0.1;
-        s.vx *= 0.98;
-        s.alpha *= 0.975;
+        s.y += s.vy * 0.72;
+        s.vy += 0.06;
+        s.vx *= 0.985;
+        s.alpha *= 0.982;
         if (!byColor.has(s.color)) byColor.set(s.color, []);
         byColor.get(s.color)!.push(s);
       }
@@ -216,8 +216,8 @@ function Fireworks({ active }: { active: boolean }) {
       confettiRef.current = confettiRef.current.filter((c) => c.y < H + 20);
       for (const c of confettiRef.current) {
         c.x += c.vx;
-        c.y += c.vy;
-        c.vx += (Math.random() - 0.5) * 0.15;
+        c.y += c.vy * 0.74;
+        c.vx += (Math.random() - 0.5) * 0.08;
         c.rotation += c.rotSpeed;
         ctx.save();
         ctx.globalAlpha = c.alpha;
@@ -867,10 +867,10 @@ export function QuestionModal({
                                   initial={{ opacity: 0, y: 32, scale: 0.8 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{
-                                    delay: i * 0.07,
-                                    type: "spring",
-                                    damping: 16,
-                                    stiffness: 300,
+                                    delay: i * (isCelebration ? 0.14 : 0.07),
+                                    ...(isCelebration
+                                      ? { duration: 0.55, ease: "easeOut" }
+                                      : { type: "spring", damping: 16, stiffness: 300 }),
                                   }}
                                   className="font-display text-primary glow-text leading-tight"
                                   style={{ fontSize: isCelebration ? "clamp(2rem, 5.5vh, 4rem)" : answerFontSizeStyle }}
