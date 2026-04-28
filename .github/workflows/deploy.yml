@@ -8,7 +8,10 @@
 #
 # Optional:
 #   DEPLOY_PORT       — SSH port (default 22)
-#   DEPLOY_COMMAND    — command to run after rsync (e.g. sudo systemctl restart myapp). If unset, only files are synced.
+#   DEPLOY_COMMAND    — command to run after rsync (e.g. sudo /usr/local/bin/restart-workspace.sh). If unset, only files are synced.
+#   For "sudo: a terminal is required" / "password is required" from the deploy user: that user must
+#   have a sudoers NOPASSWD rule for the exact command. Test on the server: sudo -n true and
+#   sudo -n /path/to/restart-workspace.sh (no prompt). See deploy/restart-workspace.sh comments.
 
 name: Build and deploy
 
@@ -91,7 +94,8 @@ jobs:
             exit 0
           fi
           PORT="${DEPLOY_PORT:-22}"
-          # shell over SSH: cd then run your restart script or systemctl
-          ssh -p "$PORT" -o StrictHostKeyChecking=yes \
+          # -tt: allocate a TTY (helps if sudoers has requiretty; CI has no TTY by default)
+          # Passwordless sudo (NOPASSWD) for the exact path is still required; see repo deploy/restart-workspace.sh
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
             bash -lc "cd $(printf %q "$DEPLOY_PATH") && $DEPLOY_COMMAND"
