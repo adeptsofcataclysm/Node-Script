@@ -1,20 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { getQuizThemeIconUrl } from "@/lib/quizThemeIcons";
 import { Question } from "../hooks/useGameState";
-
-const BASE = import.meta.env.BASE_URL;
-
-const THEME_ICONS: Record<string, string> = {
-  "боссы": `${BASE}bossy.png`,
-  "пасхалки": `${BASE}pashalki.png`,
-  "цитаты и фразы": `${BASE}quotes.png`,
-  "лор world of warcraft": `${BASE}lor-wow.png`,
-  "лор wow": `${BASE}lor-wow2.png`,
-  "халява": `${BASE}freebie.png`,
-  "локации": `${BASE}locations.png`,
-  "профессии": `${BASE}professions.png`,
-  "всратый косплей": `${BASE}cosplay.png`,
-};
 
 interface QuizBoardProps {
   themes: string[];
@@ -33,7 +20,9 @@ export function QuizBoard({
 
   return (
     <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-2">
-      {themes.map((theme, tIdx) => (
+      {themes.map((theme, tIdx) => {
+        const iconUrl = getQuizThemeIconUrl(theme);
+        return (
         <div key={tIdx} className="flex gap-2 items-stretch flex-1 min-h-0">
 
           {/* Theme label */}
@@ -95,9 +84,9 @@ export function QuizBoard({
                 </span>
               )}
 
-              {THEME_ICONS[theme.toLowerCase()] && (
+              {iconUrl && (
                 <motion.img
-                  src={THEME_ICONS[theme.toLowerCase()]}
+                  src={iconUrl}
                   alt=""
                   className="flex-shrink-0 w-auto object-contain pointer-events-none select-none"
                   style={{
@@ -168,7 +157,8 @@ export function QuizBoard({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
