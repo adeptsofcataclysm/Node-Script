@@ -1,0 +1,40 @@
+# Systemd — Workspace game API (Node, bundled dist).
+# Install: copy to /etc/systemd/system/, adjust paths and User=, then:
+#   systemctl daemon-reload && systemctl enable --now game-api
+#
+# Expects: repo deployed with built artifacts (pnpm run build), Node on PATH.
+# The API listens on 0.0.0.0:PORT; prefer firewall rules so only Nginx reaches 127.0.0.1:3000,
+# or leave as-is and rely on Nginx as the public edge.
+#
+# Before first start:
+#   - Create a dedicated user (e.g. useradd -r -d /var/www/Node-Script -s /sbin/nologin workspace)
+#   - chown -R that user:group on the deploy directory
+
+[Unit]
+Description=Workspace game API (Node + Socket.io)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=adept
+Group=adept
+WorkingDirectory=/home/adept/node_app/artifacts/api-server
+Environment=NODE_ENV=production
+# Listen address for the HTTP server (separate from PORT; adjust if you change index.ts to bind to this)
+Environment=PORT=3000
+Environment=LOG_LEVEL=info
+# Optional: if you skip Nginx and serve the Vite dist from the API, set:
+#Environment=WEB_STATIC_ROOT=/var/www/Node-Script/artifacts/game-client/dist/public
+ExecStart=/usr/bin/node --enable-source-maps /home/adept/node_app/artifacts/api-server/dist/index.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+# Writable tree for the deployed app (database files, etc.)
+ReadWritePaths=/home/adept/node_app
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

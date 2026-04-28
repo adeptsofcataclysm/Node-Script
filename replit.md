@@ -5,7 +5,19 @@ This repo is a **pnpm workspace**. You can run everything on a normal Linux mach
 ## Prereqs
 
 - **Node.js**: use a current LTS (recommended: **22.x**)
-- **pnpm** (repo `preinstall` blocks `npm`/`yarn` installs at the workspace root)
+- **pnpm**: npm install -g pnpm
+
+### Deploy reqs
+
+- **nginx** - dnf install nginx
+
+```shell
+sudo cp deploy/systemd/game-api.service /etc/systemd/system/
+sudo cp deploy/systemd/game-frontend.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now game-api
+sudo systemctl enable --now game-frontend
+```
 
 ## Install
 
