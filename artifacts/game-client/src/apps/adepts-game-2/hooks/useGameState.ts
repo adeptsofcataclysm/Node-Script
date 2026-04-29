@@ -252,14 +252,14 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Как называют всё это вот?",
-        questionUrl: "/abilities-200-question.png",
+        questionUrl: "/abilities-200-question.jpg",
         answerText: "Лужи",
         answerUrl: "",
         used: false,
       },
       {
         text: "Опишите эту способность:",
-        questionUrl: "/abilities-300-question.png",
+        questionUrl: "/abilities-300-question.jpg",
         answerText: "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
         splashUrl: "/raccoon.png",
         answerUrl: "",
