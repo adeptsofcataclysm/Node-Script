@@ -268,6 +268,20 @@ export function QuestionModal({
   /** Содержание «Ящика Пандоры» (adepts-game-2 Треш 500) перенесено в Пасхалки 200 */
   const isPandora = themeName === "Пасхалки" && points === 200;
   const isCelebration = (themeName === "Зацени Look" && points === 500) || (themeName === "Боссы" && points === 200);
+  const isWowEventsLargeQuestionMedia =
+    themeName === "События в WoW" && [100, 200, 400, 500].includes(points);
+  const questionImageMaxStyle = isWowEventsLargeQuestionMedia
+    ? { maxHeight: "clamp(115px, 31.05vh, 414px)", maxWidth: "100%" as const }
+    : { maxHeight: "clamp(100px, 27vh, 360px)", maxWidth: "100%" as const };
+  const questionVideoMaxStyle = isWowEventsLargeQuestionMedia
+    ? { maxHeight: "clamp(138px, 34.5vh, 460px)" }
+    : { maxHeight: "clamp(120px, 30vh, 400px)" };
+
+  const isWowEventsLargeAnswerMedia =
+    themeName === "События в WoW" && [300, 400].includes(points);
+  const answerVideoMaxStyle = isWowEventsLargeAnswerMedia
+    ? { maxHeight: "clamp(138px, 34.5vh, 460px)" }
+    : { maxHeight: "clamp(120px, 30vh, 400px)" };
 
   const stopTimer = () => {
     if (intervalRef.current) {
@@ -406,6 +420,22 @@ export function QuestionModal({
                         {points}
                       </div>
                     </div>
+                    {question.headerUrl && (
+                      <>
+                        <span className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">+</span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <img
+                            src={resolveUrl(question.headerUrl)}
+                            alt=""
+                            className="object-contain select-none pointer-events-none"
+                            style={{ width: "53px", height: "53px", filter: "drop-shadow(0 0 6px hsla(45,100%,60%,0.5))" }}
+                          />
+                          <span className="text-[11.5px] font-bold uppercase tracking-wider text-primary" style={{ textShadow: "0 0 8px hsla(45,93%,47%,0.7)" }}>
+                            1 крутка
+                          </span>
+                        </div>
+                      </>
+                    )}
                     {question.splashUrl && (
                       <img
                         src={resolveUrl(question.splashUrl)}
@@ -483,7 +513,7 @@ export function QuestionModal({
                                   playsInline
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
-                                  style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
+                                  style={questionVideoMaxStyle}
                                   onLoadedData={(e) => {
                                     (e.currentTarget as HTMLVideoElement).play().catch(() => {});
                                   }}
@@ -493,7 +523,7 @@ export function QuestionModal({
                                   src={resolveUrl(question.questionUrl)}
                                   alt="Question media"
                                   className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={{ maxHeight: "clamp(100px, 27vh, 360px)", maxWidth: "100%" }}
+                                  style={questionImageMaxStyle}
                                   onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
                                     el.style.display = "none";
@@ -570,7 +600,7 @@ export function QuestionModal({
                                   autoPlay
                                   preload="auto"
                                   className="w-full rounded-xl shadow-lg"
-                                  style={{ maxHeight: "clamp(120px, 30vh, 400px)" }}
+                                  style={answerVideoMaxStyle}
                                 />
                               ) : (
                                 <img
@@ -578,7 +608,11 @@ export function QuestionModal({
                                   alt="Answer media"
                                   className={`w-auto rounded-xl object-contain${isCelebration ? "" : " shadow-lg"}`}
                                   style={{
-                                    maxHeight: isCelebration ? "clamp(160px, 38vh, 460px)" : "clamp(100px, 24vh, 320px)",
+                                    maxHeight: isCelebration
+                                      ? "clamp(160px, 38vh, 460px)"
+                                      : isWowEventsLargeAnswerMedia
+                                        ? "clamp(115px, 27.6vh, 368px)"
+                                        : "clamp(100px, 24vh, 320px)",
                                     maxWidth: "100%",
                                     ...(isCelebration ? {
                                       filter: "drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35))",
@@ -699,6 +733,14 @@ export function QuestionModal({
                       )}
                     </div>
                   ) : isCelebration && stage === "answer" ? (
+                    <Button
+                      size="lg"
+                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
+                    >
+                      🎡 Колесо Адептов
+                    </Button>
+                  ) : question.headerUrl && stage === "answer" ? (
                     <Button
                       size="lg"
                       onClick={() => window.open(window.location.origin + "/adepts", "_blank")}

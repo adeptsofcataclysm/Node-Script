@@ -150,6 +150,14 @@ function restoreLegacyWheelCards(state: GameState): GameState {
     };
   }
 
+  // Лор WOW 100 — иконка колеса в шапке карточки (старые сохранения без headerUrl)
+  if (nextQuestions[3]?.[0]) {
+    nextQuestions[3][0] = {
+      ...nextQuestions[3][0],
+      headerUrl: "/wheel.png",
+    };
+  }
+
   return { ...state, questions: nextQuestions };
 }
 
@@ -190,7 +198,12 @@ export function useGameState() {
 
     socket.on("sync", (incoming: GameState) => {
       skipEmitRef.current = true;
-      setState(incoming);
+      setState(
+        restoreLegacyWheelCards({
+          ...incoming,
+          players: incoming.players?.length ? incoming.players : DEFAULT_STATE.players,
+        })
+      );
     });
 
     return () => {

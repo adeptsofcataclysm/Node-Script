@@ -14,6 +14,8 @@ export type Question = {
   answerUrl: string;
   used: boolean;
   splashUrl?: string;
+  /** Иконка колеса в шапке (+ «1 крутка»), как в adepts-game / adepts-game-2 */
+  headerUrl?: string;
 };
 
 export type GameState = {
@@ -86,30 +88,30 @@ const DEFAULT_STATE: GameState = {
     [
       {
         text: "Угадайте персонажа по косплею:",
-        questionUrl: gd("1roBbEGJevfoz2cjKW7JFTEIojAMujkGM"),
+        questionUrl: "/cursed-cosplay-200.png",
         answerText: "Пандарен",
         answerUrl: "https://mir-s3-cdn-cf.behance.net/project_modules/hd_webp/42b0ab50391213.560881a922da1.jpg",
         used: false,
       },
       {
         text: "Угадайте персонажа по косплею:",
-        questionUrl: gd("1sREVtyUAWuEKPXpFifVHyi4rM-2HdfaA"),
+        questionUrl: "/cursed-cosplay-400.png",
         answerText: "Гулдан",
         answerUrl: "https://cs19.pikabu.ru/s/2025/12/20/13/6ljew2eq.webp",
         used: false,
       },
       {
         text: "Угадайте персонажа по косплею:",
-        questionUrl: gd("1f5pqd7N7cH86GmMpaFGTpXzXlXrOxbY6"),
+        questionUrl: "/cursed-cosplay-100.png",
         answerText: "Артас",
-        answerUrl: "https://static.wikia.nocookie.net/wowpedia/images/8/8b/Lich_King.jpg/revision/latest/scale-to-width-down/985?cb=20220516215225",
+        answerUrl: "/cursed-cosplay-300-answer.png",
         used: false,
       },
       {
         text: "Угадайте персонажа по косплею:",
-        questionUrl: gd("1MmRlwxfnJzBsWWCTkdgYrEbJFxukwgPr"),
+        questionUrl: "/cursed-cosplay-300.png",
         answerText: "Шаман",
-        answerUrl: gd("1wc3TBwRHsDVxe1lsPBftMamfVrTQAmAE"),
+        answerUrl: "/cursed-cosplay-400-answer.png",
         used: false,
       },
       {
@@ -129,6 +131,7 @@ const DEFAULT_STATE: GameState = {
         answerText: "Алар",
         answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/171317-.jpg",
         used: false,
+        headerUrl: "/wheel.png",
       },
       {
         text: "Как называется этот маунт?",
@@ -209,7 +212,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Какой спек у этого паладина?",
-        questionUrl: gd("11DipRDgyGDy5aIWOtfOu96tTN-3GxsQD"),
+        questionUrl: "/zaceni-look-200-question.png",
         answerText: "Хил...но в душе он остаётся ретриком)",
         answerUrl: "",
         used: false,
@@ -224,14 +227,14 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "Какой из классов мог носить эту версию Атиеша?",
-        questionUrl: gd("1ngPHnzr6yExJcO88Nj6GlJCALgKgGsOW"),
+        questionUrl: "/zaceni-look-400-question.png",
         answerText: "Чернокнижник (синяя лента — чернокнижник, оранжевая — жрец, зелёная — друид, красная — маг)",
         answerUrl: "",
         used: false,
       },
       {
         text: "",
-        questionUrl: "/freebie-400-question.mp4",
+        questionUrl: "/zaceni-look-500-question.mp4",
         answerText: "Вы получаете 3 крутки Колеса Адептов",
         answerUrl: "/freebie-400-question.png",
         used: false,
@@ -248,7 +251,7 @@ const DEFAULT_STATE: GameState = {
       },
       {
         text: "",
-        questionUrl: "/freebie-400-question.mp4",
+        questionUrl: "/bosses-200-question.mp4",
         answerText: "Вы получаете 3 крутки Колеса Адептов",
         answerUrl: "/freebie-400-question.png",
         used: false,
@@ -300,7 +303,7 @@ const DEFAULT_STATE: GameState = {
         used: false,
       },
       {
-        text: "[4.Поиск спутников]: Помогу с фармом «Тёмных ларцов» для репутации с фракцией <????>. Подробности в ПМ.\nЧто за репутация?",
+        text: '[4.Поиск спутников]: "Помогу с фармом «Тёмных ларцов» для репутации с фракцией <????>. Подробности в ПМ."\nО какой фракции идёт речь?',
         questionUrl: "",
         answerText: "Чёрный ворон",
         answerUrl: "https://wow.zamimg.com/uploads/screenshots/normal/11152-%D1%87%D0%B5%D1%80%D0%BD%D1%8B%D0%B9-%D0%B2%D0%BE%D1%80%D0%BE%D0%BD.jpg",
@@ -318,7 +321,7 @@ const DEFAULT_STATE: GameState = {
     [
       {
         text: "Что за праздник?",
-        questionUrl: gd("12IZdaQYXdaU92AhiL01I1CKRYLMfui2E"),
+        questionUrl: "/wow-events-100-question.png",
         answerText: "Зимний Покров",
         answerUrl: "",
         used: false,
@@ -334,19 +337,19 @@ const DEFAULT_STATE: GameState = {
         text: "Несчастный, ты достиг конца пути! Судьба решит, кому вперёд идти!\nДанную фразу можно услышать от босса этого события.",
         questionUrl: "",
         answerText: "Тыквовин",
-        answerUrl: "",
+        answerUrl: "/wow-events-300-answer.png",
         used: false,
       },
       {
         text: "Почему всё в огне?",
-        questionUrl: gd("1tpUbHNfCt0-aUazlBaMmsz2j0ifM5LM2"),
+        questionUrl: "/wow-events-400-question.png",
         answerText: "Событие в локации: прилетел Смертокрыл",
-        answerUrl: gd("1PWFdCaHpUd_pOQPheC1RwLsM0M19501S"),
+        answerUrl: "/wow-events-400-answer.png",
         used: false,
       },
       {
         text: "Что за событие происходило, когда в игре появлялись подобные NPC?",
-        questionUrl: "",
+        questionUrl: "/wow-events-500-question.png",
         answerText: "Подготовка к открытию Врат Ан'киража",
         answerUrl: gd("17AFs6awvOAhukzbHGvCyslHPkOm4f_Dt"),
         splashUrl: "/raccoon.png",
@@ -381,6 +384,36 @@ function restoreRaccoonCards(state: GameState): GameState {
     }
   }
 
+  // Всратый косплей 100–400 — локальные картинки в public
+  // Порядок файлов на диске прежний; привязка к 100/200/300/400 — циклическая перестановка
+  const cursedCosplayUrls = [
+    "/cursed-cosplay-200.png",
+    "/cursed-cosplay-400.png",
+    "/cursed-cosplay-100.png",
+    "/cursed-cosplay-300.png",
+  ] as const;
+  cursedCosplayUrls.forEach((url, qIdx) => {
+    if (nextQuestions[1]?.[qIdx]) {
+      nextQuestions[1][qIdx] = {
+        ...nextQuestions[1][qIdx],
+        questionUrl: url,
+      };
+    }
+  });
+
+  if (nextQuestions[1]?.[2]) {
+    nextQuestions[1][2] = {
+      ...nextQuestions[1][2],
+      answerUrl: "/cursed-cosplay-300-answer.png",
+    };
+  }
+  if (nextQuestions[1]?.[3]) {
+    nextQuestions[1][3] = {
+      ...nextQuestions[1][3],
+      answerUrl: "/cursed-cosplay-400-answer.png",
+    };
+  }
+
   if (nextQuestions[3]?.[1]) {
     nextQuestions[3][1] = {
       ...nextQuestions[3][1],
@@ -405,6 +438,68 @@ function restoreRaccoonCards(state: GameState): GameState {
       ...q,
       answerUrl: "https://images.cybersport.ru/images/as-is/plain/8e/8ea3f54ef99a2e90ed1ef1f34bcc085f.gif",
     };
+  }
+
+  // Маунты 100 — колесо в шапке
+  if (nextQuestions[2]?.[0]) {
+    nextQuestions[2][0] = {
+      ...nextQuestions[2][0],
+      headerUrl: "/wheel.png",
+    };
+  }
+
+  // Зацени Look 200 / 400 — локальные картинки вопроса
+  if (nextQuestions[4]?.[1]) {
+    nextQuestions[4][1] = {
+      ...nextQuestions[4][1],
+      questionUrl: "/zaceni-look-200-question.png",
+    };
+  }
+  if (nextQuestions[4]?.[3]) {
+    nextQuestions[4][3] = {
+      ...nextQuestions[4][3],
+      questionUrl: "/zaceni-look-400-question.png",
+    };
+  }
+
+  // Зацени Look 500 / Боссы 200 — ролики Якубовича в public
+  if (nextQuestions[4]?.[4]) {
+    nextQuestions[4][4] = {
+      ...nextQuestions[4][4],
+      questionUrl: "/zaceni-look-500-question.mp4",
+    };
+  }
+  if (nextQuestions[5]?.[1]) {
+    nextQuestions[5][1] = {
+      ...nextQuestions[5][1],
+      questionUrl: "/bosses-200-question.mp4",
+    };
+  }
+
+  // Фракции 400 — актуальный текст объявления
+  if (nextQuestions[6]?.[3]) {
+    nextQuestions[6][3] = {
+      ...nextQuestions[6][3],
+      text: '[4.Поиск спутников]: "Помогу с фармом «Тёмных ларцов» для репутации с фракцией <????>. Подробности в ПМ."\nО какой фракции идёт речь?',
+    };
+  }
+
+  // События в WoW 100 / 400 / 500 — локальные картинки вопроса
+  if (nextQuestions[7]?.[0]) {
+    nextQuestions[7][0] = { ...nextQuestions[7][0], questionUrl: "/wow-events-100-question.png" };
+  }
+  if (nextQuestions[7]?.[3]) {
+    nextQuestions[7][3] = {
+      ...nextQuestions[7][3],
+      questionUrl: "/wow-events-400-question.png",
+      answerUrl: "/wow-events-400-answer.png",
+    };
+  }
+  if (nextQuestions[7]?.[4]) {
+    nextQuestions[7][4] = { ...nextQuestions[7][4], questionUrl: "/wow-events-500-question.png" };
+  }
+  if (nextQuestions[7]?.[2]) {
+    nextQuestions[7][2] = { ...nextQuestions[7][2], answerUrl: "/wow-events-300-answer.png" };
   }
 
   return { ...state, questions: nextQuestions };
