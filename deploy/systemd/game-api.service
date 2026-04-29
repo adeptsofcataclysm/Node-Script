@@ -1,17 +1,12 @@
 # Systemd — Workspace game API (Node, bundled dist).
-# Install: copy to /etc/systemd/system/, adjust paths and User=, then:
-#   systemctl daemon-reload && systemctl enable --now game-api
-#
-# Expects: repo deployed with built artifacts (pnpm run build), Node on PATH.
+
+# Expects: Node on PATH.
 # The API listens on 0.0.0.0:PORT; prefer firewall rules so only Nginx reaches 127.0.0.1:3000,
 # or leave as-is and rely on Nginx as the public edge.
-#
-# Before first start:
-#   - Create a dedicated user (e.g. useradd -r -d /var/www/Node-Script -s /sbin/nologin workspace)
-#   - chown -R that user:group on the deploy directory
+
 
 [Unit]
-Description=Workspace game API (Node + Socket.io)
+Description=Adept game API
 After=network-online.target
 Wants=network-online.target
 

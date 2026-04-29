@@ -1,16 +1,10 @@
-# Systemd — Nginx edge: static Vite dist + /api and /socket.io to game-api.
-# Install: copy to /etc/systemd/system/, then:
-#   systemctl daemon-reload && systemctl enable --now game-frontend
+# Systemd — Nginx edge: static Vite dist
 #
-# Prereq: dnf install nginx, and the companion config:
-#   deploy/nginx/nginx-frontend-standalone.conf
-# Paths in that file default to /var/www/Node-Script — adjust to match the API unit.
-#
-# If nginx.service (stock) is also enabled, resolve port 80 conflict (see comments in
-# the nginx file). game-api should be enabled first so upstream :3000 is up.
+# If nginx.service (stock) is also enabled, resolve port 80 conflict. 
+# game-api should be enabled first so upstream :3000 is up.
 
 [Unit]
-Description=Workspace game frontend (Nginx static + proxy)
+Description=Adept game frontend
 After=network-online.target game-api.service
 Wants=network-online.target
 

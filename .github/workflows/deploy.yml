@@ -1,17 +1,5 @@
 # Build the workspace on GitHub-hosted Linux and sync the tree to a remote server over SSH.
-#
-# Required repository secrets:
-#   DEPLOY_HOST       — hostname or IP
-#   DEPLOY_USER       — SSH user (e.g. deploy)
-#   DEPLOY_SSH_KEY    — private key (PEM), full multiline content
-#   DEPLOY_PATH       — absolute path on the server (e.g. /var/www/game)
-#
-# Optional:
-#   DEPLOY_PORT       — SSH port (default 22)
-#   DEPLOY_COMMAND    — command to run after rsync (e.g. sudo /usr/local/bin/restart-workspace.sh). If unset, only files are synced.
-#   For "sudo: a terminal is required" / "password is required" from the deploy user: that user must
-#   have a sudoers NOPASSWD rule for the exact command. Test on the server: sudo -n true and
-#   sudo -n /path/to/restart-workspace.sh (no prompt). See deploy/restart-workspace.sh comments.
+
 
 name: Build and deploy
 
