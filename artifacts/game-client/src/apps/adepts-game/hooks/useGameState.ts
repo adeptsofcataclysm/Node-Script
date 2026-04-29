@@ -1,21 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import type { Player, Question } from "@/lib/adepts-quiz-types";
 
-export type Player = {
-  id: string;
-  name: string;
-  score: number;
-};
-
-export type Question = {
-  text: string;
-  questionUrl: string;
-  answerText: string;
-  answerUrl: string;
-  used: boolean;
-  splashUrl?: string;
-  headerUrl?: string;
-};
+export type { Player, Question };
 
 export type GameState = {
   players: Player[];
