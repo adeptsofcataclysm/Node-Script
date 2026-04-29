@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useGameState } from "../hooks/useGameState";
-import { Scoreboard } from "../components/Scoreboard";
-import { QuizBoard } from "../components/QuizBoard";
-import { QuestionModal } from "../components/QuestionModal";
+import { Scoreboard } from "@/lib/adepts-scoreboard";
+import { QuizBoard } from "@/lib/adepts-quiz-board";
+import { QuestionModal } from "@/lib/adepts-question-modal";
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -75,6 +75,7 @@ export default function Home() {
 
       <main className="flex-1 min-h-0 py-3">
         <QuizBoard
+          board={2}
           themes={state.themes}
           questions={state.questions}
           onUpdateTheme={updateThemeName}
@@ -93,6 +94,7 @@ export default function Home() {
 
       {activeQuestion && (
         <QuestionModal
+          board={2}
           isOpen={true}
           themeName={state.themes[activeQuestion.themeIndex]}
           points={(activeQuestion.questionIndex + 1) * 100}
