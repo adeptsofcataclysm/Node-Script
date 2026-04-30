@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
@@ -21,6 +21,8 @@ export default function Home() {
     updateThemeName,
     updateQuestion,
     resetScores,
+    setActiveQuizCard,
+    patchActiveQuizCard,
   } = useGameState();
 
   const handleAwardPoints = (playerIndex: number, points: number) => {
@@ -40,17 +42,20 @@ export default function Home() {
     fetch("/api/track/adepts-game-3", { method: "POST" }).catch(() => {});
   }, []);
 
-  const [activeQuestion, setActiveQuestion] = useState<{
-    themeIndex: number;
-    questionIndex: number;
-  } | null>(null);
+  const active = state.activeQuizCard;
+  const openCard =
+    active &&
+    state.questions[active.themeIndex]?.[active.questionIndex] != null
+      ? active
+      : null;
 
   const handleQuestionClick = (themeIndex: number, questionIndex: number) => {
-    setActiveQuestion({ themeIndex, questionIndex });
+    if (isSpectator) return;
+    setActiveQuizCard({ themeIndex, questionIndex, stage: "question" });
   };
 
   const closeQuestion = () => {
-    setActiveQuestion(null);
+    setActiveQuizCard(null);
   };
 
   return (
@@ -98,25 +103,20 @@ export default function Home() {
         />
       </div>
 
-      {activeQuestion && (
+      {openCard && (
         <QuestionModal
           board={3}
           isOpen={true}
-          themeName={state.themes[activeQuestion.themeIndex]}
-          points={(activeQuestion.questionIndex + 1) * 100}
-          question={
-            state.questions[activeQuestion.themeIndex][
-              activeQuestion.questionIndex
-            ]
-          }
+          themeName={state.themes[openCard.themeIndex]}
+          points={(openCard.questionIndex + 1) * 100}
+          question={state.questions[openCard.themeIndex][openCard.questionIndex]}
           players={state.players}
+          quizStage={openCard.stage}
+          onQuizStageChange={(s) => patchActiveQuizCard({ stage: s })}
+          readonly={isSpectator}
           onClose={closeQuestion}
           onUpdate={(data) =>
-            updateQuestion(
-              activeQuestion.themeIndex,
-              activeQuestion.questionIndex,
-              data
-            )
+            updateQuestion(openCard.themeIndex, openCard.questionIndex, data)
           }
           onAwardPoints={handleAwardPoints}
         />

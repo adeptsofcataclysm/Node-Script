@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import type { AdeptsBoardId, Question, Player } from "@/lib/adepts-quiz-types";
 
+type Stage = "question" | "answer";
+
 interface QuestionModalProps {
   board: AdeptsBoardId;
   isOpen: boolean;
@@ -13,12 +15,15 @@ interface QuestionModalProps {
   points: number;
   question: Question;
   players: Player[];
+  /** Синхронизация этапа «вопрос / ответ» между ведущим и зрителем */
+  quizStage: Stage;
+  onQuizStageChange: (stage: Stage) => void;
+  /** Только просмотр: без закрытия по клику снаружи и без управления карточкой */
+  readonly?: boolean;
   onClose: () => void;
   onUpdate: (data: Partial<Question>) => void;
   onAwardPoints: (playerIndex: number, points: number) => void;
 }
-
-type Stage = "question" | "answer";
 
 const TIMER_SECONDS = 30;
 const RADIUS = 31;
@@ -503,11 +508,14 @@ export function QuestionModal({
   points,
   question,
   players,
+  quizStage,
+  onQuizStageChange,
+  readonly = false,
   onClose,
   onUpdate,
   onAwardPoints,
 }: QuestionModalProps) {
-  const [stage, setStage] = useState<Stage>("question");
+  const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState("");
   const [answerText, setAnswerText] = useState("");
@@ -574,11 +582,9 @@ export function QuestionModal({
       setAnswerText(question.answerText || "");
       setAnswerUrl(question.answerUrl || "");
       setAwarded(null);
-      setStage("question");
       setIsEditing(false);
       setShowFireworks(false);
       setSplashDismissed(false);
-      startTimer();
     } else {
       stopTimer();
       setCountdown(TIMER_SECONDS);
@@ -587,6 +593,17 @@ export function QuestionModal({
     return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (quizStage === "question") {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+    return stopTimer;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, quizStage]);
 
   const saveAndClose = (extra: Partial<Question> = {}) => {
     stopTimer();
@@ -612,7 +629,7 @@ export function QuestionModal({
 
   const handleShowAnswer = () => {
     stopTimer();
-    setStage("answer");
+    onQuizStageChange("answer");
     setIsEditing(false);
     if (isCelebration) {
       setShowFireworks(true);
@@ -621,6 +638,24 @@ export function QuestionModal({
       audio.play().catch(() => {});
     }
   };
+
+  const spectatorCelebrationKeyRef = useRef("");
+
+  // Зритель: этап «ответ» приходит по sync — включаем те же эффекты празднования, что и у ведущего
+  useEffect(() => {
+    if (!isOpen) {
+      spectatorCelebrationKeyRef.current = "";
+      return;
+    }
+    if (!readonly || quizStage !== "answer" || !isCelebration) return;
+    const key = `${board}-${themeName}-${points}`;
+    if (spectatorCelebrationKeyRef.current === key) return;
+    spectatorCelebrationKeyRef.current = key;
+    setShowFireworks(true);
+    const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  }, [readonly, isOpen, quizStage, isCelebration, board, themeName, points]);
 
   const questionFontSizeStyle = adaptiveFontSize(text);
   const answerFontSizeStyle = adaptiveAnswerFontSize(answerText);
@@ -637,7 +672,7 @@ export function QuestionModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50"
-            onClick={handleClose}
+            onClick={readonly ? undefined : handleClose}
           />
           <AnimatePresence>
             {question.splashUrl && !splashDismissed && (
@@ -722,25 +757,27 @@ export function QuestionModal({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsEditing((v) => !v)}
-                    title={isEditing ? "Режим просмотра" : "Редактировать"}
-                    className={`rounded-full transition-colors ${isEditing ? "bg-accent/20 text-accent hover:bg-accent/30" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClose}
-                    className="rounded-full hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
+                {!readonly && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditing((v) => !v)}
+                      title={isEditing ? "Режим просмотра" : "Редактировать"}
+                      className={`rounded-full transition-colors ${isEditing ? "bg-accent/20 text-accent hover:bg-accent/30" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClose}
+                      className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Body */}
@@ -915,8 +952,8 @@ export function QuestionModal({
                         </>
                       )}
 
-                      {/* Award points — hidden for celebration */}
-                      {!isCelebration && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
+                      {/* Award points — hidden for celebration and for зрителя */}
+                      {!isCelebration && !readonly && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Trophy className="w-4 h-4 text-primary" />
                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -985,7 +1022,7 @@ export function QuestionModal({
                         <ExternalLink className="w-4 h-4" />
                         Ящик пандоры
                       </a>
-                      {question.used && (
+                      {!readonly && question.used && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1016,7 +1053,7 @@ export function QuestionModal({
                       >
                         🎡 Колесо Адептов
                       </Button>
-                    ) : question.used ? (
+                    ) : !readonly && question.used ? (
                       <Button
                         variant="outline"
                         size="lg"
@@ -1045,7 +1082,7 @@ export function QuestionModal({
                     >
                       🎡 Колесо Адептов
                     </Button>
-                  ) : question.used ? (
+                  ) : !readonly && question.used ? (
                     <Button
                       variant="outline"
                       size="lg"
@@ -1088,7 +1125,7 @@ export function QuestionModal({
 
                 {/* Right */}
                 <div className="flex justify-end gap-2">
-                  {stage === "question" && !isPandora ? (
+                  {!readonly && (stage === "question" && !isPandora ? (
                     <Button
                       size="lg"
                       onClick={handleShowAnswer}
@@ -1106,7 +1143,7 @@ export function QuestionModal({
                     >
                       {isPandora || isCelebration ? "Закрыть" : "Никто не ответил — закрыть"}
                     </Button>
-                  )}
+                  ))}
                 </div>
               </div>
             </motion.div>

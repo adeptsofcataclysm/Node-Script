@@ -4,14 +4,23 @@ import type { Player, Question } from "@/lib/adepts-quiz-types";
 
 export type { Player, Question };
 
+export type ActiveQuizCard = {
+  themeIndex: number;
+  questionIndex: number;
+  stage: "question" | "answer";
+};
+
 export type GameState = {
   players: Player[];
   themes: string[];
   questions: Question[][];
+  /** Открытая карточка квиза — синхронизируется с зрителем по /quiz */
+  activeQuizCard: ActiveQuizCard | null;
   dataVersion?: number;
 };
 
 const DEFAULT_STATE: GameState = {
+  activeQuizCard: null,
   players: Array.from({ length: 5 }, (_, i) => ({
     id: `p${i}`,
     name: `Player ${i + 1}`,
@@ -158,7 +167,11 @@ function loadInitialState(): GameState {
       if (parsed.dataVersion !== DATA_VERSION) {
         return restoreLegacyWheelCards({ ...DEFAULT_STATE, players, dataVersion: DATA_VERSION });
       }
-      return restoreLegacyWheelCards({ ...parsed, players });
+      return restoreLegacyWheelCards({
+        ...parsed,
+        players,
+        activeQuizCard: parsed.activeQuizCard ?? null,
+      });
     }
   } catch (err) {
     console.error("Failed to load state", err);
@@ -189,6 +202,7 @@ export function useGameState() {
         restoreLegacyWheelCards({
           ...incoming,
           players: incoming.players?.length ? incoming.players : DEFAULT_STATE.players,
+          activeQuizCard: incoming.activeQuizCard ?? null,
         })
       );
     });
@@ -284,6 +298,20 @@ export function useGameState() {
     }));
   }, []);
 
+  const setActiveQuizCard = useCallback((card: GameState["activeQuizCard"]) => {
+    setState((prev) => ({ ...prev, activeQuizCard: card }));
+  }, []);
+
+  const patchActiveQuizCard = useCallback(
+    (patch: Partial<NonNullable<GameState["activeQuizCard"]>>) => {
+      setState((prev) => {
+        if (!prev.activeQuizCard) return prev;
+        return { ...prev, activeQuizCard: { ...prev.activeQuizCard, ...patch } };
+      });
+    },
+    []
+  );
+
   const resetGame = useCallback(() => {
     setState(DEFAULT_STATE);
   }, []);
@@ -295,6 +323,8 @@ export function useGameState() {
     updateThemeName,
     updateQuestion,
     resetScores,
+    setActiveQuizCard,
+    patchActiveQuizCard,
     resetGame,
   };
 }

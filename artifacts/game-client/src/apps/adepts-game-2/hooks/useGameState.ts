@@ -4,10 +4,17 @@ import type { Player, Question } from "@/lib/adepts-quiz-types";
 
 export type { Player, Question };
 
+export type ActiveQuizCard = {
+  themeIndex: number;
+  questionIndex: number;
+  stage: "question" | "answer";
+};
+
 export type GameState = {
   players: Player[];
   themes: string[];
   questions: Question[][];
+  activeQuizCard: ActiveQuizCard | null;
 };
 
 function gd(id: string) {
@@ -15,6 +22,7 @@ function gd(id: string) {
 }
 
 const DEFAULT_STATE: GameState = {
+  activeQuizCard: null,
   players: Array.from({ length: 5 }, (_, i) => ({
     id: `p${i}`,
     name: `Player ${i + 1}`,
@@ -317,7 +325,11 @@ function loadInitialState(): GameState {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return restoreLegacyPandoraVideos({ ...parsed, players });
+      return restoreLegacyPandoraVideos({
+        ...parsed,
+        players,
+        activeQuizCard: parsed.activeQuizCard ?? null,
+      });
     }
     return restoreLegacyPandoraVideos({ ...DEFAULT_STATE, players });
   } catch {
@@ -345,6 +357,7 @@ export function useGameState() {
       skipEmitRef.current = true;
       setState({
         ...incoming,
+        activeQuizCard: incoming.activeQuizCard ?? null,
         questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
           themeQs.map((defaultQ, qIdx) => ({
             ...defaultQ,
@@ -437,6 +450,20 @@ export function useGameState() {
     }));
   }, []);
 
+  const setActiveQuizCard = useCallback((card: GameState["activeQuizCard"]) => {
+    setState((prev) => ({ ...prev, activeQuizCard: card }));
+  }, []);
+
+  const patchActiveQuizCard = useCallback(
+    (patch: Partial<NonNullable<GameState["activeQuizCard"]>>) => {
+      setState((prev) => {
+        if (!prev.activeQuizCard) return prev;
+        return { ...prev, activeQuizCard: { ...prev.activeQuizCard, ...patch } };
+      });
+    },
+    []
+  );
+
   const resetGame = useCallback(() => {
     setState(DEFAULT_STATE);
   }, []);
@@ -448,6 +475,8 @@ export function useGameState() {
     updateThemeName,
     updateQuestion,
     resetScores,
+    setActiveQuizCard,
+    patchActiveQuizCard,
     resetGame,
   };
 }
