@@ -3,6 +3,7 @@ import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
 import { QuestionModal } from "@/lib/adepts-question-modal";
+import { GamePhaseNav } from "@/components/GamePhaseArrows";
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -58,12 +59,6 @@ export default function Home() {
           <video key={url} src={url} preload="auto" muted />
         ))}
       </div>
-      {/* Fixed online indicator */}
-      <div style={{ position: "fixed", top: 20, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />
-        Онлайн
-      </div>
-
       <header className="flex-shrink-0 w-full flex items-center gap-6 px-6 py-3 bg-card/80 border-b border-border backdrop-blur-sm">
         <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
           САМЫЙ ДУШНЫЙ 3.0
@@ -71,6 +66,13 @@ export default function Home() {
         <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
           Adepts-game
         </span>
+        <div className="ml-auto flex items-center gap-3">
+          <GamePhaseNav />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />
+            Онлайн
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 min-h-0 py-3">

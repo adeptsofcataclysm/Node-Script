@@ -1,131 +1,129 @@
 # Vision
 
-This document contains high-level vision for the game app.
+High-level product vision for the game application.
 
 ## Adepts game
 
-Основная игра состоит из трёх раундов. Каждый раунд имеет несколько категорий вопросов. В каждой категории - 5 вопросов. Вопрос имеет стоимость, которая отображается на поле с вопросами.
+The main game runs in **three rounds**. Each round has several **question categories**. Every category holds **five questions**. Each question has a **point value** shown on the game board.
 
-При выборе вопроса открывается Карточка вопроса. Существует несколько вариантов Карточек, они описаны ниже. Карточка содержит вопрос и кнопку для показа ответа.
+Choosing a question opens a **question card**. Several card types exist (described below). A card shows the prompt and a control to reveal the answer.
 
-В игре принимает участие 5 **Игроков**. За правильный ответ на вопрос **Игрок** получает очки. За неправильный ответ на вопрос **Игрок** теряет очки. Очки привязаны к номеру **Игрока**, но не к конкретному **Игроку**.
+**Five Players** compete. A correct answer **adds** that card’s points to the active Player slot; a wrong answer **subtracts** points. Scores are tied to **Player number** (seat 1–5), not to a fixed real-world identity—who sits in a seat can change across the show.
 
-Переход в следующий раунд производится **Ведущим**.
+Only the **Host** advances the session into the next round.
 
-Экран раунда содержит:
+The round screen includes:
 
-- меню вверху экрана
-- основное поле с категориями и вопросами
-- полосу с **Игроками**
-- чат **Зрителей**, слева от основного поля
+- a top menu
+- the main **quiz board** (categories and questions)
+- a **Player strip** (the five seats)
+- a **Spectator chat** to the left of the main board
 
-### Роли и активности
+### Roles and what they do during the main game
 
-Роли и активности во время основной игры:
+**Host** — Opens question and answer cards, judges whether a Player’s answer is correct. On a wrong answer, passes play to the next Player. Can restore cards on the quiz board, award or adjust scores via card flows, by typing into a Player’s score field, or with **+** / **−** controls (step **100** points). Navigates between board states and transitions.
 
-**Ведущий** - может открывать карточки вопросов и ответов, принимает ответ **Игрока**. В случае неверного ответа передаёт ход следующему **Игроку**. Может восстанавливать карточки на доске квиза, начислять очки **Игрокам** через карточки, вводом цифры в поле очков **Игрока** или через "+" и "-" (с шагом в 100 очков). Может перемещаться по частям игры (доски квиза и переходы между ними).
+**Player** — Plays under a specific seat number. May open a question card; when they do, **only the question** is revealed. **Only the Host** may reveal the answer for everyone.
 
-**Игрок** - участвует в игре под определённым номером, может открывать карточки вопроса, при открытии карточки открывается только вопрос карточки. Ответ карточки может открыть для всех только **Ведущий**.
+**Spectator** — Watches the main game and mini-games. Spectators can use the **Spectator chat**.
 
-**Зритель** - наблюдение за игрой и мини-играми. Для **Зрителей** доступно общение в чате **Зрителей**.
+### Question card types
 
-### Карточка вопроса
+#### Standard card
 
-#### Обычная карточка
+The prompt may be text, an image, or video.
 
-Содержит вопрос в виде текста, изображения или видео.
-При правильном ответе на вопрос **Игрок** получает количество очков карточки и может выбрать следующую карточку на доске вопросов. При неправильном ответе **Игрок** получает минус очки карточки и ход переходит следующему **Игроку**. Переход происходит к Игроку справа.
+On a **correct** answer, the Player gains the card’s points and may pick the next cell on the board. On a **wrong** answer, they lose the card’s points and **turn order** moves to the **Player to their right**.
 
-#### Колесо Адептов на 3 вращения
+#### Wheel of Adepts — three spins
 
-При открытии карточки с колесом на 3 вращения **Игрок** попадает на мини-игру `Колесо Адептов` по итогам каждого вращения очки начисляются или списываются с **Игрока**, в зависимости от того, что накрутил **Игрок**.
-На поле помимо секторов с очками есть "Особые сектора".
-Особые сектора:
-a)"Свап" - **Игрок** указывает **Игрока**, с которым меняется очками.
-б)"Держи вора"  - **Игрок** забирает 500 очков у другого **Игрока**.
-в)"Вайп"  - очки всех **Игроков** обнуляются.
-г)"Расскажи стишок" - **Игрок** должен рассказать стихотворение, за что получит очки от ведущего. Может не рассказывать
+Opening this card sends the Player into the **Wheel of Adepts** mini-game. After **each** spin, points are added or removed depending on where the wheel lands.
 
-#### Карточка с вопросом + 1 вращение колеса
+Besides plain score sectors, there are **special sectors**:
 
-Данная карточка при верном ответе на вопрос даёт право Игроку на прокрутку колеса Адептов.
-Всё также как во 2ом пункте, но Игрок крутит колесо всего 1 раз.
+a) **Swap** — the Player chooses another Player and **exchanges** scores with them.  
+b) **Catch the thief** — the Player takes **500** points from another Player.  
+c) **Wipe** — **all** Players’ scores go to zero.  
+d) **Recite a poem** — the Player may recite a poem for points awarded by the Host; they may also skip it.
 
-#### Ящик пандоры
+#### Question card + one wheel spin
 
-Карточка, при открытии которой, запускается мини-игра `Рулетка`.
+If the answer is **correct**, the Player earns **one** spin on the Wheel of Adepts. Rules match the wheel section above, but there is only **one** spin.
 
-#### "Енот в мешке"
+#### Pandora’s box
 
-При открытии карточки с "Енотом" **Игрок** передаёт вопрос одному из других **Игроков**. Сам ответить на вопрос он не может.
+Opening this card starts the **Roulette** mini-game (see below).
+
+#### “Raccoon in a sack”
+
+When this card opens, the current Player **passes the question** to another Player. They **cannot** answer it themselves.
 
 ## Mini-games
 
-### Начало игры
+### Opening the show
 
-Стартовая Мини-игра в начале, для определения 5ти стартовых **Игроков**, которые займут места в игре.
-У всех одно и тоже окно с полем вывода эмодзи и текстовым чатом. **Зрителям** транслируется эмодзи и **Зрители** пишут ответы в чат. **Ведущий** фиксирует верные ответ в таблицу со **Зрителями** и транслирует следущий вариант эмодзи **Зрителям**. По итогам топ 5 **Зрителей**, набравших больше всего верных ответов, занимают место в игре под конкретным номером.
+A **starter** mini-game picks the **five starting Players** who will take the seats.
 
-### Ставки зрителей
+Everyone sees the same view: an emoji display area and a text chat. **Spectators** see the emoji prompts and type guesses in chat. The **Host** marks correct answers in a table of Spectators and pushes the **next** emoji to the room. The **top five** Spectators by correct answers become **Players** and receive seat numbers.
 
-Перед началом первого раунда, после того, как определились все **Игроки** первого раунда среди **Зрителей** проводится мини-игра с приёмом ставок на номер **Игрока**. Побеждают те **Зрители**, которые выбрали номер **Игрока**, набравшего наибольшее количество очков по результатам трёх раундов.
+### Spectator picks
 
-### Рулетка
+After all **Round 1** Players are known—but **before** Round 1 begins—Spectators play a short mini-game where they **bet on a Player number**. Winners are those who picked the Player seat that ends the **three rounds** with the **highest** total score.
 
-Мини-игра активируется при открытии карточки Рулетки на доске вопросов.
-В рулетке участвует 5 **Игроков**, каждый **Игрок** по очереди крутит барабан револьвера, до тех пор пока один из **Игроков** не застрелится. Застрелившийся **Игрок** становится **Зрителем**. Для продолжения основной игры проводится лотерея. Для старта лотереи **Ведущий** заполняет список участников лотереи - из **Зрителей**. Далее крутится барабан лотереи(рандомно). По итогам лотереи  победитель становится **Игроком**.
+### Roulette
 
-### Колесо Адептов
+Triggered when a **Pandora’s box** (or equivalent) card opens on the board.
 
-Мини-игра, которая становится доступной, если открыть соответствующую карточку.  Карточек 2 варианта, на 1 вращение при верном ответе и на 3 вращения без вопросов. При открытии карточки **Игрок** попадает на Колесо Адептов с возможностью крутить барабан, **Ведущий** и **Зрители** тоже переключаются на колесо. По итогам выигрыш начисляется ведущим (или автоматизирован).
+All **five Players** take turns “spinning” a **revolver drum** until one Player is **eliminated**. That Player becomes a **Spectator**. To continue the main game, a **lottery** is run: the Host fills a participant list from **Spectators**, then a random draw picks a winner who becomes a **Player** again (replacing or filling a seat per your rules).
 
-### Переход между раундами
+### Wheel of Adepts
 
-Мини-игра с переходом происходит только после второго раунда. Когда заканчивается второй раунд, мы транслируем сюжетное видео, которое должны видеть все (**Ведущий**, **Игроки**, **Зрители**). Далее для каждого **Игрока** появляется поле ввода количества очков. Каждый **Игрок** указывает количество очков, которое он жертвует на "благие дела" или не жертвует(может быть 0). Очки эти не могут превышать количество набранных очков и не могут быть меньше 0. На доске 3 колонки справа в небольшой таблице, эти очки сохраняются до конца игры. Сохраненные очки это ставки, которые будут активированы, а именно умножены на х2 и разраспределны между другими **Игроками**, при открытии соответствующей карточки в третьем раунде игры.
+Available when the matching card is opened. Two variants exist: **one** spin after a correct answer on a combined card, or **three** spins with **no** prior question. When the card opens, the active Player gets the wheel; **Host** and **Spectators** also switch to the wheel view. Final scoring is applied by the **Host** (or automated).
 
-## Роли и права
+### Between-rounds transition
 
-**Ведущий** - человек, который совершает основные действия в течении игры.
+This beat runs **only after Round 2**. When Round 2 ends, everyone (**Host**, **Players**, **Spectators**) watches a **story video**. Then each **Player** enters how many points they **donate** to “good causes” (or **0**). Donations cannot exceed their current score and cannot be negative. A small table on the board (three columns on the right) **stores** these amounts until the end of the game. Those stored amounts act as **stakes**: when a specific card opens in **Round 3**, they **activate**—multiplied by **×2** and **redistributed** among other Players per the card rules.
 
-- управляет раундами с вопросами - перемещается между раундами, открывает и закрывает вопросы, начисляет очки, управляет **Игроками**
-- имеет возможность открывать окно с `Рулеткой`
-- имеет возможность открывать окно с `Колесом адептов`
-- имеет возможность активировать `Лотерею` для выбора нового игрока за столом
+## Roles and permissions
 
-**Игрок** - видит поле квиза, может крутить колесо адептов, участвует в русской рулетке.
+**Host** — Runs the session: pacing, reveals, scoring, and structural moves. In this product, the Host is whoever uses the **`/admin`** route and completes **authentication**.
 
-**Зритель** - Видит происходящее без возможности активных действий во время раундов игры. **Зритель** перед проведением `Лотереи` может отказаться от участия. Таким образом отказаться стать **Игроком**. Любой **Зритель** может участвовать в мини-игре `Ставки зрителей`.
+- Controls rounds and the question board—moves between rounds, opens and closes questions, adjusts scores, manages Players.
+- Can open the **Roulette** view.
+- Can open the **Wheel of Adepts** view.
+- Can start the **Lottery** to seat a new Player after Roulette.
+
+**Player** — Sees the quiz board, can spin the Wheel of Adepts when allowed, and takes part in **Russian roulette** when that mini-game runs.
+
+**Spectator** — Sees everything during rounds but **cannot** take Player-level actions. Before a **Lottery**, a Spectator may **opt out** so they will not be drawn as a new Player. Any Spectator may join **Spectator picks**. Someone becomes a Spectator after completing the **name entry** screen (viewer onboarding).
 
 ## Glossary
 
-
-| Термин                            | Краткое значение в этом документе                                                                                                                                                                                          |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Adepts game**                   | Квиз в стиле игры-шоу: раунды, доска, карточки, роли Ведущий / Игрок / Зритель.                                                                                                                                            |
-| **Ведущий**                       | Роль, которая ведёт игру: раунды, раскрытие вопросов и ответов, начисление и корректировка очков, сценарные переходы и служебные окна (например `Рулетка`, `Колесо Адептов`).                                              |
-| **Игрок**                         | Участник за «столом» (один из пяти номеров/слотов); открывает карточки, отвечает, участвует в мини-играх по правилам карточки.                                                                                             |
-| **Номер Игрока**                  | Слот 1–5 на полосе игроков; **очки** и ход привязаны к номеру, а не к фиксированной личности.                                                                                                                              |
-| **Зритель**                       | Наблюдатель: чат, мини-игры по документу (`Ставки зрителей` и старт), опциональное желание сменить роль; во время **раундов** основной квиз-части — без полноценных ходов как у Игрока.                                    |
-| **Раунд**                         | Этап основной игры с **доской квиза** (несколько **категорий** по пять **вопросов**). Всего три раунда.                                                                                                                    |
-| **Категория**                     | строка/тема на доске; в категории пять **вопросов** с разной **стоимостью**.                                                                                                                                               |
-| **Вопрос**                        | Единица сетки: текст/медиа, **стоимость** на поле, при выборе открывается **карточка вопроса**.                                                                                                                            |
-| **Стоимость**                     | Очковая цена **вопроса** (и типичный выигрыш/потеря при **обычной карточке**), отображается на доске.                                                                                                                      |
-| **Карточка вопроса**              | Экран/сущность с **вопросом**, кнопкой показа ответа (ответ открывает **Ведущий**) и типом: обычная, колесо (1/3), ящик, «енот» и т.д.                                                                                     |
-| **Доска квиза**                   | Основное поле с **категориями** и **вопросами** в **раунде**; **Ведущий** и **Игрок** перемещаются по сцене игры между досками и **мини-играми**.                                                                          |
-| **Ход**                           | Право отвечать/выбирать следующий **вопрос**; при ошибке **ход** к **Игроку справа** (для **обычной карточки**).                                                                                                           |
-| **Очки**                          | Счёт по **номеру Игрока**; **Ведущий** меняет вручную, с карточки, полем или кнопками ± (шаг 100) по тексту.                                                                                                               |
-| **Мини-игра**                     | Отдельный режим экрана: `Колесо Адептов`, `Рулетка`, переход **между раундами**, стартовая **эмодзи**-сессия, `Ставки зрителей`.                                                                                           |
-| **Колесо Адептов**                | Барабан: секторы очков и «особые» секторы; варианты карточек — 3 вращения без вопроса или 1 после верного ответа на **карточку с вопросом**; итог — у **Ведущего** или авто.                                               |
-| **Рулетка**                       | **Мини-игра** (револьвер по очереди) при **Ящике пандоры** и карточке; проигравший **Игрок** → **Зритель**, далее **лотерея** среди **Зрителей** на место **Игрока**.                                                      |
-| **Лотерея**                       | Выбор **Зрителя** из списка, который заполняет **Ведущий**, по итогам `Рулетка` для назначения нового **Игрока** на **номер**.                                                                                             |
-| **Ящик пандоры**                  | Тип **карточки вопроса**: запускает `Рулетка`.                                                                                                                                                                             |
-| **«Енот в мешке»**                | **Карточка вопроса**: текущий **Игрок** передаёт **вопрос** другому **Игроку** и не отвечает сам.                                                                                                                          |
-| **Переход между раундами**        | После 2-го **раунда**: общее **сюжетное видео**, затем ввод «жертвы» **очков** каждым **Игроком**; суммы фиксируются в таблице и позже (в 3-м **раунде**) **активируются** (×2 и **распределение**).                       |
-| **Сюжетное видео**                | Ролик, видимый всем ролям, между 2-м и 3-м **раундом** до ввода жертв очков.                                                                                                                                               |
-| **Начало игры** (старт)           | **Мини-игра** на отбор 5 **Игроков**: эмодзи + чат, **топ-5** по верным ответам получают **номер**.                                                                                                                        |
-| **Жертвование (благие дела)**     | **Очки**, добровольно отданные **Игроком** при **переходе между раундами** (не больше набранных, не меньше 0); дальше в документе используются как **«ставки»** для **активации** в 3-м **раунде**.                        |
-| **Ставки (на доске / активация)** | Сохранённые **очки** из этапа **жертвования**; **активируются** при открытии **соответствующей карточки** в третьем **раунде** (×2 и **распределение**).                                                                   |
-| **Ставки зрителей**               | **Мини-игра** до 1-го **раунда** после отбора **Игроков**; **Зрители** делают ставки на **номер Игрока**; победители — те, кто выбрал **Игрока** с max **очками** после трёх **раундов** (см. раздел **Ставки зрителей**). |
-| **Особые сектора**                | Секторы `Колеса Адептов`, отличные от прямой выдачи/снятия **очков**: `Свап`, `Держи вора`, `Вайп`, `Расскажи стишок` и т.д.                                                                                               |
-
-
+| Term | Meaning in this document |
+| --- | --- |
+| **Adepts game** | Quiz-show style game: rounds, board, cards, and three roles—Host, Player, Spectator. |
+| **Host** | Runs the show: rounds, reveal of questions and answers, score changes, scripted transitions, and utility surfaces (e.g. **Roulette**, **Wheel of Adepts**). |
+| **Player** | A contestant at the “table” (one of five numbered seats); opens cards, answers, and joins mini-games according to card rules. |
+| **Player number** | Seat **1–5** on the Player strip; **turn** and **score** attach to the seat, not to a permanent person. |
+| **Spectator** | Observer: chat, eligible mini-games (**Spectator picks**, opening show), optional opt-out before **Lottery**; during **main rounds**, no full Player actions. |
+| **Round** | A phase of the main game with a **quiz board** (several **categories**, each with five **questions**). There are **three** rounds. |
+| **Category** | A row or theme on the board; holds five **questions** with different **point values**. |
+| **Question** | A board cell: text or media, a **point value** on the grid; selecting it opens a **question card**. |
+| **Point value** | The score weight of a **question** (typical win/loss on a **standard card**), shown on the board. |
+| **Question card** | The full-screen (or modal) experience: **prompt**, “show answer” (Host-only reveal), and a **type** (standard, wheel 1/3, Pandora, Raccoon, etc.). |
+| **Quiz board** | The main grid of **categories** and **questions** within a **round**; Host and Player navigate between boards and **mini-games**. |
+| **Turn** | The right to answer or pick the next **question**; on a wrong answer on a **standard card**, **turn** passes to the **Player on the right**. |
+| **Score** | Points per **Player number**; the Host changes them via cards, direct entry, or **±** in steps of **100** as described above. |
+| **Mini-game** | A separate mode: **Wheel of Adepts**, **Roulette**, **between-rounds** flow, **opening** emoji round, **Spectator picks**. |
+| **Wheel of Adepts** | Spinning wheel with score sectors and **special sectors**; card variants—three spins with no question, or one spin after a correct answer on a **combined** card; outcome credited by Host or automation. |
+| **Roulette** | Revolver-style **mini-game** tied to **Pandora’s box**; eliminated **Player** → **Spectator**, then **Lottery** among Spectators for a new **Player**. |
+| **Lottery** | Random draw from a list the **Host** builds from **Spectators**, used after **Roulette** to assign a new **Player** to a seat. |
+| **Pandora’s box** | **Question card** type that launches **Roulette**. |
+| **“Raccoon in a sack”** | **Question card** type: current **Player** gives the **question** to another **Player** and does not answer. |
+| **Between-rounds transition** | After **Round 2**: shared **story video**, then each **Player** enters **donated** points; values are stored and later **activated** in **Round 3** (×2 and **redistribution**). |
+| **Story video** | Cinematic clip everyone sees between **Round 2** and **Round 3**, before donation entry. |
+| **Opening the show** | **Mini-game** to select five **Players**: emoji wall + chat; **top five** by correct guesses get **seat numbers**. |
+| **Donation (“good causes”)** | Points a **Player** voluntarily gives up in the **between-rounds** step (≤ current score, ≥ 0); stored as **stakes** for later **activation** in **Round 3**. |
+| **Board stakes / activation** | Saved points from **donations**; **activate** when a specific **card** opens in **Round 3** (×2 and **redistribution**). |
+| **Spectator picks** | **Mini-game** after **Players** are set but **before Round 1**; Spectators bet on a **Player number**; winners picked the **Player** with the highest **score** after **three rounds** (see **Spectator picks** section). |
+| **Special sectors** | Wheel slices that are not simple add/subtract **score**: **Swap**, **Catch the thief**, **Wipe**, **Recite a poem**, etc. |

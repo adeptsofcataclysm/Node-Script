@@ -4,17 +4,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type Phase = { href: string; label: string };
 
-/** Same order as the admin hub: wheel → pandora → three quiz boards. */
 const PHASES: Phase[] = [
-  { href: "/", label: "Колесо — ведущий" },
-  { href: "/adepts", label: "Колесо — ведущий Adepts" },
-  { href: "/watch", label: "Колесо — зрители" },
-  { href: "/game", label: "Пандора — игроки" },
-  { href: "/spectate", label: "Пандора — ведущий" },
   { href: "/adepts-game/", label: "Квиз-доска 1" },
   { href: "/adepts-game-2/", label: "Квиз-доска 2" },
   { href: "/adepts-game-3/", label: "Квиз-доска 3" },
 ];
+
+/** Routes that render their own inline phase nav inside a header. */
+const HEADER_NAV_ROUTES = ["/adepts-game", "/adepts-game-2", "/adepts-game-3"];
 
 function stripBase(pathname: string, base: string): string {
   const b = base.replace(/\/$/, "");
@@ -41,17 +38,23 @@ function phaseIndexForPath(relPath: string): number {
   return -1;
 }
 
-export function GamePhaseArrows() {
+function usePhaseIndex() {
   const [location] = useLocation();
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-  const index = useMemo(() => {
+  return useMemo(() => {
     const fullPath = typeof window !== "undefined" ? window.location.pathname : location;
     const rel = stripBase(fullPath, base);
-    return phaseIndexForPath(rel);
+    return { index: phaseIndexForPath(rel), rel };
   }, [location, base]);
+}
 
-  if (index < 0) return null;
+/** Floating pill fixed at bottom-center. Rendered globally for pages without a header. */
+export function GamePhaseArrows() {
+  const { index, rel } = usePhaseIndex();
+
+  const isHeaderRoute = HEADER_NAV_ROUTES.some((r) => normalize(rel).startsWith(normalize(r)));
+  if (index < 0 || isHeaderRoute) return null;
 
   const prev = index > 0 ? PHASES[index - 1] : null;
   const next = index < PHASES.length - 1 ? PHASES[index + 1] : null;
@@ -93,6 +96,58 @@ export function GamePhaseArrows() {
       ) : (
         <span className="flex h-10 w-10 items-center justify-center text-white/25" aria-hidden>
           <ChevronRight className="h-7 w-7" />
+        </span>
+      )}
+    </nav>
+  );
+}
+
+/** Compact inline nav for use inside a page header.
+ *  Uses plain <a> tags so nested wouter routers don't mangle the absolute hrefs. */
+export function GamePhaseNav() {
+  const { index } = usePhaseIndex();
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+  if (index < 0) return null;
+
+  const prev = index > 0 ? PHASES[index - 1] : null;
+  const next = index < PHASES.length - 1 ? PHASES[index + 1] : null;
+
+  const toHref = (phase: Phase) => base + phase.href;
+
+  return (
+    <nav className="flex items-center gap-0.5" aria-label="Переход между фазами игры">
+      {prev ? (
+        <a
+          href={toHref(prev)}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-amber-300"
+          title={`Назад: ${prev.label}`}
+          aria-label={`Предыдущая фаза: ${prev.label}`}
+        >
+          <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
+        </a>
+      ) : (
+        <span className="flex h-7 w-7 items-center justify-center text-white/20" aria-hidden>
+          <ChevronLeft className="h-4 w-4" />
+        </span>
+      )}
+
+      <span className="px-1 text-[10px] font-mono text-white/50 tabular-nums">
+        {index + 1}/{PHASES.length}
+      </span>
+
+      {next ? (
+        <a
+          href={toHref(next)}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-amber-300"
+          title={`Вперёд: ${next.label}`}
+          aria-label={`Следующая фаза: ${next.label}`}
+        >
+          <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+        </a>
+      ) : (
+        <span className="flex h-7 w-7 items-center justify-center text-white/20" aria-hidden>
+          <ChevronRight className="h-4 w-4" />
         </span>
       )}
     </nav>
