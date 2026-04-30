@@ -9,6 +9,10 @@ export type ActiveQuizCard = {
   themeIndex: number;
   questionIndex: number;
   stage: "question" | "answer";
+  /** Клик ведущего / ходящего по вылетающему еноту — синхронно всем клиентам */
+  splashDismissed?: boolean;
+  /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
+  splashSeatPassUsed?: boolean;
 };
 
 export type GameState = {

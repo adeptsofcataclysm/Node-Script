@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
+import { isAdeptsWheelFaceDownCell } from "@/lib/isAdeptsWheelFaceDownCell";
 import { QuestionModal } from "@/lib/adepts-question-modal";
 import { GamePhaseNav } from "@/components/GamePhaseArrows";
 import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
@@ -52,21 +53,34 @@ export default function Home() {
       ? active
       : null;
 
-  const [raccoonSplashSeatPassUsed, setRaccoonSplashSeatPassUsed] = useState(false);
-  const openCardKey = openCard ? `${openCard.themeIndex}-${openCard.questionIndex}` : null;
-  useEffect(() => {
-    setRaccoonSplashSeatPassUsed(false);
-  }, [openCardKey]);
-
   const seatRaw = Number(localStorage.getItem("player_seat_index"));
   const seatIndex =
     Number.isInteger(seatRaw) && seatRaw >= 0 && seatRaw <= 4 ? seatRaw : -1;
   const canOpenCards =
     isHost || (!isSpectator && seatIndex === state.currentTurnSeat);
+  const blockTurnPlayerFromPlayedOrFaceDownCells =
+    !isHost && !isSpectator && seatIndex >= 0 && seatIndex <= 4 && seatIndex === state.currentTurnSeat;
+
+  const canDismissRaccoonSplash =
+    isHost ||
+    (!isSpectator && seatIndex >= 0 && seatIndex <= 4 && seatIndex === state.currentTurnSeat);
 
   const handleQuestionClick = (themeIndex: number, questionIndex: number) => {
     if (!canOpenCards) return;
-    setActiveQuizCard({ themeIndex, questionIndex, stage: "question" });
+    const q = state.questions[themeIndex]?.[questionIndex];
+    if (
+      q &&
+      blockTurnPlayerFromPlayedOrFaceDownCells &&
+      (q.used || isAdeptsWheelFaceDownCell(q))
+    )
+      return;
+    setActiveQuizCard({
+      themeIndex,
+      questionIndex,
+      stage: "question",
+      splashDismissed: false,
+      splashSeatPassUsed: false,
+    });
   };
 
   const closeQuestion = () => {
@@ -109,6 +123,7 @@ export default function Home() {
             onUpdateTheme={updateThemeName}
             onQuestionClick={handleQuestionClick}
             readonly={!canOpenCards}
+            blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
           />
         </main>
       </div>
@@ -144,9 +159,12 @@ export default function Home() {
           onPassTurnNext={() => setCurrentTurnSeat((state.currentTurnSeat + 1) % 5)}
           currentTurnSeat={state.currentTurnSeat}
           viewerSeatIndex={isHost || isSpectator || seatIndex < 0 ? null : seatIndex}
-          allowRaccoonSplashSeatPass={!raccoonSplashSeatPassUsed}
+          allowRaccoonSplashSeatPass={openCard.splashSeatPassUsed !== true}
+          splashDismissed={openCard.splashDismissed === true}
+          canDismissRaccoonSplash={canDismissRaccoonSplash}
+          onDismissSplash={() => patchActiveQuizCard({ splashDismissed: true })}
           onPassTurnToSeat={(target) => {
-            setRaccoonSplashSeatPassUsed(true);
+            patchActiveQuizCard({ splashSeatPassUsed: true });
             setCurrentTurnSeat(target);
           }}
           readonly={!isHost}

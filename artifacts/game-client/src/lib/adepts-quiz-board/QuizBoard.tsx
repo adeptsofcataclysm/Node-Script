@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { getQuizThemeIconUrl } from "@/lib/quizThemeIcons";
+import { isAdeptsWheelFaceDownCell } from "@/lib/isAdeptsWheelFaceDownCell";
 import type { AdeptsBoardId, Question } from "@/lib/adepts-quiz-types";
 
 const THEME_DISPLAY_BOARD2: Record<string, string> = {
@@ -15,6 +16,10 @@ interface QuizBoardProps {
   onUpdateTheme: (index: number, name: string) => void;
   onQuestionClick: (themeIndex: number, questionIndex: number) => void;
   readonly?: boolean;
+  /**
+   * true: игрок с ходом не открывает сыгранные (used) и ячейки только-колесо без вопроса; ведущий может.
+   */
+  blockTurnPlayerFromPlayedOrFaceDownCells?: boolean;
 }
 
 export function QuizBoard({
@@ -24,6 +29,7 @@ export function QuizBoard({
   onUpdateTheme,
   onQuestionClick,
   readonly = false,
+  blockTurnPlayerFromPlayedOrFaceDownCells = false,
 }: QuizBoardProps) {
   const [editingTheme, setEditingTheme] = useState<number | null>(null);
   const theme2LineBreaks = board === 2;
@@ -128,6 +134,10 @@ export function QuizBoard({
           <div className="flex-1 grid grid-cols-5 gap-2">
             {questions[tIdx].map((q, qIdx) => {
               const points = (qIdx + 1) * 100;
+              const turnPlayerBlockedCell =
+                blockTurnPlayerFromPlayedOrFaceDownCells &&
+                (q.used || isAdeptsWheelFaceDownCell(q));
+              const cellReadonly = readonly || turnPlayerBlockedCell;
               return (
                 <motion.button
                   key={qIdx}
@@ -142,23 +152,23 @@ export function QuizBoard({
                       stiffness: 200,
                     },
                   }}
-                  whileHover={!q.used && !readonly ? {
+                  whileHover={!q.used && !cellReadonly ? {
                     scale: 1.06,
                     y: -3,
                     transition: { type: "tween", duration: 0.08, ease: "easeOut" },
                   } : {}}
-                  whileTap={!q.used && !readonly ? {
+                  whileTap={!q.used && !cellReadonly ? {
                     scale: 0.94,
                     transition: { type: "tween", duration: 0.06 },
                   } : {}}
                   transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
-                  onClick={() => !readonly && onQuestionClick(tIdx, qIdx)}
+                  onClick={() => !cellReadonly && onQuestionClick(tIdx, qIdx)}
                   className={`
                     relative w-full h-full rounded-xl border flex items-center justify-center
                     font-display font-bold transition-colors duration-150
                     ${q.used
                       ? "bg-background/20 border-border/50 text-muted-foreground/30 cursor-not-allowed"
-                      : readonly
+                      : cellReadonly
                         ? "bg-secondary/40 border-accent/30 text-primary cursor-default"
                         : "bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] cursor-pointer"
                     }

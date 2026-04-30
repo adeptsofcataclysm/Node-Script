@@ -1,18 +1,14 @@
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Trophy, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import type { AdeptsBoardId, Question, Player } from "@/lib/adepts-quiz-types";
-import {
-  ADEPTS_SLOT_THEMES,
-  hsl,
-  PLAYER_CARD_OCTAGON_CLIP,
-  slotCardShellFilter,
-} from "@/lib/adeptsQuizSlotCardVisual";
 
 type Stage = "question" | "answer";
+
+const ADEPTS_EMBLEM_URL = "/lor-adeptov-icon.png";
 
 interface QuestionModalProps {
   board: AdeptsBoardId;
@@ -44,6 +40,12 @@ interface QuestionModalProps {
    * @default true
    */
   allowRaccoonSplashSeatPass?: boolean;
+  /** Енот скрыт (общее состояние стола, не локально). */
+  splashDismissed?: boolean;
+  /** Ведущий или игрок с ходом — единственные, кто может кликнуть по вылетающему еноту. */
+  canDismissRaccoonSplash?: boolean;
+  /** Записать в синхронизируемое состояние, что splash закрыт. */
+  onDismissSplash?: () => void;
 }
 
 const TIMER_SECONDS = 30;
@@ -394,7 +396,15 @@ function interpolateSpiral(t: number) {
   };
 }
 
-function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void }) {
+function SplashOverlay({
+  url,
+  canDismiss,
+  onDismiss,
+}: {
+  url: string;
+  canDismiss: boolean;
+  onDismiss: () => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<SparkParticle[]>([]);
   const rafRef = useRef<number | undefined>(undefined);
@@ -489,8 +499,8 @@ function SplashOverlay({ url, onDismiss }: { url: string; onDismiss: () => void 
 
   return (
     <motion.div
-      className="fixed inset-0 z-[200] flex items-center justify-center cursor-pointer select-none"
-      onClick={onDismiss}
+      className={`fixed inset-0 z-[200] flex items-center justify-center select-none ${canDismiss ? "cursor-pointer" : "cursor-default pointer-events-none"}`}
+      onClick={canDismiss ? onDismiss : undefined}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.25 } }}
@@ -541,6 +551,9 @@ export function QuestionModal({
   viewerSeatIndex = null,
   onPassTurnToSeat,
   allowRaccoonSplashSeatPass = true,
+  splashDismissed: splashDismissedProp = false,
+  canDismissRaccoonSplash = false,
+  onDismissSplash,
 }: QuestionModalProps) {
   const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
@@ -550,7 +563,7 @@ export function QuestionModal({
   const [awarded, setAwarded] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const [showFireworks, setShowFireworks] = useState(false);
-  const [splashDismissed, setSplashDismissed] = useState(false);
+  const splashDismissed = splashDismissedProp === true;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isWheelCard = !!question.headerUrl;
 
@@ -627,7 +640,6 @@ export function QuestionModal({
       setAwarded(null);
       setIsEditing(false);
       setShowFireworks(false);
-      setSplashDismissed(false);
     } else {
       stopTimer();
       setCountdown(TIMER_SECONDS);
@@ -731,7 +743,8 @@ export function QuestionModal({
             {question.splashUrl && !splashDismissed && (
               <SplashOverlay
                 url={question.splashUrl}
-                onDismiss={() => setSplashDismissed(true)}
+                canDismiss={canDismissRaccoonSplash && typeof onDismissSplash === "function"}
+                onDismiss={() => onDismissSplash?.()}
               />
             )}
           </AnimatePresence>
@@ -913,75 +926,72 @@ export function QuestionModal({
                               <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                                 Передайте ход другому игроку
                               </p>
-                              <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
+                              <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2 sm:gap-2 md:grid-cols-4">
                                 {players.map((p, i) => {
                                   if (i === viewerSeatIndex) return null;
-                                  const theme = ADEPTS_SLOT_THEMES[i] ?? ADEPTS_SLOT_THEMES[0]!;
-                                  const accent = theme.hsl;
                                   const label = p.name?.trim() ? p.name : `Игрок ${i + 1}`;
                                   return (
-                                    <div
+                                    <motion.button
                                       key={p.id}
-                                      className="mx-auto w-full max-w-[11rem]"
-                                      style={{ filter: slotCardShellFilter(accent, false) }}
+                                      type="button"
+                                      initial={{ opacity: 0, y: 24 }}
+                                      animate={{
+                                        opacity: 1,
+                                        y: 0,
+                                        transition: {
+                                          delay: i * 0.04,
+                                          type: "spring",
+                                          damping: 22,
+                                          stiffness: 200,
+                                        },
+                                      }}
+                                      whileHover={{
+                                        scale: 1.06,
+                                        y: -3,
+                                        transition: { type: "tween", duration: 0.08, ease: "easeOut" },
+                                      }}
+                                      whileTap={{
+                                        scale: 0.94,
+                                        transition: { type: "tween", duration: 0.06 },
+                                      }}
+                                      transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
+                                      onClick={() => onPassTurnToSeat(i)}
+                                      className="group relative flex min-h-[7.25rem] w-full flex-col items-center justify-center gap-1.5 rounded-xl border bg-secondary/40 border-accent/30 px-2 py-3 font-display font-bold text-primary transition-colors duration-150 hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
                                     >
-                                      <button
-                                        type="button"
-                                        onClick={() => onPassTurnToSeat(i)}
-                                        className="relative flex min-h-[6.25rem] w-full flex-col overflow-hidden text-left transition-[filter,transform] duration-200 ease-out hover:brightness-[1.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
-                                        style={
-                                          {
-                                            ["--oct" as string]: "clamp(7px, 1.8vw, 12px)",
-                                            clipPath: PLAYER_CARD_OCTAGON_CLIP,
-                                            WebkitClipPath: PLAYER_CARD_OCTAGON_CLIP,
-                                            background:
-                                              "linear-gradient(175deg, hsl(270 35% 8% / 0.94) 0%, hsl(270 28% 5% / 0.97) 50%, hsl(270 43% 3% / 1) 100%)",
-                                            boxShadow: `inset 0 0 0 1px ${hsl(accent, 0.12)}, inset 0 0 28px ${hsl(accent, 0.06)}`,
-                                          } as CSSProperties
-                                        }
+                                      <div
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                        style={{
+                                          background:
+                                            "linear-gradient(105deg, hsla(280,65%,55%,0) 0%, hsla(280,65%,55%,0.1) 50%, hsla(280,65%,55%,0) 100%)",
+                                        }}
+                                      />
+                                      <img
+                                        src={resolveUrl(ADEPTS_EMBLEM_URL)}
+                                        alt=""
+                                        className="relative z-[1] h-[clamp(2.35rem,7vw,3.2rem)] w-auto max-w-[78%] object-contain select-none pointer-events-none"
+                                        style={{
+                                          filter:
+                                            "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
+                                        }}
+                                      />
+                                      <span
+                                        className="relative z-[1] glow-text max-w-full truncate px-1 text-center uppercase tracking-widest"
+                                        style={{
+                                          fontSize: "clamp(0.65rem, 2vw, 0.8rem)",
+                                          textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
+                                        }}
+                                        title={label}
                                       >
-                                        <div
-                                          aria-hidden
-                                          className="pointer-events-none absolute inset-0 z-0 opacity-40"
-                                          style={{
-                                            background: `radial-gradient(ellipse 118% 90% at 50% -8%, ${hsl(accent, 0.18)}, transparent 58%)`,
-                                          }}
-                                        />
-                                        <div
-                                          className="pointer-events-none absolute inset-0 z-0 opacity-[0.11]"
-                                          style={{
-                                            background: `radial-gradient(ellipse 130% 90% at 50% -5%, ${hsl(accent, 0.45)}, transparent 58%)`,
-                                          }}
-                                        />
-                                        <div
-                                          className="relative z-[1] border-b px-2 py-1.5 text-center"
-                                          style={{ borderColor: hsl(accent, 0.22) }}
-                                        >
-                                          <div
-                                            className="font-mono text-[7px] font-bold uppercase tracking-[0.2em] md:text-[8px]"
-                                            style={{ color: hsl(accent, 0.78) }}
-                                          >
-                                            ИГРОК
-                                          </div>
-                                          <div
-                                            className="mt-0.5 truncate px-0.5 text-center text-[9px] font-semibold uppercase tracking-wider md:text-[10px]"
-                                            style={{
-                                              color: hsl(accent, 0.88),
-                                              textShadow: `0 0 8px ${hsl(accent, 0.28)}`,
-                                            }}
-                                            title={label}
-                                          >
-                                            {label}
-                                          </div>
-                                        </div>
-                                        <div
-                                          className="relative z-[1] mt-auto min-h-[2rem] flex-1"
-                                          style={{
-                                            background: `radial-gradient(ellipse 95% 80% at 50% 100%, ${hsl(accent, 0.08)}, transparent 72%)`,
-                                          }}
-                                        />
-                                      </button>
-                                    </div>
+                                        {label}
+                                      </span>
+                                      <span
+                                        className="relative z-[1] glow-text font-display font-bold leading-none tabular-nums"
+                                        style={{ fontSize: "clamp(1rem, 2.5vw, 1.75rem)" }}
+                                      >
+                                        {p.score}
+                                      </span>
+                                    </motion.button>
                                   );
                                 })}
                               </div>
