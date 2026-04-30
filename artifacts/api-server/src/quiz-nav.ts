@@ -108,6 +108,27 @@ export function setupQuizNav(io: Server) {
       logger.info({}, "Quiz hostReturnToLogin — broadcast returnToLogin");
     });
 
+    socket.on("chatMessage", (payload: unknown) => {
+      const po =
+        payload && typeof payload === "object"
+          ? (payload as Record<string, unknown>)
+          : {};
+      const text =
+        typeof po["text"] === "string" ? po["text"].trim().slice(0, 500) : "";
+      const nick =
+        typeof po["nick"] === "string"
+          ? po["nick"].trim().slice(0, 64)
+          : "Аноним";
+      const role = po["role"] === "host" ? "host" : "spectator";
+      if (!text) return;
+      ns.emit("chatMessage", {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        nick,
+        role,
+        text,
+      });
+    });
+
     socket.on("disconnect", () => {
       unbindQuizSocketPresence(socket.id);
       logger.info({ socketId: socket.id }, "Quiz nav client disconnected");

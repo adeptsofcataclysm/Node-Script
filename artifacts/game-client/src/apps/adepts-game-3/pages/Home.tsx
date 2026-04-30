@@ -6,6 +6,7 @@ import { QuestionModal } from "@/lib/adepts-question-modal";
 import { GamePhaseNav } from "@/components/GamePhaseArrows";
 import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
 import { useRole } from "@/hooks/useRole";
+import { ChatPanel } from "@/components/ChatPanel";
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -97,16 +98,20 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 py-3">
-        <QuizBoard
-          board={3}
-          themes={state.themes}
-          questions={state.questions}
-          onUpdateTheme={updateThemeName}
-          onQuestionClick={handleQuestionClick}
-          readonly={!canOpenCards}
-        />
-      </main>
+      <div className="flex flex-1 min-h-0">
+        <ChatPanel className="w-[15%] flex-shrink-0 m-2" />
+
+        <main className="flex-1 min-h-0 py-3">
+          <QuizBoard
+            board={3}
+            themes={state.themes}
+            questions={state.questions}
+            onUpdateTheme={updateThemeName}
+            onQuestionClick={handleQuestionClick}
+            readonly={!canOpenCards}
+          />
+        </main>
+      </div>
 
       <div className="flex-shrink-0 w-full">
         <Scoreboard
