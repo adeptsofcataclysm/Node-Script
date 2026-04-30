@@ -1,8 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Route, Router, Switch } from "wouter";
+import { Route, Router, Switch, Redirect } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { HostPage } from "@/pages/HostPage";
 import { ViewerPage } from "@/pages/ViewerPage";
 import { GamePage } from "@/pages/GamePage";
 import { SpectatorPage } from "@/pages/SpectatorPage";
@@ -51,7 +50,7 @@ function App() {
                   <Route component={Adepts3NotFound} />
                 </Switch>
               </Route>
-              <Route path="/" component={HostPage} />
+              <Route path="/"><Redirect to="/adepts-game/" /></Route>
             </Switch>
             <GamePhaseArrows />
           </>
