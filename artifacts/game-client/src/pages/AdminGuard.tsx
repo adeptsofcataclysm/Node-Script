@@ -107,7 +107,7 @@ export function AdminGuard() {
       setTimeout(() => {
         localStorage.setItem("player_nick", nickVal);
         localStorage.setItem("player_role", "host");
-        window.location.href = `${base}/adepts-game/`;
+        window.location.href = `${base}/adepts-lobby/`;
       }, 2600);
     } else {
       setStatus("fail");

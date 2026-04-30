@@ -4,6 +4,7 @@ import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
 import { QuestionModal } from "@/lib/adepts-question-modal";
 import { GamePhaseNav } from "@/components/GamePhaseArrows";
+import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
 import { useRole } from "@/hooks/useRole";
 
 function resolveUrl(url: string): string {
@@ -73,7 +74,8 @@ export default function Home() {
         <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
           Adepts-game 3
         </span>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
+          <QuizBoardReloadButton />
           {!isSpectator && <GamePhaseNav />}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />

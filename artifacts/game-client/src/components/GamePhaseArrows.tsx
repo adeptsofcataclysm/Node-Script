@@ -28,7 +28,7 @@ export function getQuizBoardPhaseIndexForPathname(fullPathname: string): number 
 }
 
 /** Routes that render their own inline phase nav inside a header. */
-const HEADER_NAV_ROUTES = ["/adepts-game", "/adepts-game-2", "/adepts-game-3"];
+const HEADER_NAV_ROUTES = ["/adepts-lobby", "/adepts-game", "/adepts-game-2", "/adepts-game-3"];
 
 function stripBase(pathname: string, base: string): string {
   const b = base.replace(/\/$/, "");

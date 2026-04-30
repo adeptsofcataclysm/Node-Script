@@ -52,7 +52,7 @@ export function LoginPage() {
     localStorage.setItem("player_role", "spectator");
     setStatus("ok");
     setTimeout(() => {
-      window.location.href = `${base}/adepts-game/`;
+      window.location.href = `${base}/adepts-lobby/`;
     }, 1800);
   }
 

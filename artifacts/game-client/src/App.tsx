@@ -17,7 +17,10 @@ import Adepts3Home from "@/apps/adepts-game-3/pages/Home";
 import Adepts3NotFound from "@/apps/adepts-game-3/pages/not-found";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
 import { QuizNavSync } from "@/components/QuizNavSync";
+import { QuizReturnToLoginSync } from "@/components/QuizReturnToLoginSync";
+import { AdeptsQuizBoardGuard } from "@/components/AdeptsQuizBoardGuard";
 import { RequireLogin } from "@/components/RequireLogin";
+import { AdeptsLobbyPage } from "@/pages/AdeptsLobbyPage";
 
 const queryClient = new QueryClient();
 
@@ -35,34 +38,48 @@ function App() {
               <Route path="/watch" component={ViewerPage} />
               <Route path="/spectate" component={SpectatorPage} />
               <Route path="/game" component={GamePage} />
-              <Route path="/adepts-game" nest>
+              <Route path="/adepts-lobby" nest>
                 <RequireLogin>
                   <Switch>
-                    <Route path="/" component={Adepts1Home} />
-                    <Route component={Adepts1NotFound} />
+                    <Route path="/" component={AdeptsLobbyPage} />
                   </Switch>
+                </RequireLogin>
+              </Route>
+              <Route path="/adepts-game" nest>
+                <RequireLogin>
+                  <AdeptsQuizBoardGuard>
+                    <Switch>
+                      <Route path="/" component={Adepts1Home} />
+                      <Route component={Adepts1NotFound} />
+                    </Switch>
+                  </AdeptsQuizBoardGuard>
                 </RequireLogin>
               </Route>
               <Route path="/adepts-game-2" nest>
                 <RequireLogin>
-                  <Switch>
-                    <Route path="/" component={Adepts2Home} />
-                    <Route component={Adepts2NotFound} />
-                  </Switch>
+                  <AdeptsQuizBoardGuard>
+                    <Switch>
+                      <Route path="/" component={Adepts2Home} />
+                      <Route component={Adepts2NotFound} />
+                    </Switch>
+                  </AdeptsQuizBoardGuard>
                 </RequireLogin>
               </Route>
               <Route path="/adepts-game-3" nest>
                 <RequireLogin>
-                  <Switch>
-                    <Route path="/" component={Adepts3Home} />
-                    <Route component={Adepts3NotFound} />
-                  </Switch>
+                  <AdeptsQuizBoardGuard>
+                    <Switch>
+                      <Route path="/" component={Adepts3Home} />
+                      <Route component={Adepts3NotFound} />
+                    </Switch>
+                  </AdeptsQuizBoardGuard>
                 </RequireLogin>
               </Route>
               <Route path="/" component={LoginPage} />
             </Switch>
             <GamePhaseArrows />
             <QuizNavSync />
+            <QuizReturnToLoginSync />
           </>
         </Router>
         <Toaster />
