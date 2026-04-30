@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { listQuizPlayersOnline, removeQuizPlayer } from "./quiz-players-registry";
+import { listQuizPlayersWithStatus, removeQuizPlayer } from "./quiz-players-registry";
 
 const visitCounts: Record<string, number> = {};
 
@@ -34,6 +34,6 @@ export function attachVisitTrackRoutes(app: Express): void {
   });
 
   app.get("/api/admin/quiz-players", (_req, res) => {
-    res.json({ players: listQuizPlayersOnline() });
+    res.json({ players: listQuizPlayersWithStatus() });
   });
 }

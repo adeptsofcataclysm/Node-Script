@@ -5,8 +5,8 @@ import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 /** Только ведущий: сброс сессии для всех и переход на страницу входа. */
 export function QuizBoardReloadButton() {
-  const { isSpectator } = useRole();
-  if (isSpectator) return null;
+  const { isHost } = useRole();
+  if (!isHost) return null;
 
   return (
     <Button

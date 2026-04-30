@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import type { Player, Question } from "@/lib/adepts-quiz-types";
+import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
 
 export type { Player, Question };
 
@@ -15,6 +16,8 @@ export type GameState = {
   themes: string[];
   questions: Question[][];
   activeQuizCard: ActiveQuizCard | null;
+  /** Текущий ход: индекс места игрока 0..4 */
+  currentTurnSeat: number;
 };
 
 function gd(id: string) {
@@ -23,6 +26,7 @@ function gd(id: string) {
 
 const DEFAULT_STATE: GameState = {
   activeQuizCard: null,
+  currentTurnSeat: 0,
   players: Array.from({ length: 5 }, (_, i) => ({
     id: `p${i}`,
     name: `Player ${i + 1}`,
@@ -329,6 +333,9 @@ function loadInitialState(): GameState {
         ...parsed,
         players,
         activeQuizCard: parsed.activeQuizCard ?? null,
+        currentTurnSeat: Number.isInteger(parsed.currentTurnSeat)
+          ? ((Number(parsed.currentTurnSeat) % 5) + 5) % 5
+          : 0,
       });
     }
     return restoreLegacyPandoraVideos({ ...DEFAULT_STATE, players });
@@ -354,17 +361,34 @@ export function useGameState() {
     socketRef.current = socket;
 
     socket.on("sync", (incoming: GameState) => {
-      skipEmitRef.current = true;
-      setState({
+      const basePlayers = incoming.players?.length ? incoming.players : DEFAULT_STATE.players;
+      const { merged, hadRoster } = mergeSeatRosterIntoQuizPlayers([...basePlayers]);
+      const hostResetTurn =
+        hadRoster &&
+        typeof localStorage !== "undefined" &&
+        localStorage.getItem("player_role") === "host";
+      const nextState = {
         ...incoming,
+        players: merged,
         activeQuizCard: incoming.activeQuizCard ?? null,
+        currentTurnSeat: hostResetTurn
+          ? 0
+          : Number.isInteger(incoming.currentTurnSeat)
+            ? ((Number(incoming.currentTurnSeat) % 5) + 5) % 5
+            : 0,
         questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
           themeQs.map((defaultQ, qIdx) => ({
             ...defaultQ,
             used: incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used,
           }))
         ),
-      });
+      };
+      skipEmitRef.current = true;
+      setState(nextState);
+      if (hadRoster) {
+        skipEmitRef.current = false;
+        queueMicrotask(() => socketRef.current?.emit("update", nextState));
+      }
     });
 
     return () => {
@@ -454,6 +478,11 @@ export function useGameState() {
     setState((prev) => ({ ...prev, activeQuizCard: card }));
   }, []);
 
+  const setCurrentTurnSeat = useCallback((seat: number) => {
+    const normalized = ((Number(seat) % 5) + 5) % 5;
+    setState((prev) => ({ ...prev, currentTurnSeat: normalized }));
+  }, []);
+
   const patchActiveQuizCard = useCallback(
     (patch: Partial<NonNullable<GameState["activeQuizCard"]>>) => {
       setState((prev) => {
@@ -476,6 +505,7 @@ export function useGameState() {
     updateQuestion,
     resetScores,
     setActiveQuizCard,
+    setCurrentTurnSeat,
     patchActiveQuizCard,
     resetGame,
   };

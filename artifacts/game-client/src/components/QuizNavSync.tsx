@@ -3,13 +3,16 @@ import { useLocation } from "wouter";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 import { buildQuizBoardUrl, getQuizBoardPhaseIndexForPathname } from "@/components/GamePhaseArrows";
 
-/** Синхронизирует переход между квиз-досками для зрителя по событию ведущего (`/quiz-nav`). */
+function isQuizPhaseFollower(): boolean {
+  return localStorage.getItem("player_role") !== "host";
+}
+
+/** Синхронизация перехода между досками для зрителя и игрока с места (не для ведущего). */
 export function QuizNavSync() {
   const [location] = useLocation();
 
   useEffect(() => {
-    const spectator = localStorage.getItem("player_role") === "spectator";
-    if (!spectator) return;
+    if (!isQuizPhaseFollower()) return;
 
     const s = getQuizNavSocket();
     const onPhase = (payload: { boardIndex?: unknown }) => {
@@ -31,8 +34,7 @@ export function QuizNavSync() {
   }, []);
 
   useEffect(() => {
-    const spectator = localStorage.getItem("player_role") === "spectator";
-    if (!spectator) return;
+    if (!isQuizPhaseFollower()) return;
     if (getQuizBoardPhaseIndexForPathname(window.location.pathname) < 0) return;
     getQuizNavSocket().emit("requestPhase");
   }, [location]);

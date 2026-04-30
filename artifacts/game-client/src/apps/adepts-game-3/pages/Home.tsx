@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
@@ -14,7 +14,7 @@ function resolveUrl(url: string): string {
 }
 
 export default function Home() {
-  const { isSpectator } = useRole();
+  const { isHost, isSpectator } = useRole();
   const {
     state,
     updatePlayerName,
@@ -23,6 +23,7 @@ export default function Home() {
     updateQuestion,
     resetScores,
     setActiveQuizCard,
+    setCurrentTurnSeat,
     patchActiveQuizCard,
   } = useGameState();
 
@@ -50,8 +51,20 @@ export default function Home() {
       ? active
       : null;
 
+  const [raccoonSplashSeatPassUsed, setRaccoonSplashSeatPassUsed] = useState(false);
+  const openCardKey = openCard ? `${openCard.themeIndex}-${openCard.questionIndex}` : null;
+  useEffect(() => {
+    setRaccoonSplashSeatPassUsed(false);
+  }, [openCardKey]);
+
+  const seatRaw = Number(localStorage.getItem("player_seat_index"));
+  const seatIndex =
+    Number.isInteger(seatRaw) && seatRaw >= 0 && seatRaw <= 4 ? seatRaw : -1;
+  const canOpenCards =
+    isHost || (!isSpectator && seatIndex === state.currentTurnSeat);
+
   const handleQuestionClick = (themeIndex: number, questionIndex: number) => {
-    if (isSpectator) return;
+    if (!canOpenCards) return;
     setActiveQuizCard({ themeIndex, questionIndex, stage: "question" });
   };
 
@@ -76,7 +89,7 @@ export default function Home() {
         </span>
         <div className="ml-auto flex items-center gap-2">
           <QuizBoardReloadButton />
-          {!isSpectator && <GamePhaseNav />}
+          {isHost && <GamePhaseNav />}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />
             Онлайн
@@ -91,7 +104,7 @@ export default function Home() {
           questions={state.questions}
           onUpdateTheme={updateThemeName}
           onQuestionClick={handleQuestionClick}
-          readonly={isSpectator}
+          readonly={!canOpenCards}
         />
       </main>
 
@@ -101,7 +114,8 @@ export default function Home() {
           onUpdateName={updatePlayerName}
           onUpdateScore={updatePlayerScore}
           onResetScores={resetScores}
-          readonly={isSpectator}
+          readonly={!isHost}
+          currentTurnSeat={state.currentTurnSeat}
         />
       </div>
 
@@ -115,7 +129,22 @@ export default function Home() {
           players={state.players}
           quizStage={openCard.stage}
           onQuizStageChange={(s) => patchActiveQuizCard({ stage: s })}
-          readonly={isSpectator}
+          onPassTurn={() => {
+            const seat = state.currentTurnSeat;
+            const pts = (openCard.questionIndex + 1) * 100;
+            const prev = state.players[seat]?.score ?? 0;
+            updatePlayerScore(seat, prev - pts);
+            setCurrentTurnSeat((state.currentTurnSeat + 1) % 5);
+          }}
+          onPassTurnNext={() => setCurrentTurnSeat((state.currentTurnSeat + 1) % 5)}
+          currentTurnSeat={state.currentTurnSeat}
+          viewerSeatIndex={isHost || isSpectator || seatIndex < 0 ? null : seatIndex}
+          allowRaccoonSplashSeatPass={!raccoonSplashSeatPassUsed}
+          onPassTurnToSeat={(target) => {
+            setRaccoonSplashSeatPassUsed(true);
+            setCurrentTurnSeat(target);
+          }}
+          readonly={!isHost}
           onClose={closeQuestion}
           onUpdate={(data) =>
             updateQuestion(openCard.themeIndex, openCard.questionIndex, data)

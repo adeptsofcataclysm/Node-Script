@@ -14,12 +14,19 @@ let gameStarted = false;
 /** Текущая квиз-доска (0..2) */
 let lastBoardIndex: number | null = null;
 
-function lobbyPayload(): { gameStarted: boolean; boardIndex: number } {
+/** Ник на местах 1–5 на доске (после «Запуск игры», задаёт ведущий). */
+let seatPlayerNicks: string[] = [];
+
+function lobbyPayload(): {
+  gameStarted: boolean;
+  boardIndex: number;
+  seatPlayerNicks: string[];
+} {
   const boardIndex =
     lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD
       ? lastBoardIndex
       : 0;
-  return { gameStarted, boardIndex };
+  return { gameStarted, boardIndex, seatPlayerNicks: [...seatPlayerNicks] };
 }
 
 export function setupQuizNav(io: Server) {
@@ -52,15 +59,24 @@ export function setupQuizNav(io: Server) {
       socket.emit("phase", { boardIndex: lastBoardIndex });
     }
 
-    socket.on("startGame", () => {
+    socket.on("startGame", (payload: unknown) => {
+      const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+      const raw = po["seatPlayerNicks"];
+      seatPlayerNicks = Array.isArray(raw)
+        ? raw.map((x) => String(x ?? "").trim().slice(0, 64)).filter(Boolean).slice(0, 5)
+        : [];
+
       gameStarted = true;
       if (lastBoardIndex === null || lastBoardIndex < 0 || lastBoardIndex > MAX_BOARD) {
         lastBoardIndex = 0;
       }
-      const payload = lobbyPayload();
-      ns.emit("lobbyState", payload);
-      ns.emit("phase", { boardIndex: payload.boardIndex });
-      logger.info({ gameStarted: true, boardIndex: payload.boardIndex }, "Quiz game started");
+      const out = lobbyPayload();
+      ns.emit("lobbyState", out);
+      ns.emit("phase", { boardIndex: out.boardIndex });
+      logger.info(
+        { gameStarted: true, boardIndex: out.boardIndex, seatCount: seatPlayerNicks.length },
+        "Quiz game started"
+      );
     });
 
     socket.on("hostNavigate", (payload: { boardIndex?: unknown }) => {
@@ -85,6 +101,7 @@ export function setupQuizNav(io: Server) {
     socket.on("hostReturnToLogin", () => {
       gameStarted = false;
       lastBoardIndex = null;
+      seatPlayerNicks = [];
       clearQuizPlayers();
       ns.emit("returnToLogin", {});
       ns.emit("lobbyState", lobbyPayload());

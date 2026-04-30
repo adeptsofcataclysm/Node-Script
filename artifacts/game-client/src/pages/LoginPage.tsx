@@ -49,6 +49,8 @@ export function LoginPage() {
     if (!nick || status !== "idle") return;
 
     localStorage.setItem("player_nick", nick);
+    /* Место назначится снова по ростеру после lobbyState на досках; без сброса можно остаться с чужим seat. */
+    localStorage.removeItem("player_seat_index");
     localStorage.setItem("player_role", "spectator");
     setStatus("ok");
     setTimeout(() => {

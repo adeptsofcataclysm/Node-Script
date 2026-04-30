@@ -1,10 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Trophy, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import type { AdeptsBoardId, Question, Player } from "@/lib/adepts-quiz-types";
+import {
+  ADEPTS_SLOT_THEMES,
+  hsl,
+  PLAYER_CARD_OCTAGON_CLIP,
+  slotCardShellFilter,
+} from "@/lib/adeptsQuizSlotCardVisual";
 
 type Stage = "question" | "answer";
 
@@ -23,6 +29,21 @@ interface QuestionModalProps {
   onClose: () => void;
   onUpdate: (data: Partial<Question>) => void;
   onAwardPoints: (playerIndex: number, points: number) => void;
+  /** Неверный ответ: снять очки с текущего игрока и передать ход следующему. */
+  onPassTurn?: () => void;
+  /** Следующий игрок без снятия очков (карточка закрывается как использованная). */
+  onPassTurnNext?: () => void;
+  /** Индекс места 0–4, чей сейчас ход на столе (для блока передачи хода после splash). */
+  currentTurnSeat?: number;
+  /** Место текущего клиента, если он игрок за столом; иначе null — блок передачи не показывается. */
+  viewerSeatIndex?: number | null;
+  /** Игрок с splash-карточкой передаёт ход выбранному месту (синхронится с сервером). */
+  onPassTurnToSeat?: (targetSeatIndex: number) => void;
+  /**
+   * После первой передачи хода по еноту родитель ставит false — получивший ход не видит повторный выбор.
+   * @default true
+   */
+  allowRaccoonSplashSeatPass?: boolean;
 }
 
 const TIMER_SECONDS = 30;
@@ -514,6 +535,12 @@ export function QuestionModal({
   onClose,
   onUpdate,
   onAwardPoints,
+  onPassTurn,
+  onPassTurnNext,
+  currentTurnSeat = 0,
+  viewerSeatIndex = null,
+  onPassTurnToSeat,
+  allowRaccoonSplashSeatPass = true,
 }: QuestionModalProps) {
   const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
@@ -526,6 +553,22 @@ export function QuestionModal({
   const [splashDismissed, setSplashDismissed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isWheelCard = !!question.headerUrl;
+
+  const showSplashPlayerPassChoice =
+    allowRaccoonSplashSeatPass &&
+    Boolean(question.splashUrl) &&
+    splashDismissed &&
+    stage === "question" &&
+    !isEditing &&
+    readonly &&
+    typeof viewerSeatIndex === "number" &&
+    viewerSeatIndex >= 0 &&
+    viewerSeatIndex <= 4 &&
+    viewerSeatIndex === currentTurnSeat &&
+    typeof onPassTurnToSeat === "function";
+
+  const activeTurnSeatNormalized =
+    Number.isInteger(currentTurnSeat) ? ((Number(currentTurnSeat) % 5) + 5) % 5 : -1;
 
   let isCelebration = false;
   let isPandora = false;
@@ -625,6 +668,16 @@ export function QuestionModal({
 
   const handleClose = () => {
     saveAndClose();
+  };
+
+  const handlePassTurnWrong = () => {
+    onPassTurn?.();
+    handleSkip();
+  };
+
+  const handlePassTurnNext = () => {
+    onPassTurnNext?.();
+    handleSkip();
   };
 
   const handleShowAnswer = () => {
@@ -855,6 +908,85 @@ export function QuestionModal({
                               </motion.p>
                             </div>
                           )}
+                          {showSplashPlayerPassChoice && (
+                            <div className="mx-auto w-full max-w-3xl border-t border-border/50 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                              <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                                Передайте ход другому игроку
+                              </p>
+                              <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
+                                {players.map((p, i) => {
+                                  if (i === viewerSeatIndex) return null;
+                                  const theme = ADEPTS_SLOT_THEMES[i] ?? ADEPTS_SLOT_THEMES[0]!;
+                                  const accent = theme.hsl;
+                                  const label = p.name?.trim() ? p.name : `Игрок ${i + 1}`;
+                                  return (
+                                    <div
+                                      key={p.id}
+                                      className="mx-auto w-full max-w-[11rem]"
+                                      style={{ filter: slotCardShellFilter(accent, false) }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => onPassTurnToSeat(i)}
+                                        className="relative flex min-h-[6.25rem] w-full flex-col overflow-hidden text-left transition-[filter,transform] duration-200 ease-out hover:brightness-[1.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
+                                        style={
+                                          {
+                                            ["--oct" as string]: "clamp(7px, 1.8vw, 12px)",
+                                            clipPath: PLAYER_CARD_OCTAGON_CLIP,
+                                            WebkitClipPath: PLAYER_CARD_OCTAGON_CLIP,
+                                            background:
+                                              "linear-gradient(175deg, hsl(270 35% 8% / 0.94) 0%, hsl(270 28% 5% / 0.97) 50%, hsl(270 43% 3% / 1) 100%)",
+                                            boxShadow: `inset 0 0 0 1px ${hsl(accent, 0.12)}, inset 0 0 28px ${hsl(accent, 0.06)}`,
+                                          } as CSSProperties
+                                        }
+                                      >
+                                        <div
+                                          aria-hidden
+                                          className="pointer-events-none absolute inset-0 z-0 opacity-40"
+                                          style={{
+                                            background: `radial-gradient(ellipse 118% 90% at 50% -8%, ${hsl(accent, 0.18)}, transparent 58%)`,
+                                          }}
+                                        />
+                                        <div
+                                          className="pointer-events-none absolute inset-0 z-0 opacity-[0.11]"
+                                          style={{
+                                            background: `radial-gradient(ellipse 130% 90% at 50% -5%, ${hsl(accent, 0.45)}, transparent 58%)`,
+                                          }}
+                                        />
+                                        <div
+                                          className="relative z-[1] border-b px-2 py-1.5 text-center"
+                                          style={{ borderColor: hsl(accent, 0.22) }}
+                                        >
+                                          <div
+                                            className="font-mono text-[7px] font-bold uppercase tracking-[0.2em] md:text-[8px]"
+                                            style={{ color: hsl(accent, 0.78) }}
+                                          >
+                                            ИГРОК
+                                          </div>
+                                          <div
+                                            className="mt-0.5 truncate px-0.5 text-center text-[9px] font-semibold uppercase tracking-wider md:text-[10px]"
+                                            style={{
+                                              color: hsl(accent, 0.88),
+                                              textShadow: `0 0 8px ${hsl(accent, 0.28)}`,
+                                            }}
+                                            title={label}
+                                          >
+                                            {label}
+                                          </div>
+                                        </div>
+                                        <div
+                                          className="relative z-[1] mt-auto min-h-[2rem] flex-1"
+                                          style={{
+                                            background: `radial-gradient(ellipse 95% 80% at 50% 100%, ${hsl(accent, 0.08)}, transparent 72%)`,
+                                          }}
+                                        />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </>
                       )}
                     </motion.div>
@@ -954,15 +1086,29 @@ export function QuestionModal({
 
                       {/* Award points — hidden for celebration and for зрителя */}
                       {!isCelebration && !readonly && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Trophy className="w-4 h-4 text-primary" />
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            Начислить очки игроку
-                          </span>
+                        <div className="mb-2 flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Trophy className="w-4 h-4 text-primary" />
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                              Начислить очки игроку
+                            </span>
+                          </div>
+                          {activeTurnSeatNormalized >= 0 && (
+                            <p className="pl-6 text-[11px] font-semibold uppercase tracking-wide text-primary/85">
+                              Сейчас ход:{" "}
+                              <span className="text-foreground">
+                                {players[activeTurnSeatNormalized]?.name?.trim()
+                                  ? players[activeTurnSeatNormalized].name
+                                  : `Игрок ${activeTurnSeatNormalized + 1}`}
+                              </span>
+                            </p>
+                          )}
                         </div>
                         <div className="grid grid-cols-5 gap-2 lg:gap-3">
                           {players.map((player, idx) => {
                             const isAwarded = awarded === idx;
+                            const isCurrentTurnSeat =
+                              activeTurnSeatNormalized >= 0 && idx === activeTurnSeatNormalized;
                             return (
                               <motion.button
                                 key={player.id}
@@ -970,12 +1116,16 @@ export function QuestionModal({
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handleAward(idx)}
                                 disabled={awarded !== null}
+                                title={isCurrentTurnSeat ? "Сейчас ход этого игрока — удобно начислить очки" : undefined}
+                                aria-current={isCurrentTurnSeat && !isAwarded ? "true" : undefined}
                                 className={`
                                   flex flex-col items-center justify-center gap-1 lg:gap-2 p-2 lg:p-4 rounded-xl border-2
                                   font-display transition-all duration-200
                                   ${isAwarded
                                     ? "border-primary bg-primary/20 shadow-[0_0_20px_hsla(45,93%,47%,0.5)]"
-                                    : "border-accent/30 bg-secondary/30 hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_15px_hsla(45,93%,47%,0.2)]"
+                                    : isCurrentTurnSeat && awarded === null
+                                      ? "border-primary/85 bg-primary/14 ring-2 ring-primary/50 shadow-[0_0_26px_hsla(280,65%,52%,0.42)] hover:border-primary hover:bg-primary/20 hover:shadow-[0_0_32px_hsla(280,65%,55%,0.48)]"
+                                      : "border-accent/30 bg-secondary/30 hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_15px_hsla(45,93%,47%,0.2)]"
                                   }
                                   ${awarded !== null && !isAwarded ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
                                 `}
@@ -1135,14 +1285,39 @@ export function QuestionModal({
                       Показать ответ
                     </Button>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      onClick={handleSkip}
-                      className="font-bold tracking-wide text-base"
-                    >
-                      {isPandora || isCelebration ? "Закрыть" : "Никто не ответил — закрыть"}
-                    </Button>
+                    <>
+                      {stage === "answer" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={handlePassTurnWrong}
+                            className="font-bold tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            Неверный ответ
+                          </Button>
+                          {typeof onPassTurnNext === "function" && (
+                            <Button
+                              variant="outline"
+                              size="lg"
+                              onClick={handlePassTurnNext}
+                              title="Передать ход следующему игроку без снятия очков"
+                              className="min-w-[3.25rem] px-4 font-mono text-lg font-bold tracking-tight text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              {"=>"}
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        onClick={handleSkip}
+                        className="font-bold tracking-wide text-base"
+                      >
+                        {isPandora || isCelebration ? "Закрыть" : "Никто не ответил — закрыть"}
+                      </Button>
+                    </>
                   ))}
                 </div>
               </div>

@@ -5,6 +5,10 @@ export type QuizPlayerRow = {
   lastSeen: number;
 };
 
+export type QuizPlayerRowWithStatus = QuizPlayerRow & {
+  online: boolean;
+};
+
 const byNick = new Map<string, QuizPlayerRow>();
 
 /** socket.id → присутствие в квизе (только залогиненные клиенты шлют quizPlayerPresence). */
@@ -70,7 +74,6 @@ export function unbindQuizSocketPresence(socketId: string): void {
   set.delete(socketId);
   if (set.size === 0) {
     socketIdsByNick.delete(prev.nick);
-    byNick.delete(prev.nick);
   } else {
     reconcileNickRole(prev.nick);
   }
@@ -88,6 +91,16 @@ export function listQuizPlayersOnline(now = Date.now()): QuizPlayerRow[] {
   return [...byNick.values()]
     .filter((p) => p.lastSeen >= cutoff)
     .sort((a, b) => b.lastSeen - a.lastSeen);
+}
+
+export function listQuizPlayersWithStatus(now = Date.now()): QuizPlayerRowWithStatus[] {
+  const cutoff = now - QUIZ_PLAYER_PRESENCE_TTL_MS;
+  return [...byNick.values()]
+    .map((p) => ({
+      ...p,
+      online: (socketIdsByNick.get(p.nick)?.size ?? 0) > 0 && p.lastSeen >= cutoff,
+    }))
+    .sort((a, b) => a.firstSeen - b.firstSeen);
 }
 
 export function removeQuizPlayer(nick: string): void {

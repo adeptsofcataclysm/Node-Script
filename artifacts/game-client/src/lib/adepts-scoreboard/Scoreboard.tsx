@@ -1,7 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Player } from "@/lib/adepts-quiz-types";
+import {
+  ADEPTS_SLOT_THEMES,
+  hsl,
+  PLAYER_CARD_OCTAGON_CLIP,
+  slotCardShellFilter,
+} from "@/lib/adeptsQuizSlotCardVisual";
 
 interface ScoreboardProps {
   players: Player[];
@@ -9,13 +15,76 @@ interface ScoreboardProps {
   onUpdateScore: (index: number, score: number) => void;
   onResetScores: () => void;
   readonly?: boolean;
+  /** Индекс места игрока 0–4 — мягкая подсветка «право хода» */
+  currentTurnSeat?: number;
+}
+
+function publicUrl(path: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+/** Стилизованный силуэт «адепта» + слой с официальной иконкой темы при наличии */
+function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: number }) {
+  const [iconFailed, setIconFailed] = useState(false);
+  const filterId = `adeptGlow-${slotIndex}`;
+  const iconSrc = publicUrl("/lor-adeptov-icon.png");
+
+  return (
+    <div className="relative z-[1] flex min-h-[53px] flex-1 flex-col items-center justify-center px-1.5 py-1.5 md:min-h-[62px]">
+      <div
+        className="pointer-events-none absolute left-[10%] right-[10%] top-[8%]"
+        style={{
+          height: "78%",
+          background: `radial-gradient(ellipse at center 35%, ${hsl(accentHsl, 0.52)} 0%, ${hsl(accentHsl, 0.18)} 40%, transparent 70%)`,
+          filter: "blur(14px)",
+        }}
+      />
+      {!iconFailed ? (
+        <img
+          src={iconSrc}
+          alt=""
+          className="relative z-[1] max-h-[4.05rem] w-auto max-w-[72%] object-contain opacity-[0.98] md:max-h-[4.5rem]"
+          style={{
+            filter: `brightness(1.08) saturate(1.35) drop-shadow(0 0 12px ${hsl(accentHsl, 0.82)}) drop-shadow(0 0 32px ${hsl(accentHsl, 0.38)})`,
+          }}
+          onError={() => setIconFailed(true)}
+        />
+      ) : (
+        <svg
+          viewBox="0 0 120 148"
+          className="relative z-[1] h-[4.05rem] w-auto max-w-[88%] md:h-[4.5rem]"
+          aria-hidden
+        >
+          <defs>
+            <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <ellipse cx="60" cy="36" rx="26" ry="30" fill={hsl(accentHsl, 0.2)} />
+          <path
+            fill={hsl(accentHsl, 0.92)}
+            filter={`url(#${filterId})`}
+            d="M60 26c-20 6-33 34-34 62L4 146h232L94 88c2-37-14-61-34-62z"
+          />
+          <ellipse cx="60" cy="38" rx="17" ry="19" fill="hsl(270 50% 3%)" opacity={0.6} />
+        </svg>
+      )}
+    </div>
+  );
 }
 
 function NameInput({
   name,
+  accentHsl,
   onCommit,
 }: {
   name: string;
+  accentHsl: string;
   onCommit: (val: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -49,31 +118,41 @@ function NameInput({
         onChange={(e) => setRaw(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); commit(); }
-          if (e.key === "Escape") { setEditing(false); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+          if (e.key === "Escape") setEditing(false);
         }}
-        className="text-center font-bold w-full px-2 py-1 rounded-md outline-none bg-background/90 border-2 border-primary text-lg mb-2"
-        style={{ color: "hsl(var(--foreground))" }}
+        className="mt-0.5 w-full rounded border bg-black/65 px-1.5 py-0.5 text-center text-[10px] font-semibold uppercase tracking-wider outline-none"
+        style={{ borderColor: hsl(accentHsl, 0.55), color: hsl(accentHsl), boxShadow: `0 0 16px ${hsl(accentHsl, 0.28)} inset` }}
       />
     );
   }
 
   return (
-    <span
+    <button
+      type="button"
       onClick={open}
       title="Нажмите, чтобы изменить имя"
-      className="text-center font-bold text-lg mb-2 block cursor-pointer hover:opacity-75 transition-opacity select-none truncate w-full px-2"
+      className="mt-0.5 block w-full cursor-pointer truncate rounded px-0.5 text-center text-[10px] font-semibold uppercase tracking-wider hover:brightness-125"
+      style={{
+        color: hsl(accentHsl, 0.92),
+        textShadow: `0 0 12px ${hsl(accentHsl, 0.45)}`,
+      }}
     >
       {name}
-    </span>
+    </button>
   );
 }
 
 function ScoreInput({
   score,
+  accentHsl,
   onCommit,
 }: {
   score: number;
+  accentHsl: string;
   onCommit: (val: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -95,7 +174,7 @@ function ScoreInput({
 
   const commit = () => {
     const n = parseInt(raw, 10);
-    onCommit(isNaN(n) ? score : n);
+    onCommit(Number.isFinite(n) ? n : score);
     setEditing(false);
   };
 
@@ -108,23 +187,36 @@ function ScoreInput({
         onChange={(e) => setRaw(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); commit(); }
-          if (e.key === "Escape") { setEditing(false); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+          if (e.key === "Escape") setEditing(false);
         }}
-        className="text-center font-display text-4xl font-bold w-24 px-1 rounded-md outline-none bg-background/90 border-2 border-primary glow-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        style={{ color: "hsl(var(--primary))" }}
+        className="font-display max-w-[4.25rem] rounded-md border px-1.5 py-0.5 text-center text-xl font-bold outline-none md:text-2xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        style={{
+          borderColor: hsl(accentHsl, 0.55),
+          background: "rgba(0,0,0,0.55)",
+          color: hsl(accentHsl),
+          boxShadow: `0 0 24px ${hsl(accentHsl, 0.35)}`,
+        }}
       />
     );
   }
 
   return (
-    <span
+    <button
+      type="button"
       onClick={open}
-      title="Нажмите, чтобы ввести очки"
-      className="font-display text-4xl font-bold glow-text w-24 text-center cursor-pointer select-none hover:opacity-75 transition-opacity block"
+      title="Нажмите для ввода очков"
+      className="font-display cursor-pointer px-1 text-center text-xl font-bold leading-none transition hover:brightness-110 md:text-2xl lg:text-[1.6rem]"
+      style={{
+        color: hsl(accentHsl),
+        textShadow: `0 0 18px ${hsl(accentHsl, 0.75)}, 0 0 40px ${hsl(accentHsl, 0.32)}`,
+      }}
     >
       {score}
-    </span>
+    </button>
   );
 }
 
@@ -134,17 +226,25 @@ export function Scoreboard({
   onUpdateScore,
   onResetScores,
   readonly = false,
+  currentTurnSeat,
 }: ScoreboardProps) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const normalizedTurn =
+    currentTurnSeat != null &&
+    Number.isInteger(currentTurnSeat) &&
+    currentTurnSeat >= 0 &&
+    currentTurnSeat <= 4
+      ? currentTurnSeat
+      : undefined;
 
   return (
-    <div className="w-full bg-card/80 border-t border-border p-4 backdrop-blur-sm">
+    <div className="w-full shrink-0 border-t border-[hsla(275,55%,42%,0.35)] bg-gradient-to-t from-[hsla(278,42%,6%,1)] via-[hsla(274,42%,5%,0.97)] to-[hsla(270,42%,9%,0.92)] px-2 py-2 backdrop-blur-md md:py-2.5">
       {!readonly && (
-        <div className="flex items-center justify-end mb-4">
-          <div className="flex items-center gap-3">
+        <div className="mb-2 flex justify-end">
+          <div className="flex items-center gap-2">
             {confirmReset ? (
-              <div className="flex items-center gap-2 animate-in fade-in">
-                <span className="text-sm text-destructive">Are you sure?</span>
+              <div className="flex flex-wrap items-center justify-end gap-2 animate-in fade-in">
+                <span className="text-xs text-muted-foreground">Сбросить все очки?</span>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -153,14 +253,10 @@ export function Scoreboard({
                     setConfirmReset(false);
                   }}
                 >
-                  Yes, Reset
+                  Да
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirmReset(false)}
-                >
-                  Cancel
+                <Button variant="outline" size="sm" onClick={() => setConfirmReset(false)}>
+                  Отмена
                 </Button>
               </div>
             ) : (
@@ -168,71 +264,130 @@ export function Scoreboard({
                 variant="outline"
                 size="sm"
                 onClick={() => setConfirmReset(true)}
-                className="text-muted-foreground hover:text-foreground"
+                className="border-border/70 text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset Scores
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Сброс очков
               </Button>
             )}
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-4">
-        {players.map((player, index) => (
-          <div
-            key={player.id}
-            className="flex flex-col items-center bg-background/50 p-4 rounded-lg border border-border relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className="overflow-x-auto pb-0.5">
+        <div className="mx-auto grid min-w-[528px] max-w-[1080px] grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5">
+          {players.map((player, index) => {
+            const theme = ADEPTS_SLOT_THEMES[index] ?? ADEPTS_SLOT_THEMES[0]!;
+            const accent = theme.hsl;
+            const isTurn = normalizedTurn === index;
 
-            {readonly ? (
-              <span className="text-center font-bold text-lg mb-2 block truncate w-full px-2">
-                {player.name}
-              </span>
-            ) : (
-              <NameInput
-                name={player.name}
-                onCommit={(val) => onUpdateName(index, val)}
-              />
-            )}
-
-            <div className="flex items-center justify-center gap-2 w-full">
-              {!readonly && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => onUpdateScore(index, player.score - 100)}
+            return (
+              <div
+                key={player.id}
+                aria-current={isTurn ? "true" : undefined}
+                title={isTurn ? "Сейчас ход этого игрока" : undefined}
+                className="relative min-h-[120px] md:min-h-[134px] lg:min-h-[147px]"
+                style={{ filter: slotCardShellFilter(accent, isTurn) }}
+              >
+                <div
+                  className={`relative flex min-h-[120px] flex-col overflow-hidden transition-[box-shadow] duration-500 ease-out md:min-h-[134px] lg:min-h-[147px] ${isTurn ? "brightness-[1.19]" : ""}`}
+                  style={
+                    {
+                      ["--oct" as string]: "clamp(9px, 2.2vw, 15px)",
+                      clipPath: PLAYER_CARD_OCTAGON_CLIP,
+                      WebkitClipPath: PLAYER_CARD_OCTAGON_CLIP,
+                      background: `linear-gradient(175deg, hsl(270 35% 8% / 0.94) 0%, hsl(270 28% 5% / 0.97) 50%, hsl(270 43% 3% / 1) 100%)`,
+                      boxShadow: isTurn
+                        ? `inset 0 0 0 1px ${hsl(accent, 0.42)}, inset 0 -8px 40px ${hsl(accent, 0.069)}`
+                        : `inset 0 0 0 1px ${hsl(accent, 0.12)}, inset 0 0 34px ${hsl(accent, 0.06)}`,
+                    } as CSSProperties
+                  }
                 >
-                  <Minus className="w-4 h-4" />
-                </Button>
-              )}
-
-              {readonly ? (
-                <span className="font-display text-4xl font-bold glow-text w-24 text-center block select-none">
-                  {player.score}
-                </span>
-              ) : (
-                <ScoreInput
-                  score={player.score}
-                  onCommit={(val) => onUpdateScore(index, val)}
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-500 ease-out ${
+                    isTurn ? "opacity-100" : "opacity-0"
+                  }`}
+                  style={{
+                    background: `radial-gradient(ellipse 118% 90% at 50% -8%, ${hsl(accent, 0.207)}, transparent 58%)`,
+                  }}
                 />
-              )}
+                <div
+                  className="pointer-events-none absolute inset-0 z-0 opacity-[0.13]"
+                  style={{
+                    background: `radial-gradient(ellipse 130% 90% at 50% -5%, ${hsl(accent, 0.5)}, transparent 58%)`,
+                  }}
+                />
 
-              {!readonly && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                  onClick={() => onUpdateScore(index, player.score + 100)}
+                <div className="relative z-[1] border-b px-2 py-1 pb-2 text-center" style={{ borderColor: hsl(accent, 0.22) }}>
+                  <div
+                    className="font-mono text-[8px] font-bold uppercase tracking-[0.22em] text-foreground/90 md:text-[9px]"
+                    style={{ color: hsl(accent, 0.78) }}
+                  >
+                    ИГРОК
+                  </div>
+                  {!readonly ? (
+                    <NameInput accentHsl={accent} name={player.name} onCommit={(v) => onUpdateName(index, v)} />
+                  ) : (
+                    <div
+                      className="mt-0.5 truncate px-0.5 text-center text-[9px] font-semibold uppercase tracking-wider md:text-[10px]"
+                      style={{
+                        color: hsl(accent, 0.88),
+                        textShadow: `0 0 10px ${hsl(accent, 0.32)}`,
+                      }}
+                      title={player.name}
+                    >
+                      {player.name}
+                    </div>
+                  )}
+                </div>
+
+                <SlotPortrait accentHsl={accent} slotIndex={index} />
+
+                <div
+                  className="relative z-[1] mt-auto flex flex-col items-center gap-1 border-t px-2 py-1.5 pb-2"
+                  style={{ borderColor: hsl(accent, 0.25) }}
                 >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
+                  {!readonly ? (
+                    <div className="flex w-full max-w-[5.85rem] items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-red-400/95 hover:bg-red-500/15 hover:text-red-300"
+                        onClick={() => onUpdateScore(index, player.score - 100)}
+                        aria-label="Минус 100"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </Button>
+                      <ScoreInput accentHsl={accent} score={player.score} onCommit={(v) => onUpdateScore(index, v)} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 hover:bg-white/5"
+                        style={{ color: hsl(accent) }}
+                        onClick={() => onUpdateScore(index, player.score + 100)}
+                        aria-label="Плюс 100"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span
+                      className="font-display px-1 text-center text-xl font-bold leading-none md:text-2xl lg:text-[1.6rem]"
+                      style={{
+                        color: hsl(accent),
+                        textShadow: `0 0 18px ${hsl(accent, 0.72)}, 0 0 44px ${hsl(accent, 0.26)}`,
+                      }}
+                    >
+                      {player.score}
+                    </span>
+                  )}
+                </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

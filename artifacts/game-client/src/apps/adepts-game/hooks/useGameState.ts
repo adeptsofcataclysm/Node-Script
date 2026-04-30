@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import type { Player, Question } from "@/lib/adepts-quiz-types";
+import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
 
 export type { Player, Question };
 
@@ -16,11 +17,14 @@ export type GameState = {
   questions: Question[][];
   /** Открытая карточка квиза — синхронизируется с зрителем по /quiz */
   activeQuizCard: ActiveQuizCard | null;
+  /** Текущий ход: индекс места игрока 0..4 */
+  currentTurnSeat: number;
   dataVersion?: number;
 };
 
 const DEFAULT_STATE: GameState = {
   activeQuizCard: null,
+  currentTurnSeat: 0,
   players: Array.from({ length: 5 }, (_, i) => ({
     id: `p${i}`,
     name: `Player ${i + 1}`,
@@ -171,6 +175,9 @@ function loadInitialState(): GameState {
         ...parsed,
         players,
         activeQuizCard: parsed.activeQuizCard ?? null,
+        currentTurnSeat: Number.isInteger(parsed.currentTurnSeat)
+          ? ((Number(parsed.currentTurnSeat) % 5) + 5) % 5
+          : 0,
       });
     }
   } catch (err) {
@@ -197,14 +204,28 @@ export function useGameState() {
     socketRef.current = socket;
 
     socket.on("sync", (incoming: GameState) => {
+      const basePlayers = incoming.players?.length ? incoming.players : DEFAULT_STATE.players;
+      const { merged, hadRoster } = mergeSeatRosterIntoQuizPlayers([...basePlayers]);
+      const hostResetTurn =
+        hadRoster &&
+        typeof localStorage !== "undefined" &&
+        localStorage.getItem("player_role") === "host";
+      const nextState = restoreLegacyWheelCards({
+        ...incoming,
+        players: merged,
+        activeQuizCard: incoming.activeQuizCard ?? null,
+        currentTurnSeat: hostResetTurn
+          ? 0
+          : Number.isInteger(incoming.currentTurnSeat)
+            ? ((Number(incoming.currentTurnSeat) % 5) + 5) % 5
+            : 0,
+      });
       skipEmitRef.current = true;
-      setState(
-        restoreLegacyWheelCards({
-          ...incoming,
-          players: incoming.players?.length ? incoming.players : DEFAULT_STATE.players,
-          activeQuizCard: incoming.activeQuizCard ?? null,
-        })
-      );
+      setState(nextState);
+      if (hadRoster) {
+        skipEmitRef.current = false;
+        queueMicrotask(() => socketRef.current?.emit("update", nextState));
+      }
     });
 
     return () => {
@@ -302,6 +323,11 @@ export function useGameState() {
     setState((prev) => ({ ...prev, activeQuizCard: card }));
   }, []);
 
+  const setCurrentTurnSeat = useCallback((seat: number) => {
+    const normalized = ((Number(seat) % 5) + 5) % 5;
+    setState((prev) => ({ ...prev, currentTurnSeat: normalized }));
+  }, []);
+
   const patchActiveQuizCard = useCallback(
     (patch: Partial<NonNullable<GameState["activeQuizCard"]>>) => {
       setState((prev) => {
@@ -324,6 +350,7 @@ export function useGameState() {
     updateQuestion,
     resetScores,
     setActiveQuizCard,
+    setCurrentTurnSeat,
     patchActiveQuizCard,
     resetGame,
   };
