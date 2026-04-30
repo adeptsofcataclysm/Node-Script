@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Route, Router, Switch, Redirect } from "wouter";
+import { Route, Router, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LoginPage } from "@/pages/LoginPage";
 import { ViewerPage } from "@/pages/ViewerPage";
 import { GamePage } from "@/pages/GamePage";
 import { SpectatorPage } from "@/pages/SpectatorPage";
@@ -15,6 +16,7 @@ import Adepts2NotFound from "@/apps/adepts-game-2/pages/not-found";
 import Adepts3Home from "@/apps/adepts-game-3/pages/Home";
 import Adepts3NotFound from "@/apps/adepts-game-3/pages/not-found";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
+import { RequireLogin } from "@/components/RequireLogin";
 
 const queryClient = new QueryClient();
 
@@ -33,24 +35,30 @@ function App() {
               <Route path="/spectate" component={SpectatorPage} />
               <Route path="/game" component={GamePage} />
               <Route path="/adepts-game" nest>
-                <Switch>
-                  <Route path="/" component={Adepts1Home} />
-                  <Route component={Adepts1NotFound} />
-                </Switch>
+                <RequireLogin>
+                  <Switch>
+                    <Route path="/" component={Adepts1Home} />
+                    <Route component={Adepts1NotFound} />
+                  </Switch>
+                </RequireLogin>
               </Route>
               <Route path="/adepts-game-2" nest>
-                <Switch>
-                  <Route path="/" component={Adepts2Home} />
-                  <Route component={Adepts2NotFound} />
-                </Switch>
+                <RequireLogin>
+                  <Switch>
+                    <Route path="/" component={Adepts2Home} />
+                    <Route component={Adepts2NotFound} />
+                  </Switch>
+                </RequireLogin>
               </Route>
               <Route path="/adepts-game-3" nest>
-                <Switch>
-                  <Route path="/" component={Adepts3Home} />
-                  <Route component={Adepts3NotFound} />
-                </Switch>
+                <RequireLogin>
+                  <Switch>
+                    <Route path="/" component={Adepts3Home} />
+                    <Route component={Adepts3NotFound} />
+                  </Switch>
+                </RequireLogin>
               </Route>
-              <Route path="/"><Redirect to="/adepts-game/" /></Route>
+              <Route path="/" component={LoginPage} />
             </Switch>
             <GamePhaseArrows />
           </>

@@ -14,6 +14,7 @@ interface QuizBoardProps {
   questions: Question[][];
   onUpdateTheme: (index: number, name: string) => void;
   onQuestionClick: (themeIndex: number, questionIndex: number) => void;
+  readonly?: boolean;
 }
 
 export function QuizBoard({
@@ -22,6 +23,7 @@ export function QuizBoard({
   questions,
   onUpdateTheme,
   onQuestionClick,
+  readonly = false,
 }: QuizBoardProps) {
   const [editingTheme, setEditingTheme] = useState<number | null>(null);
   const theme2LineBreaks = board === 2;
@@ -43,7 +45,7 @@ export function QuizBoard({
               damping: 22,
               stiffness: 180,
             }}
-            className="w-[21%] relative flex items-center rounded-xl overflow-hidden cursor-text group"
+            className={`w-[21%] relative flex items-center rounded-xl overflow-hidden group ${readonly ? "cursor-default" : "cursor-text"}`}
             style={{
               background: "linear-gradient(105deg, hsla(270,40%,12%,0.95) 0%, hsla(270,30%,9%,0.7) 100%)",
               borderLeft: "3px solid hsla(280,65%,58%,0.85)",
@@ -52,7 +54,7 @@ export function QuizBoard({
               borderLeftColor: "hsla(280,65%,58%,0.85)",
               boxShadow: "inset 0 0 30px hsla(280,60%,15%,0.4)",
             }}
-            onClick={() => setEditingTheme(tIdx)}
+            onClick={() => !readonly && setEditingTheme(tIdx)}
           >
             {/* Hover shimmer */}
             <motion.div
@@ -140,23 +142,25 @@ export function QuizBoard({
                       stiffness: 200,
                     },
                   }}
-                  whileHover={!q.used ? {
+                  whileHover={!q.used && !readonly ? {
                     scale: 1.06,
                     y: -3,
                     transition: { type: "tween", duration: 0.08, ease: "easeOut" },
                   } : {}}
-                  whileTap={!q.used ? {
+                  whileTap={!q.used && !readonly ? {
                     scale: 0.94,
                     transition: { type: "tween", duration: 0.06 },
                   } : {}}
                   transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
-                  onClick={() => onQuestionClick(tIdx, qIdx)}
+                  onClick={() => !readonly && onQuestionClick(tIdx, qIdx)}
                   className={`
                     relative w-full h-full rounded-xl border flex items-center justify-center
                     font-display font-bold transition-colors duration-150
                     ${q.used
                       ? "bg-background/20 border-border/50 text-muted-foreground/30 cursor-not-allowed"
-                      : "bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] cursor-pointer"
+                      : readonly
+                        ? "bg-secondary/40 border-accent/30 text-primary cursor-default"
+                        : "bg-secondary/40 border-accent/30 text-primary hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] cursor-pointer"
                     }
                   `}
                 >

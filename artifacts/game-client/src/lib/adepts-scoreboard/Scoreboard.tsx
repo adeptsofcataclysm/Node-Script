@@ -8,6 +8,7 @@ interface ScoreboardProps {
   onUpdateName: (index: number, name: string) => void;
   onUpdateScore: (index: number, score: number) => void;
   onResetScores: () => void;
+  readonly?: boolean;
 }
 
 function NameInput({
@@ -132,47 +133,50 @@ export function Scoreboard({
   onUpdateName,
   onUpdateScore,
   onResetScores,
+  readonly = false,
 }: ScoreboardProps) {
   const [confirmReset, setConfirmReset] = useState(false);
 
   return (
     <div className="w-full bg-card/80 border-t border-border p-4 backdrop-blur-sm">
-      <div className="flex items-center justify-end mb-4">
-        <div className="flex items-center gap-3">
-          {confirmReset ? (
-            <div className="flex items-center gap-2 animate-in fade-in">
-              <span className="text-sm text-destructive">Are you sure?</span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  onResetScores();
-                  setConfirmReset(false);
-                }}
-              >
-                Yes, Reset
-              </Button>
+      {!readonly && (
+        <div className="flex items-center justify-end mb-4">
+          <div className="flex items-center gap-3">
+            {confirmReset ? (
+              <div className="flex items-center gap-2 animate-in fade-in">
+                <span className="text-sm text-destructive">Are you sure?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    onResetScores();
+                    setConfirmReset(false);
+                  }}
+                >
+                  Yes, Reset
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmReset(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setConfirmReset(false)}
+                onClick={() => setConfirmReset(true)}
+                className="text-muted-foreground hover:text-foreground"
               >
-                Cancel
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset Scores
               </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setConfirmReset(true)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset Scores
-            </Button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-5 gap-4">
         {players.map((player, index) => (
@@ -182,34 +186,50 @@ export function Scoreboard({
           >
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-            <NameInput
-              name={player.name}
-              onCommit={(val) => onUpdateName(index, val)}
-            />
+            {readonly ? (
+              <span className="text-center font-bold text-lg mb-2 block truncate w-full px-2">
+                {player.name}
+              </span>
+            ) : (
+              <NameInput
+                name={player.name}
+                onCommit={(val) => onUpdateName(index, val)}
+              />
+            )}
 
             <div className="flex items-center justify-center gap-2 w-full">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onUpdateScore(index, player.score - 100)}
-              >
-                <Minus className="w-4 h-4" />
-              </Button>
+              {!readonly && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => onUpdateScore(index, player.score - 100)}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+              )}
 
-              <ScoreInput
-                score={player.score}
-                onCommit={(val) => onUpdateScore(index, val)}
-              />
+              {readonly ? (
+                <span className="font-display text-4xl font-bold glow-text w-24 text-center block select-none">
+                  {player.score}
+                </span>
+              ) : (
+                <ScoreInput
+                  score={player.score}
+                  onCommit={(val) => onUpdateScore(index, val)}
+                />
+              )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                onClick={() => onUpdateScore(index, player.score + 100)}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
+              {!readonly && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                  onClick={() => onUpdateScore(index, player.score + 100)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         ))}

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AdminPage } from "./AdminPage";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const OK_TEXT = "★  Ладно, заходи!";
 const FAIL_TEXT = "✖  Иди нахуй отсюда!";
@@ -89,19 +90,25 @@ function FailAnimation() {
 }
 
 export function AdminGuard() {
+  const [nick, setNick] = useState("");
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<"idle" | "ok" | "fail">("idle");
-  const [granted, setGranted] = useState(false);
+  const nickRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const val = input.trim();
-    if (!val) return;
+    const nickVal = nick.trim();
+    const passVal = input.trim();
+    if (!nickVal || !passVal) return;
 
-    if (val.toLowerCase() === "да") {
+    if (passVal.toLowerCase() === "да") {
       setStatus("ok");
-      setTimeout(() => setGranted(true), 2600);
+      setTimeout(() => {
+        localStorage.setItem("player_nick", nickVal);
+        localStorage.setItem("player_role", "host");
+        window.location.href = `${base}/adepts-game/`;
+      }, 2600);
     } else {
       setStatus("fail");
       setTimeout(() => {
@@ -111,8 +118,6 @@ export function AdminGuard() {
       }, 2600);
     }
   }
-
-  if (granted) return <AdminPage />;
 
   return (
     <div style={{
@@ -152,11 +157,36 @@ export function AdminGuard() {
         style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, width: "100%", maxWidth: 320 }}
       >
         <input
+          ref={nickRef}
+          value={nick}
+          onChange={e => setNick(e.target.value)}
+          disabled={status !== "idle"}
+          autoFocus
+          placeholder="Введите свой ник"
+          style={{
+            width: "100%",
+            padding: "10px 16px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(241,196,15,0.4)",
+            borderRadius: 6,
+            color: "#fff",
+            fontFamily: "monospace",
+            fontSize: 16,
+            outline: "none",
+            textAlign: "center",
+            letterSpacing: "2px",
+            boxShadow: "0 0 12px rgba(241,196,15,0.1)",
+            transition: "border-color 0.2s",
+          }}
+          onFocus={e => { e.target.style.borderColor = "#f1c40f"; }}
+          onBlur={e => { e.target.style.borderColor = "rgba(241,196,15,0.4)"; }}
+        />
+        <input
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={status !== "idle"}
-          autoFocus
+          type="password"
           placeholder="Введи пароль..."
           style={{
             width: "100%",

@@ -4,6 +4,7 @@ import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
 import { QuestionModal } from "@/lib/adepts-question-modal";
 import { GamePhaseNav } from "@/components/GamePhaseArrows";
+import { useRole } from "@/hooks/useRole";
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -12,6 +13,7 @@ function resolveUrl(url: string): string {
 }
 
 export default function Home() {
+  const { isSpectator } = useRole();
   const {
     state,
     updatePlayerName,
@@ -67,7 +69,7 @@ export default function Home() {
           Adepts-game 2
         </span>
         <div className="ml-auto flex items-center gap-3">
-          <GamePhaseNav />
+          {!isSpectator && <GamePhaseNav />}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 11, color: "#2ecc71" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 8px #2ecc71" }} />
             Онлайн
@@ -82,6 +84,7 @@ export default function Home() {
           questions={state.questions}
           onUpdateTheme={updateThemeName}
           onQuestionClick={handleQuestionClick}
+          readonly={isSpectator}
         />
       </main>
 
@@ -91,6 +94,7 @@ export default function Home() {
           onUpdateName={updatePlayerName}
           onUpdateScore={updatePlayerScore}
           onResetScores={resetScores}
+          readonly={isSpectator}
         />
       </div>
 
