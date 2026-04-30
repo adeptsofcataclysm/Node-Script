@@ -16,6 +16,7 @@ import Adepts2NotFound from "@/apps/adepts-game-2/pages/not-found";
 import Adepts3Home from "@/apps/adepts-game-3/pages/Home";
 import Adepts3NotFound from "@/apps/adepts-game-3/pages/not-found";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
+import { QuizNavSync } from "@/components/QuizNavSync";
 import { RequireLogin } from "@/components/RequireLogin";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ function App() {
               <Route path="/" component={LoginPage} />
             </Switch>
             <GamePhaseArrows />
+            <QuizNavSync />
           </>
         </Router>
         <Toaster />

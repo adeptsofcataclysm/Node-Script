@@ -1,14 +1,31 @@
-import { useMemo } from "react";
+import { useMemo, type MouseEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 type Phase = { href: string; label: string };
 
+/** Порядок совпадает с индексом на сервере `/quiz-nav` (0..2) */
+export const QUIZ_BOARD_PHASE_HREFS = ["/adepts-game/", "/adepts-game-2/", "/adepts-game-3/"] as const;
+
 const PHASES: Phase[] = [
-  { href: "/adepts-game/", label: "Квиз-доска 1" },
-  { href: "/adepts-game-2/", label: "Квиз-доска 2" },
-  { href: "/adepts-game-3/", label: "Квиз-доска 3" },
+  { href: QUIZ_BOARD_PHASE_HREFS[0], label: "Квиз-доска 1" },
+  { href: QUIZ_BOARD_PHASE_HREFS[1], label: "Квиз-доска 2" },
+  { href: QUIZ_BOARD_PHASE_HREFS[2], label: "Квиз-доска 3" },
 ];
+
+export function buildQuizBoardUrl(boardIndex: number): string {
+  const b = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const href = QUIZ_BOARD_PHASE_HREFS[boardIndex];
+  if (href === undefined) return `${b}/`;
+  return b + href;
+}
+
+export function getQuizBoardPhaseIndexForPathname(fullPathname: string): number {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const rel = stripBase(fullPathname, base);
+  return phaseIndexForPath(rel);
+}
 
 /** Routes that render their own inline phase nav inside a header. */
 const HEADER_NAV_ROUTES = ["/adepts-game", "/adepts-game-2", "/adepts-game-3"];
@@ -115,11 +132,18 @@ export function GamePhaseNav() {
 
   const toHref = (phase: Phase) => base + phase.href;
 
+  const navigateBoard = (phase: Phase, targetIndex: number) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    getQuizNavSocket().emit("hostNavigate", { boardIndex: targetIndex });
+    window.location.assign(toHref(phase));
+  };
+
   return (
     <nav className="flex items-center gap-0.5" aria-label="Переход между фазами игры">
       {prev ? (
         <a
           href={toHref(prev)}
+          onClick={navigateBoard(prev, index - 1)}
           className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-amber-300"
           title={`Назад: ${prev.label}`}
           aria-label={`Предыдущая фаза: ${prev.label}`}
@@ -139,6 +163,7 @@ export function GamePhaseNav() {
       {next ? (
         <a
           href={toHref(next)}
+          onClick={navigateBoard(next, index + 1)}
           className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-amber-300"
           title={`Вперёд: ${next.label}`}
           aria-label={`Следующая фаза: ${next.label}`}
