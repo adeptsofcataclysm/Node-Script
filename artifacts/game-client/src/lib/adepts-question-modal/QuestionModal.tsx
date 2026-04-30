@@ -535,8 +535,8 @@ export function QuestionModal({
   const isWowEventsLargeQuestionMedia =
     board === 3 && themeName === "События в WoW" && [100, 200, 400, 500].includes(points);
   const questionImageMaxStyle = isWowEventsLargeQuestionMedia
-    ? { maxHeight: "clamp(115px, 31.05vh, 414px)", maxWidth: "100%" as const }
-    : { maxHeight: "clamp(100px, 27vh, 360px)", maxWidth: "100%" as const };
+    ? { maxHeight: "clamp(138px, 37.26vh, 497px)", maxWidth: "100%" as const }
+    : { maxHeight: "clamp(120px, 32.4vh, 432px)", maxWidth: "100%" as const };
   const questionVideoMaxStyle = isWowEventsLargeQuestionMedia
     ? { maxHeight: "clamp(138px, 34.5vh, 460px)" }
     : { maxHeight: "clamp(120px, 30vh, 400px)" };
@@ -790,7 +790,7 @@ export function QuestionModal({
                                   src={resolveUrl(question.questionUrl)}
                                   alt="Question media"
                                   className="w-auto rounded-xl object-contain shadow-lg"
-                                  style={board === 3 ? questionImageMaxStyle : { maxHeight: "clamp(100px, 27vh, 360px)", maxWidth: "100%" }}
+                                  style={board === 3 ? questionImageMaxStyle : { maxHeight: "clamp(120px, 32.4vh, 432px)", maxWidth: "100%" }}
                                   onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
                                     el.style.display = "none";
@@ -876,10 +876,10 @@ export function QuestionModal({
                                   className={`w-auto rounded-xl object-contain${isCelebration ? "" : " shadow-lg"}`}
                                   style={{
                                     maxHeight: isCelebration
-                                      ? "clamp(160px, 38vh, 460px)"
+                                      ? "clamp(192px, 45.6vh, 552px)"
                                       : board === 3 && isWowEventsLargeAnswerMedia
-                                        ? "clamp(115px, 27.6vh, 368px)"
-                                        : "clamp(100px, 24vh, 320px)",
+                                        ? "clamp(138px, 33.12vh, 442px)"
+                                        : "clamp(120px, 28.8vh, 384px)",
                                     maxWidth: "100%",
                                     ...(isCelebration ? {
                                       filter: "drop-shadow(0 0 18px hsla(45,100%,55%,0.95)) drop-shadow(0 0 40px hsla(45,100%,50%,0.6)) drop-shadow(0 0 70px hsla(45,100%,45%,0.35))",
