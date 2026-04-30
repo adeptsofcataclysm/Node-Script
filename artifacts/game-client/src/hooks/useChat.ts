@@ -8,19 +8,56 @@ export interface ChatMessage {
   text: string;
 }
 
+const SESSION_KEY = "quiz_chat_messages";
+
+function readSession(): ChatMessage[] {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSession(msgs: ChatMessage[]) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(msgs));
+  } catch { /* ignore */ }
+}
+
+// Module-level cache initialized from sessionStorage so it survives
+// both React unmount/remount AND full-page navigations (window.location.replace).
+let cachedMessages: ChatMessage[] = readSession();
+
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(cachedMessages);
   const [text, setText] = useState("");
 
   useEffect(() => {
     const socket = getQuizNavSocket();
 
-    const onMessage = (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg]);
+    const onHistory = (history: ChatMessage[]) => {
+      cachedMessages = history;
+      writeSession(cachedMessages);
+      setMessages([...cachedMessages]);
     };
 
+    const onMessage = (msg: ChatMessage) => {
+      if (cachedMessages.some((m) => m.id === msg.id)) return;
+      cachedMessages = [...cachedMessages, msg];
+      writeSession(cachedMessages);
+      setMessages([...cachedMessages]);
+    };
+
+    socket.on("chatHistory", onHistory);
     socket.on("chatMessage", onMessage);
+
+    // Request history after listeners are registered to avoid the race where
+    // the server fires chatHistory before useEffect has run.
+    socket.emit("requestChatHistory");
+
     return () => {
+      socket.off("chatHistory", onHistory);
       socket.off("chatMessage", onMessage);
     };
   }, []);

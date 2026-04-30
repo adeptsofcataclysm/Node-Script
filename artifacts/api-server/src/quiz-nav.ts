@@ -17,6 +17,10 @@ let lastBoardIndex: number | null = null;
 /** Ник на местах 1–5 на доске (после «Запуск игры», задаёт ведущий). */
 let seatPlayerNicks: string[] = [];
 
+const CHAT_HISTORY_MAX = 50;
+interface ChatEntry { id: string; nick: string; role: "host" | "spectator"; text: string; }
+const chatHistory: ChatEntry[] = [];
+
 function lobbyPayload(): {
   gameStarted: boolean;
   boardIndex: number;
@@ -54,6 +58,9 @@ export function setupQuizNav(io: Server) {
     });
 
     socket.emit("lobbyState", lobbyPayload());
+    if (chatHistory.length > 0) {
+      socket.emit("chatHistory", chatHistory);
+    }
 
     if (gameStarted && lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD) {
       socket.emit("phase", { boardIndex: lastBoardIndex });
@@ -108,6 +115,10 @@ export function setupQuizNav(io: Server) {
       logger.info({}, "Quiz hostReturnToLogin — broadcast returnToLogin");
     });
 
+    socket.on("requestChatHistory", () => {
+      socket.emit("chatHistory", chatHistory);
+    });
+
     socket.on("chatMessage", (payload: unknown) => {
       const po =
         payload && typeof payload === "object"
@@ -121,12 +132,15 @@ export function setupQuizNav(io: Server) {
           : "Аноним";
       const role = po["role"] === "host" ? "host" : "spectator";
       if (!text) return;
-      ns.emit("chatMessage", {
+      const entry: ChatEntry = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         nick,
         role,
         text,
-      });
+      };
+      chatHistory.push(entry);
+      if (chatHistory.length > CHAT_HISTORY_MAX) chatHistory.shift();
+      ns.emit("chatMessage", entry);
     });
 
     socket.on("disconnect", () => {
