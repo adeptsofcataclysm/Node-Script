@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import type { Player, Question } from "@/lib/adepts-quiz-types";
+import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
 
 export type { Player, Question };
@@ -13,6 +14,8 @@ export type ActiveQuizCard = {
   splashDismissed?: boolean;
   /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
   splashSeatPassUsed?: boolean;
+  /** Подсветка цели передачи хода (место 0–4), синхронно всем; null — нет наведения */
+  splashPassHoverSeat?: number | null;
 };
 
 export type GameState = {
@@ -22,6 +25,7 @@ export type GameState = {
   activeQuizCard: ActiveQuizCard | null;
   /** Текущий ход: индекс места игрока 0..4 */
   currentTurnSeat: number;
+  quizBoardHoverCell?: QuizBoardHoverCell;
 };
 
 function gd(id: string) {
@@ -31,6 +35,7 @@ function gd(id: string) {
 const DEFAULT_STATE: GameState = {
   activeQuizCard: null,
   currentTurnSeat: 0,
+  quizBoardHoverCell: null,
   players: Array.from({ length: 5 }, (_, i) => ({
     id: `p${i}`,
     name: `Player ${i + 1}`,
@@ -340,6 +345,12 @@ function loadInitialState(): GameState {
         currentTurnSeat: Number.isInteger(parsed.currentTurnSeat)
           ? ((Number(parsed.currentTurnSeat) % 5) + 5) % 5
           : 0,
+        quizBoardHoverCell:
+          parsed.quizBoardHoverCell &&
+          typeof parsed.quizBoardHoverCell.themeIndex === "number" &&
+          typeof parsed.quizBoardHoverCell.questionIndex === "number"
+            ? parsed.quizBoardHoverCell
+            : null,
       });
     }
     return restoreLegacyPandoraVideos({ ...DEFAULT_STATE, players });
@@ -497,6 +508,10 @@ export function useGameState() {
     []
   );
 
+  const setQuizBoardHoverCell = useCallback((cell: QuizBoardHoverCell) => {
+    setState((prev) => ({ ...prev, quizBoardHoverCell: cell }));
+  }, []);
+
   const resetGame = useCallback(() => {
     setState(DEFAULT_STATE);
   }, []);
@@ -511,6 +526,7 @@ export function useGameState() {
     setActiveQuizCard,
     setCurrentTurnSeat,
     patchActiveQuizCard,
+    setQuizBoardHoverCell,
     resetGame,
   };
 }

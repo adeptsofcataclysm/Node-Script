@@ -27,6 +27,7 @@ export default function Home() {
     setActiveQuizCard,
     setCurrentTurnSeat,
     patchActiveQuizCard,
+    setQuizBoardHoverCell,
   } = useGameState();
 
   const handleAwardPoints = (playerIndex: number, points: number) => {
@@ -74,16 +75,19 @@ export default function Home() {
       (q.used || isAdeptsWheelFaceDownCell(q))
     )
       return;
+    setQuizBoardHoverCell(null);
     setActiveQuizCard({
       themeIndex,
       questionIndex,
       stage: "question",
       splashDismissed: false,
       splashSeatPassUsed: false,
+      splashPassHoverSeat: null,
     });
   };
 
   const closeQuestion = () => {
+    setQuizBoardHoverCell(null);
     setActiveQuizCard(null);
   };
 
@@ -124,6 +128,9 @@ export default function Home() {
             onQuestionClick={handleQuestionClick}
             readonly={!canOpenCards}
             blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
+            hoverCell={state.quizBoardHoverCell ?? null}
+            canSyncBoardHover={canOpenCards}
+            onBoardHoverCellChange={setQuizBoardHoverCell}
           />
         </main>
       </div>
@@ -163,8 +170,17 @@ export default function Home() {
           splashDismissed={openCard.splashDismissed === true}
           canDismissRaccoonSplash={canDismissRaccoonSplash}
           onDismissSplash={() => patchActiveQuizCard({ splashDismissed: true })}
+          splashPassHoverSeat={
+            typeof openCard.splashPassHoverSeat === "number" &&
+            Number.isInteger(openCard.splashPassHoverSeat)
+              ? openCard.splashPassHoverSeat
+              : null
+          }
+          onSplashPassHoverSeatChange={(seat) =>
+            patchActiveQuizCard({ splashPassHoverSeat: seat })
+          }
           onPassTurnToSeat={(target) => {
-            patchActiveQuizCard({ splashSeatPassUsed: true });
+            patchActiveQuizCard({ splashSeatPassUsed: true, splashPassHoverSeat: null });
             setCurrentTurnSeat(target);
           }}
           readonly={!isHost}

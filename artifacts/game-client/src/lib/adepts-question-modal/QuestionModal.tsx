@@ -46,6 +46,10 @@ interface QuestionModalProps {
   canDismissRaccoonSplash?: boolean;
   /** Записать в синхронизируемое состояние, что splash закрыт. */
   onDismissSplash?: () => void;
+  /** Подсветка карточки передачи хода (место 0–4), общая для всех клиентов. */
+  splashPassHoverSeat?: number | null;
+  /** Только игрок с ходом обновляет наведение (pointer enter/leave). */
+  onSplashPassHoverSeatChange?: (seatIndex: number | null) => void;
 }
 
 const TIMER_SECONDS = 30;
@@ -554,6 +558,8 @@ export function QuestionModal({
   splashDismissed: splashDismissedProp = false,
   canDismissRaccoonSplash = false,
   onDismissSplash,
+  splashPassHoverSeat: splashPassHoverSeatProp = null,
+  onSplashPassHoverSeatChange,
 }: QuestionModalProps) {
   const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
@@ -567,21 +573,37 @@ export function QuestionModal({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isWheelCard = !!question.headerUrl;
 
-  const showSplashPlayerPassChoice =
+  const activeTurnSeatNormalized =
+    Number.isInteger(currentTurnSeat) ? ((Number(currentTurnSeat) % 5) + 5) % 5 : -1;
+
+  /** Панель «кому передать ход» видна всем зрителям и ведущему в фазе после енота. */
+  const showRaccoonSplashPassChoicePanel =
     allowRaccoonSplashSeatPass &&
     Boolean(question.splashUrl) &&
     splashDismissed &&
     stage === "question" &&
     !isEditing &&
+    typeof onPassTurnToSeat === "function" &&
+    activeTurnSeatNormalized >= 0 &&
+    activeTurnSeatNormalized <= 4;
+
+  /** Нажать может только игрок с текущим ходом (клиент в readonly и своё место = ход). */
+  const canChooseRaccoonPassTarget =
     readonly &&
     typeof viewerSeatIndex === "number" &&
     viewerSeatIndex >= 0 &&
     viewerSeatIndex <= 4 &&
-    viewerSeatIndex === currentTurnSeat &&
+    viewerSeatIndex === activeTurnSeatNormalized &&
     typeof onPassTurnToSeat === "function";
 
-  const activeTurnSeatNormalized =
-    Number.isInteger(currentTurnSeat) ? ((Number(currentTurnSeat) % 5) + 5) % 5 : -1;
+  const splashPassHoverSeatNorm =
+    typeof splashPassHoverSeatProp === "number" &&
+    Number.isInteger(splashPassHoverSeatProp) &&
+    splashPassHoverSeatProp >= 0 &&
+    splashPassHoverSeatProp <= 4 &&
+    splashPassHoverSeatProp !== activeTurnSeatNormalized
+      ? splashPassHoverSeatProp
+      : null;
 
   let isCelebration = false;
   let isPandora = false;
@@ -921,15 +943,26 @@ export function QuestionModal({
                               </motion.p>
                             </div>
                           )}
-                          {showSplashPlayerPassChoice && (
+                          {showRaccoonSplashPassChoicePanel && (
                             <div className="mx-auto w-full max-w-3xl border-t border-border/50 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                               <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                                 Передайте ход другому игроку
                               </p>
-                              <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2 sm:gap-2 md:grid-cols-4">
+                              <div
+                                className="mx-auto grid max-w-2xl grid-cols-2 gap-2 sm:gap-2 md:grid-cols-4"
+                                onPointerLeave={() => {
+                                  if (
+                                    canChooseRaccoonPassTarget &&
+                                    typeof onSplashPassHoverSeatChange === "function"
+                                  ) {
+                                    onSplashPassHoverSeatChange(null);
+                                  }
+                                }}
+                              >
                                 {players.map((p, i) => {
-                                  if (i === viewerSeatIndex) return null;
+                                  if (i === activeTurnSeatNormalized) return null;
                                   const label = p.name?.trim() ? p.name : `Игрок ${i + 1}`;
+                                  const syncHovered = splashPassHoverSeatNorm === i;
                                   return (
                                     <motion.button
                                       key={p.id}
@@ -945,52 +978,64 @@ export function QuestionModal({
                                           stiffness: 200,
                                         },
                                       }}
-                                      whileHover={{
-                                        scale: 1.06,
-                                        y: -3,
-                                        transition: { type: "tween", duration: 0.08, ease: "easeOut" },
+                                      onPointerEnter={() => {
+                                        if (
+                                          canChooseRaccoonPassTarget &&
+                                          typeof onSplashPassHoverSeatChange === "function"
+                                        ) {
+                                          onSplashPassHoverSeatChange(i);
+                                        }
                                       }}
-                                      whileTap={{
-                                        scale: 0.94,
-                                        transition: { type: "tween", duration: 0.06 },
+                                      onClick={() => {
+                                        if (canChooseRaccoonPassTarget) onPassTurnToSeat(i);
                                       }}
-                                      transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
-                                      onClick={() => onPassTurnToSeat(i)}
-                                      className="group relative flex min-h-[7.25rem] w-full flex-col items-center justify-center gap-1.5 rounded-xl border bg-secondary/40 border-accent/30 px-2 py-3 font-display font-bold text-primary transition-colors duration-150 hover:bg-secondary hover:border-accent hover:shadow-[0_0_22px_hsla(280,65%,50%,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
+                                      className={`group relative flex min-h-[7.25rem] w-full flex-col overflow-hidden rounded-xl border border-accent/30 bg-secondary/40 px-2 py-3 font-display font-bold text-primary transition-[box-shadow,background-color,border-color] duration-100 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                                        syncHovered
+                                          ? "border-accent bg-secondary shadow-[0_0_22px_hsla(280,65%,50%,0.45)]"
+                                          : ""
+                                      } ${canChooseRaccoonPassTarget ? "cursor-pointer" : "pointer-events-none cursor-default"}`}
                                     >
                                       <div
-                                        aria-hidden
-                                        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                                        style={{
-                                          background:
-                                            "linear-gradient(105deg, hsla(280,65%,55%,0) 0%, hsla(280,65%,55%,0.1) 50%, hsla(280,65%,55%,0) 100%)",
-                                        }}
-                                      />
-                                      <img
-                                        src={resolveUrl(ADEPTS_EMBLEM_URL)}
-                                        alt=""
-                                        className="relative z-[1] h-[clamp(2.35rem,7vw,3.2rem)] w-auto max-w-[78%] object-contain select-none pointer-events-none"
-                                        style={{
-                                          filter:
-                                            "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
-                                        }}
-                                      />
-                                      <span
-                                        className="relative z-[1] glow-text max-w-full truncate px-1 text-center uppercase tracking-widest"
-                                        style={{
-                                          fontSize: "clamp(0.65rem, 2vw, 0.8rem)",
-                                          textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
-                                        }}
-                                        title={label}
+                                        className={`relative flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-1.5 transition-transform duration-100 ease-out will-change-transform ${
+                                          syncHovered ? "-translate-y-[3px] scale-[1.06]" : "translate-y-0 scale-100"
+                                        }`}
                                       >
-                                        {label}
-                                      </span>
-                                      <span
-                                        className="relative z-[1] glow-text font-display font-bold leading-none tabular-nums"
-                                        style={{ fontSize: "clamp(1rem, 2.5vw, 1.75rem)" }}
-                                      >
-                                        {p.score}
-                                      </span>
+                                        <div
+                                          aria-hidden
+                                          className={`pointer-events-none absolute inset-0 rounded-xl transition-opacity duration-300 ${
+                                            syncHovered ? "opacity-100" : "opacity-0"
+                                          }`}
+                                          style={{
+                                            background:
+                                              "linear-gradient(105deg, hsla(280,65%,55%,0) 0%, hsla(280,65%,55%,0.1) 50%, hsla(280,65%,55%,0) 100%)",
+                                          }}
+                                        />
+                                        <img
+                                          src={resolveUrl(ADEPTS_EMBLEM_URL)}
+                                          alt=""
+                                          className="relative z-[1] h-[clamp(2.35rem,7vw,3.2rem)] w-auto max-w-[78%] object-contain select-none pointer-events-none"
+                                          style={{
+                                            filter:
+                                              "drop-shadow(0 0 5px hsla(45,100%,60%,0.44)) drop-shadow(0 0 11px hsla(45,100%,55%,0.20))",
+                                          }}
+                                        />
+                                        <span
+                                          className="relative z-[1] glow-text max-w-full truncate px-1 text-center uppercase tracking-widest"
+                                          style={{
+                                            fontSize: "clamp(0.65rem, 2vw, 0.8rem)",
+                                            textShadow: "0 0 20px hsla(280,65%,70%,0.25)",
+                                          }}
+                                          title={label}
+                                        >
+                                          {label}
+                                        </span>
+                                        <span
+                                          className="relative z-[1] glow-text font-display font-bold leading-none tabular-nums"
+                                          style={{ fontSize: "clamp(1rem, 2.5vw, 1.75rem)" }}
+                                        >
+                                          {p.score}
+                                        </span>
+                                      </div>
                                     </motion.button>
                                   );
                                 })}
