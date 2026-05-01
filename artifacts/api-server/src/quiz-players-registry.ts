@@ -121,3 +121,8 @@ export function clearQuizPlayers(): void {
   presenceBySocket.clear();
   socketIdsByNick.clear();
 }
+
+/** Роль сокета в квиз-лобби (после `quizPlayerPresence` с scope=lobby). */
+export function getQuizSocketLobbyRole(socketId: string): "host" | "spectator" | null {
+  return presenceBySocket.get(socketId)?.role ?? null;
+}

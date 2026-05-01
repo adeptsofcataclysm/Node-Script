@@ -124,7 +124,7 @@ function NameInput({
           }
           if (e.key === "Escape") setEditing(false);
         }}
-        className="mt-0.5 w-full rounded border bg-black/65 px-1.5 py-0.5 text-center text-[10px] font-semibold uppercase tracking-wider outline-none"
+        className="mt-0.5 w-full rounded border bg-black/65 px-2 py-1 text-center text-xs font-semibold uppercase tracking-wider outline-none md:text-[13px]"
         style={{ borderColor: hsl(accentHsl, 0.55), color: hsl(accentHsl), boxShadow: `0 0 16px ${hsl(accentHsl, 0.28)} inset` }}
       />
     );
@@ -135,7 +135,7 @@ function NameInput({
       type="button"
       onClick={open}
       title="Нажмите, чтобы изменить имя"
-      className="mt-0.5 block w-full cursor-pointer truncate rounded px-0.5 text-center text-[10px] font-semibold uppercase tracking-wider hover:brightness-125"
+      className="mt-0.5 block w-full cursor-pointer truncate rounded px-1 py-0.5 text-center text-xs font-semibold uppercase tracking-wider hover:brightness-125 md:text-[13px]"
       style={{
         color: hsl(accentHsl, 0.92),
         textShadow: `0 0 12px ${hsl(accentHsl, 0.45)}`,
@@ -319,18 +319,12 @@ export function Scoreboard({
                   }}
                 />
 
-                <div className="relative z-[1] border-b px-2 py-1 pb-2 text-center" style={{ borderColor: hsl(accent, 0.22) }}>
-                  <div
-                    className="font-mono text-[8px] font-bold uppercase tracking-[0.22em] text-foreground/90 md:text-[9px]"
-                    style={{ color: hsl(accent, 0.78) }}
-                  >
-                    ИГРОК
-                  </div>
+                <div className="relative z-[1] border-b px-2 py-1.5 pb-2 text-center" style={{ borderColor: hsl(accent, 0.22) }}>
                   {!readonly ? (
                     <NameInput accentHsl={accent} name={player.name} onCommit={(v) => onUpdateName(index, v)} />
                   ) : (
                     <div
-                      className="mt-0.5 truncate px-0.5 text-center text-[9px] font-semibold uppercase tracking-wider md:text-[10px]"
+                      className="truncate px-0.5 py-0.5 text-center text-xs font-semibold uppercase tracking-wider md:text-[13px]"
                       style={{
                         color: hsl(accent, 0.88),
                         textShadow: `0 0 10px ${hsl(accent, 0.32)}`,

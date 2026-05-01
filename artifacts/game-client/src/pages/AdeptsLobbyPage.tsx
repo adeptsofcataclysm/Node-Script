@@ -8,6 +8,10 @@ import { LobbyQuizPlayersTable, type LobbyQuizPollPlayerRow } from "@/components
 import { computeTopSeatNicks } from "@/lib/computeTopSeatNicks";
 import { SEAT_ROSTER_SESSION_KEY } from "@/lib/quizLobbyClientAssignments";
 import { ChatPanel } from "@/components/ChatPanel";
+import {
+  LOBBY_EMOJI_REVEAL_LINES,
+  LOBBY_EMOJI_REVEAL_LINE_COUNT,
+} from "@/lib/lobbyEmojiRevealLines";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -25,12 +29,12 @@ function exitToLoginPage() {
 }
 
 const lobbyExitButtonClass =
-  "fixed bottom-6 right-6 z-[60] rounded-lg border border-border/80 bg-card/85 px-5 py-2.5 font-mono text-xs uppercase tracking-widest text-muted-foreground shadow-lg backdrop-blur-sm transition hover:border-primary/50 hover:text-foreground";
+  "shrink-0 rounded-lg border border-border/80 bg-card/85 px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-primary/50 hover:text-foreground";
 
 /** Лобби после логина: до старта игры темы квиза не показываются. */
 export function AdeptsLobbyPage() {
   const { isHost } = useRole();
-  const { lobbyState, emitStartGame } = useQuizLobbyState();
+  const { lobbyState, emitStartGame, emitLobbyEmojiNext, emitLobbyEmojiPrev } = useQuizLobbyState();
   const [lobbyTablePlayers, setLobbyTablePlayers] = useState<LobbyQuizPollPlayerRow[]>([]);
   const [scoresByNick, setScoresByNick] = useState<Record<string, string>>({});
 
@@ -82,61 +86,95 @@ export function AdeptsLobbyPage() {
     );
   }
 
+  const lineIdx = lobbyState.lobbyEmojiLineIndex;
+  const emojiLobbyText =
+    lineIdx >= 0 && lineIdx < LOBBY_EMOJI_REVEAL_LINE_COUNT
+      ? LOBBY_EMOJI_REVEAL_LINES[lineIdx] ?? ""
+      : "";
+  const emojiAllShown = lineIdx >= LOBBY_EMOJI_REVEAL_LINE_COUNT - 1;
+  const emojiAtStart = lineIdx < 0;
+
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col overflow-hidden text-foreground">
-      <header className="flex flex-shrink-0 items-center border-b border-border bg-card/80 px-6 py-3 backdrop-blur-sm">
-        <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
-          САМЫЙ ДУШНЫЙ 3.0
-        </h1>
-        <span className="ml-4 rounded border border-primary/40 px-3 py-1.5 font-display text-sm tracking-wider text-primary/80">
-          Лобби
-        </span>
+      <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-border bg-card/80 px-4 py-3 backdrop-blur-sm sm:px-6">
+        <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
+          <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
+            САМЫЙ ДУШНЫЙ 3.0
+          </h1>
+          <span className="rounded border border-primary/40 px-3 py-1.5 font-display text-sm tracking-wider text-primary/80">
+            Лобби
+          </span>
+        </div>
+        <button type="button" onClick={exitToLoginPage} className={lobbyExitButtonClass}>
+          Выход
+        </button>
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        <ChatPanel className="w-1/3 flex-shrink-0 m-3" />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <ChatPanel className="mx-2 mb-2 mt-1 w-[min(32%,360px)] flex-shrink-0 sm:mx-3 sm:mb-3 sm:mt-2" />
 
-        {/* Right side: lobby content (50%) */}
-        <div className="flex flex-1 items-center justify-center p-6 overflow-y-auto">
-          {isHost ? (
-            <div className="flex w-full max-w-4xl flex-wrap items-start justify-center gap-8 lg:gap-10">
-              <div className="flex w-full max-w-xs flex-shrink-0 flex-col items-center gap-6 text-center sm:max-w-sm">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Когда будете готовы начать игру, нажмите кнопку — топ-5 зрителей по столбцу «Количество верных ответов»
-                  займут игровые места на доске, вы — ведущий, остальные станут зрителями доски.
+        <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden px-2 pb-3 pt-0 sm:px-4 sm:pb-4 sm:pt-1 lg:pr-4">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto py-4">
+            <div
+              className="flex w-full max-w-[min(94vw,720px)] min-h-[min(48vh,440px)] flex-col items-center justify-center rounded-[1.125rem] border border-amber-400/45 bg-transparent px-4 py-6 text-center shadow-[0_0_20px_rgba(234,179,8,0.35),0_0_48px_rgba(250,204,21,0.18),inset_0_0_24px_rgba(234,179,8,0.06)] sm:min-h-[min(52vh,480px)] sm:rounded-[1.25rem] sm:px-8 sm:py-10"
+              style={{
+                fontFamily:
+                  "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif",
+              }}
+            >
+              {emojiLobbyText ? (
+                <p
+                  className="w-full max-w-full whitespace-pre-wrap break-words text-center font-normal leading-[1.2] tracking-[0.02em]"
+                  style={{
+                    fontSize: "clamp(2.25rem, min(9vmin, 11vw), 5.25rem)",
+                    wordSpacing: "0.12em",
+                  }}
+                >
+                  {emojiLobbyText}
                 </p>
+              ) : (
+                <p className="max-w-sm px-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  Здесь появятся эмодзи, твоя задача разгадать какой босс зашифрован, ответ пиши в чат
+                  слева.
+                </p>
+              )}
+            </div>
+            {isHost ? (
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
                 <button
                   type="button"
-                  onClick={() => emitStartGame(computeTopSeatNicks(lobbyTablePlayers, scoresByNick))}
-                  className="rounded-xl border-2 border-primary/50 bg-primary/15 px-10 py-4 font-display text-lg font-bold tracking-wider text-primary shadow-[0_0_24px_hsla(45,93%,47%,0.25)] transition hover:bg-primary/25 hover:shadow-[0_0_32px_hsla(45,93%,47%,0.35)]"
+                  disabled={emojiAtStart}
+                  onClick={() => emitLobbyEmojiPrev()}
+                  className="rounded-xl border-2 border-border/80 bg-card/60 px-8 py-3 font-display text-lg tracking-widest text-foreground/90 shadow-sm transition hover:border-primary/40 hover:bg-card disabled:pointer-events-none disabled:opacity-40"
                 >
-                  Запуск игры
+                  Назад
+                </button>
+                <button
+                  type="button"
+                  disabled={emojiAllShown}
+                  onClick={() => emitLobbyEmojiNext()}
+                  className="rounded-xl border-2 border-primary/60 bg-primary/15 px-10 py-3 font-display text-lg tracking-widest text-primary shadow-[0_0_28px_hsl(280_65%_50%/0.2)] transition hover:border-primary hover:bg-primary/25 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  Дальше
                 </button>
               </div>
+            ) : null}
+          </div>
+
+          {isHost ? (
+            <aside className="flex min-h-0 w-fit max-w-[min(420px,46vw)] shrink-0 flex-col self-stretch overflow-hidden pt-1 lg:max-w-[min(420px,40vw)]">
               <LobbyQuizPlayersTable
-                className="w-full min-w-[min(100%,280px)] max-w-xl lg:max-w-md"
+                variant="sidebar"
+                className="h-full min-h-0 w-fit max-w-full"
+                onStartGame={() => emitStartGame(computeTopSeatNicks(lobbyTablePlayers, scoresByNick))}
                 players={lobbyTablePlayers}
                 scoresByNick={scoresByNick}
                 onScoresByNickChange={setScoresByNick}
               />
-            </div>
-          ) : (
-            <div
-              className="max-w-xs rounded-2xl border border-accent/30 bg-card/60 px-8 py-10 text-center shadow-[0_0_40px_hsla(280,65%,50%,0.12)]"
-              style={{ fontFamily: "monospace" }}
-            >
-              <p className="text-base leading-relaxed text-foreground/70">
-                Ожидание начала игры…
-              </p>
-            </div>
-          )}
+            </aside>
+          ) : null}
         </div>
-
       </div>
-
-      <button type="button" onClick={exitToLoginPage} className={lobbyExitButtonClass}>
-        Выход
-      </button>
     </div>
   );
 }
