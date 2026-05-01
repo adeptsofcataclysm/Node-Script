@@ -14,6 +14,14 @@ export type Question = {
   answerUrl: string;
   used: boolean;
   splashUrl?: string;
+  /** Спираль (енот) или полёт картинки слева в центр (dedFly) */
+  splashVariant?: "spiral" | "dedFly";
+  /** Музыка на время splash (dedFly и др.) */
+  splashAudioUrl?: string;
+  /** Закрыть splash по клику может только ведущий */
+  splashDismissHostOnly?: boolean;
   /** Wheel icon in header (+ «1 крутка») */
   headerUrl?: string;
+  /** Маленькая картинка в шапке рядом с очками (без splash и без сценария енота) */
+  headerCornerUrl?: string;
 };

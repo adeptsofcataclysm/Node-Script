@@ -66,6 +66,14 @@ export default function Home() {
     isHost ||
     (!isSpectator && seatIndex >= 0 && seatIndex <= 4 && seatIndex === state.currentTurnSeat);
 
+  const openQuestion =
+    openCard != null &&
+    state.questions[openCard.themeIndex]?.[openCard.questionIndex] != null
+      ? state.questions[openCard.themeIndex][openCard.questionIndex]
+      : null;
+  const canDismissSplash =
+    openQuestion?.splashDismissHostOnly === true ? isHost : canDismissRaccoonSplash;
+
   const handleQuestionClick = (themeIndex: number, questionIndex: number) => {
     if (!canOpenCards) return;
     const q = state.questions[themeIndex]?.[questionIndex];
@@ -81,6 +89,7 @@ export default function Home() {
       questionIndex,
       stage: "question",
       splashDismissed: false,
+      splashDedFlyExitStarted: false,
       splashSeatPassUsed: false,
       splashPassHoverSeat: null,
     });
@@ -168,8 +177,13 @@ export default function Home() {
           viewerSeatIndex={isHost || isSpectator || seatIndex < 0 ? null : seatIndex}
           allowRaccoonSplashSeatPass={openCard.splashSeatPassUsed !== true}
           splashDismissed={openCard.splashDismissed === true}
-          canDismissRaccoonSplash={canDismissRaccoonSplash}
-          onDismissSplash={() => patchActiveQuizCard({ splashDismissed: true })}
+          splashDedFlyExitStarted={openCard.splashDedFlyExitStarted === true}
+          onDedFlyExitStart={() => patchActiveQuizCard({ splashDedFlyExitStarted: true })}
+          canFinalizeDedFlySplashDismiss={isHost}
+          canDismissRaccoonSplash={canDismissSplash}
+          onDismissSplash={() =>
+            patchActiveQuizCard({ splashDismissed: true, splashDedFlyExitStarted: false })
+          }
           splashPassHoverSeat={
             typeof openCard.splashPassHoverSeat === "number" &&
             Number.isInteger(openCard.splashPassHoverSeat)

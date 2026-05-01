@@ -46,6 +46,11 @@ interface QuestionModalProps {
   canDismissRaccoonSplash?: boolean;
   /** Записать в синхронизируемое состояние, что splash закрыт. */
   onDismissSplash?: () => void;
+  /** dedFly: синхронно начать вылет картинки вправо (все клиенты). */
+  splashDedFlyExitStarted?: boolean;
+  onDedFlyExitStart?: () => void;
+  /** dedFly: после анимации вылета вызвать onDismissSplash (только ведущий). */
+  canFinalizeDedFlySplashDismiss?: boolean;
   /** Подсветка карточки передачи хода (место 0–4), общая для всех клиентов. */
   splashPassHoverSeat?: number | null;
   /** Только игрок с ходом обновляет наведение (pointer enter/leave). */
@@ -536,6 +541,255 @@ function SplashOverlay({
   );
 }
 
+const DED_FLY_IN_DURATION_SEC = 12;
+const DED_FLY_EXIT_DURATION_SEC = 1.05;
+const DED_FLY_CAPTION = "Чё суки?! Завещание хотите?";
+
+function DedFlySplashOverlay({
+  url,
+  audioUrl,
+  canDismiss,
+  dedFlyExitStarted,
+  onDedFlyExitStart,
+  canFinalizeSplashDismiss,
+  onDismiss,
+}: {
+  url: string;
+  audioUrl?: string;
+  canDismiss: boolean;
+  dedFlyExitStarted: boolean;
+  onDedFlyExitStart?: () => void;
+  canFinalizeSplashDismiss: boolean;
+  onDismiss: () => void;
+}) {
+  const [arrived, setArrived] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const trailCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imgBoxRef = useRef<HTMLDivElement | null>(null);
+  const arrivedRef = useRef(false);
+  const exitingRef = useRef(false);
+
+  useEffect(() => {
+    arrivedRef.current = arrived;
+  }, [arrived]);
+
+  useEffect(() => {
+    exitingRef.current = exiting;
+  }, [exiting]);
+
+  useEffect(() => {
+    if (!audioUrl?.trim()) return;
+    const a = new Audio(resolveUrl(audioUrl));
+    a.volume = 0.75;
+    audioRef.current = a;
+    a.play().catch(() => {});
+    return () => {
+      a.pause();
+      a.src = "";
+      audioRef.current = null;
+    };
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (!dedFlyExitStarted) return;
+    audioRef.current?.pause();
+    setExiting(true);
+  }, [dedFlyExitStarted]);
+
+  useEffect(() => {
+    const canvas = trailCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const sparks: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      decay: number;
+      size: number;
+    }[] = [];
+    const MAX_SPARKS = 90;
+    let rafId = 0;
+    const startMs = performance.now();
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const loop = () => {
+      const el = imgBoxRef.current;
+      const isFlying = !arrivedRef.current || exitingRef.current;
+      if (el && isFlying) {
+        const r = el.getBoundingClientRect();
+        const flightProgress = Math.min((performance.now() - startMs) / (DED_FLY_IN_DURATION_SEC * 1000), 1);
+        const isBraking = !exitingRef.current && flightProgress > 0.68;
+        const sparkCount = exitingRef.current ? 3 : 4;
+        for (let i = 0; i < sparkCount; i++) {
+          sparks.push({
+            x: r.left + Math.random() * Math.max(8, r.width * 0.08),
+            y: r.top + r.height * (0.18 + Math.random() * 0.64),
+            vx: -(1.8 + Math.random() * 4.2),
+            vy: (Math.random() - 0.5) * 2.2,
+            life: 0,
+            decay: 0.014 + Math.random() * 0.018,
+            size: 2.4 + Math.random() * 4.6,
+          });
+        }
+        if (isBraking) {
+          const brakeCount = 2 + Math.floor((flightProgress - 0.68) * 7);
+          for (let i = 0; i < brakeCount; i++) {
+            sparks.push({
+              x: r.right - Math.random() * Math.max(8, r.width * 0.1),
+              y: r.top + r.height * (0.16 + Math.random() * 0.68),
+              vx: 1.8 + Math.random() * 4.5,
+              vy: (Math.random() - 0.5) * 2.4,
+              life: 0,
+              decay: 0.016 + Math.random() * 0.022,
+              size: 2.2 + Math.random() * 5,
+            });
+          }
+        }
+        if (sparks.length > MAX_SPARKS) {
+          sparks.splice(0, sparks.length - MAX_SPARKS);
+        }
+      }
+
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i];
+        p.life += p.decay;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.965;
+        p.vy *= 0.985;
+        p.size *= 0.985;
+
+        const alpha = Math.max(0, 1 - p.life);
+        if (alpha <= 0 || p.size < 0.35) {
+          sparks.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = "rgba(255, 244, 170, 1)";
+        ctx.shadowBlur = 12;
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.4);
+        gradient.addColorStop(0, "rgba(255, 255, 245, 1)");
+        gradient.addColorStop(0.32, "rgba(255, 240, 158, 1)");
+        gradient.addColorStop(0.68, "rgba(255, 205, 70, 0.78)");
+        gradient.addColorStop(1, "rgba(255, 180, 30, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = alpha * 0.95;
+        ctx.strokeStyle = "rgba(255, 240, 150, 1)";
+        ctx.lineWidth = Math.max(1.2, p.size * 0.78);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 5, p.y - p.vy * 5);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  const handleImgClick = () => {
+    if (!canDismiss || !arrived || exiting) return;
+    onDedFlyExitStart?.();
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-center select-none pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.22 } }}
+    >
+      <canvas
+        ref={trailCanvasRef}
+        className="absolute inset-0 z-0 pointer-events-none"
+        aria-hidden
+      />
+      <div className="relative z-10 flex flex-col items-center justify-center gap-5">
+        <motion.div
+          ref={imgBoxRef}
+          initial={{ x: "-68vw", opacity: 1 }}
+          animate={exiting ? { x: "82vw", opacity: 1 } : { x: 0, opacity: 1 }}
+          transition={
+            exiting
+              ? { duration: DED_FLY_EXIT_DURATION_SEC, ease: "easeIn" }
+              : { duration: DED_FLY_IN_DURATION_SEC, ease: "easeInOut" }
+          }
+          onAnimationComplete={() => {
+            if (exiting) {
+              if (canFinalizeSplashDismiss) onDismiss();
+              return;
+            }
+            if (!arrived) setArrived(true);
+          }}
+          onClick={handleImgClick}
+          className={
+            canDismiss && arrived && !exiting
+              ? "cursor-pointer pointer-events-auto"
+              : "pointer-events-none"
+          }
+        >
+          <img
+            src={resolveUrl(url)}
+            alt=""
+            draggable={false}
+            className="block max-w-[min(42vw,320px)] max-h-[min(72vh,520px)] object-contain"
+            style={{
+              filter:
+                "drop-shadow(0 0 18px rgba(255, 218, 90, 0.95)) drop-shadow(0 0 46px rgba(255, 170, 24, 0.58)) drop-shadow(0 12px 26px rgba(0, 0, 0, 0.62))",
+            }}
+          />
+        </motion.div>
+        {arrived && !exiting ? (
+          <motion.p
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: "spring", damping: 16, stiffness: 220 }}
+            className="pointer-events-none max-w-[min(92vw,520px)] text-center font-display text-xl sm:text-2xl md:text-3xl font-bold leading-tight px-4"
+            style={{
+              color: "#ffd54a",
+              textShadow:
+                "0 0 22px rgba(255,200,60,0.95), 0 0 42px rgba(200,140,20,0.55), 0 2px 0 rgba(120,70,0,0.35)",
+            }}
+          >
+            {DED_FLY_CAPTION}
+          </motion.p>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
 export function QuestionModal({
   board,
   isOpen,
@@ -558,6 +812,9 @@ export function QuestionModal({
   splashDismissed: splashDismissedProp = false,
   canDismissRaccoonSplash = false,
   onDismissSplash,
+  splashDedFlyExitStarted: splashDedFlyExitStartedProp = false,
+  onDedFlyExitStart,
+  canFinalizeDedFlySplashDismiss = false,
   splashPassHoverSeat: splashPassHoverSeatProp = null,
   onSplashPassHoverSeatChange,
 }: QuestionModalProps) {
@@ -570,6 +827,7 @@ export function QuestionModal({
   const [countdown, setCountdown] = useState(TIMER_SECONDS);
   const [showFireworks, setShowFireworks] = useState(false);
   const splashDismissed = splashDismissedProp === true;
+  const splashDedFlyExitStarted = splashDedFlyExitStartedProp === true;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isWheelCard = !!question.headerUrl;
 
@@ -580,6 +838,7 @@ export function QuestionModal({
   const showRaccoonSplashPassChoicePanel =
     allowRaccoonSplashSeatPass &&
     Boolean(question.splashUrl) &&
+    question.splashVariant !== "dedFly" &&
     splashDismissed &&
     stage === "question" &&
     !isEditing &&
@@ -769,11 +1028,23 @@ export function QuestionModal({
           />
           <AnimatePresence>
             {question.splashUrl && !splashDismissed && (
-              <SplashOverlay
-                url={question.splashUrl}
-                canDismiss={canDismissRaccoonSplash && typeof onDismissSplash === "function"}
-                onDismiss={() => onDismissSplash?.()}
-              />
+              question.splashVariant === "dedFly" ? (
+                <DedFlySplashOverlay
+                  url={question.splashUrl}
+                  audioUrl={question.splashAudioUrl}
+                  canDismiss={canDismissRaccoonSplash && typeof onDedFlyExitStart === "function"}
+                  dedFlyExitStarted={splashDedFlyExitStarted}
+                  onDedFlyExitStart={onDedFlyExitStart}
+                  canFinalizeSplashDismiss={canFinalizeDedFlySplashDismiss === true}
+                  onDismiss={() => onDismissSplash?.()}
+                />
+              ) : (
+                <SplashOverlay
+                  url={question.splashUrl}
+                  canDismiss={canDismissRaccoonSplash && typeof onDismissSplash === "function"}
+                  onDismiss={() => onDismissSplash?.()}
+                />
+              )
             )}
           </AnimatePresence>
           <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center p-3 lg:p-6">
@@ -833,9 +1104,9 @@ export function QuestionModal({
                       </>
                     )}
                   </div>
-                  {question.splashUrl && (
+                  {(question.headerCornerUrl || question.splashUrl) && (
                     <img
-                      src={resolveUrl(question.splashUrl)}
+                      src={resolveUrl(question.headerCornerUrl || question.splashUrl || "")}
                       alt=""
                       className="object-contain select-none pointer-events-none"
                       style={{ width: "46px", height: "46px", filter: "drop-shadow(0 0 5px hsla(45,100%,60%,0.55))" }}

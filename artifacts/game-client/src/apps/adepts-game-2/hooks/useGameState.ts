@@ -12,6 +12,8 @@ export type ActiveQuizCard = {
   stage: "question" | "answer";
   /** Клик ведущего / ходящего по вылетающему еноту — синхронно всем клиентам */
   splashDismissed?: boolean;
+  /** dedFly: ведущий нажал — вылет вправо синхронно у всех зрителей и игроков */
+  splashDedFlyExitStarted?: boolean;
   /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
   splashSeatPassUsed?: boolean;
   /** Подсветка цели передачи хода (место 0–4), синхронно всем; null — нет наведения */
@@ -86,7 +88,14 @@ const DEFAULT_STATE: GameState = {
         answerUrl: "/ded-primi-tabletki-400-answer.png",
         used: false,
       },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      {
+        text: "",
+        questionUrl: "",
+        answerText:
+          "На ласт фазе выходят 5 жуков. Пристам нужно было зашаклить ровно 3, не больше. Иначе Кел'Тузад их освободит.",
+        answerUrl: "",
+        used: false,
+      },
     ],
     // Тактики
     [
@@ -334,7 +343,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 51;
+const DATA_VERSION = 52;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 

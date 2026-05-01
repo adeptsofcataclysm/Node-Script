@@ -12,6 +12,8 @@ export type ActiveQuizCard = {
   stage: "question" | "answer";
   /** Клик ведущего / ходящего по вылетающему еноту — синхронно всем клиентам */
   splashDismissed?: boolean;
+  /** dedFly: ведущий нажал — вылет вправо синхронно у всех зрителей и игроков */
+  splashDedFlyExitStarted?: boolean;
   /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
   splashSeatPassUsed?: boolean;
   /** Подсветка цели передачи хода (место 0–4), синхронно всем; null — нет наведения */

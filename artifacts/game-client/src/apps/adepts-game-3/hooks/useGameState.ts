@@ -12,6 +12,8 @@ export type ActiveQuizCard = {
   stage: "question" | "answer";
   /** Клик ведущего / ходящего по вылетающему еноту — синхронно всем клиентам */
   splashDismissed?: boolean;
+  /** dedFly: ведущий нажал — вылет вправо синхронно у всех зрителей и игроков */
+  splashDedFlyExitStarted?: boolean;
   /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
   splashSeatPassUsed?: boolean;
   /** Подсветка цели передачи хода (место 0–4), синхронно всем; null — нет наведения */
@@ -162,6 +164,10 @@ const DEFAULT_STATE: GameState = {
         answerText: "Непобедимый",
         answerUrl: "https://static.wowhead.com/uploads/screenshots/normal/166549.jpg",
         used: false,
+        splashUrl: "/mounts-400-ded-fly.png",
+        splashVariant: "dedFly",
+        splashAudioUrl: "/mounts-400-ded-splash-hor.mp3",
+        splashDismissHostOnly: true,
       },
       {
         text: "Редкий морской конёк, который обитает в безднах Вайш'ира. Позволяет хозяину быстро передвигаться под водой. Это один из немногих маунтов, который не становится персональным при получении.",
@@ -370,7 +376,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-3-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 14;
+const DATA_VERSION = 17;
 const DATA_VERSION_KEY = "adepts-game-3-data-version";
 const ROOM = "adepts-game-3";
 
