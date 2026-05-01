@@ -29,6 +29,8 @@ export type GameState = {
   /** Подсветка ячейки доски под курсором ведущего / игрока с ходом */
   quizBoardHoverCell?: QuizBoardHoverCell;
   dataVersion?: number;
+  /** Идентификатор доски — проверяется в sync-обработчике для отклонения данных чужой доски */
+  boardRoom?: string;
 };
 
 const DEFAULT_STATE: GameState = {
@@ -226,8 +228,10 @@ export function useGameState() {
         hadRoster &&
         typeof localStorage !== "undefined" &&
         localStorage.getItem("player_role") === "host";
+      const isSameBoard = incoming.boardRoom === ROOM;
       const nextState = restoreLegacyWheelCards({
         ...incoming,
+        themes: isSameBoard ? (incoming.themes ?? DEFAULT_STATE.themes) : DEFAULT_STATE.themes,
         players: merged,
         activeQuizCard: incoming.activeQuizCard ?? null,
         currentTurnSeat: hostResetTurn
@@ -235,12 +239,20 @@ export function useGameState() {
           : Number.isInteger(incoming.currentTurnSeat)
             ? ((Number(incoming.currentTurnSeat) % 5) + 5) % 5
             : 0,
+        questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
+          themeQs.map((defaultQ, qIdx) => ({
+            ...defaultQ,
+            used: isSameBoard
+              ? (incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used)
+              : defaultQ.used,
+          }))
+        ),
       });
       skipEmitRef.current = true;
       setState(nextState);
       if (hadRoster) {
         skipEmitRef.current = false;
-        queueMicrotask(() => socketRef.current?.emit("update", nextState));
+        queueMicrotask(() => socketRef.current?.emit("update", { ...nextState, boardRoom: ROOM }));
       }
     });
 
@@ -260,7 +272,7 @@ export function useGameState() {
       return;
     }
 
-    socketRef.current?.emit("update", state);
+    socketRef.current?.emit("update", { ...state, boardRoom: ROOM });
   }, [state]);
 
   // Cross-tab sync via StorageEvent (same machine, different tabs)

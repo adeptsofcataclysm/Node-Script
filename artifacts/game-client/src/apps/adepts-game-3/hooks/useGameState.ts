@@ -26,6 +26,8 @@ export type GameState = {
   /** Текущий ход: индекс места игрока 0..4 */
   currentTurnSeat: number;
   quizBoardHoverCell?: QuizBoardHoverCell;
+  /** Идентификатор доски — проверяется в sync-обработчике для отклонения данных чужой доски */
+  boardRoom?: string;
 };
 
 function gd(id: string) {
@@ -568,8 +570,10 @@ export function useGameState() {
         hadRoster &&
         typeof localStorage !== "undefined" &&
         localStorage.getItem("player_role") === "host";
+      const isSameBoard = incoming.boardRoom === ROOM;
       const nextState = {
         ...incoming,
+        themes: isSameBoard ? (incoming.themes ?? DEFAULT_STATE.themes) : DEFAULT_STATE.themes,
         players: merged,
         activeQuizCard: incoming.activeQuizCard ?? null,
         currentTurnSeat: hostResetTurn
@@ -580,7 +584,9 @@ export function useGameState() {
         questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
           themeQs.map((defaultQ, qIdx) => ({
             ...defaultQ,
-            used: incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used,
+            used: isSameBoard
+              ? (incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used)
+              : defaultQ.used,
           }))
         ),
       };
@@ -588,7 +594,7 @@ export function useGameState() {
       setState(nextState);
       if (hadRoster) {
         skipEmitRef.current = false;
-        queueMicrotask(() => socketRef.current?.emit("update", nextState));
+        queueMicrotask(() => socketRef.current?.emit("update", { ...nextState, boardRoom: ROOM }));
       }
     });
 
@@ -607,7 +613,7 @@ export function useGameState() {
       return;
     }
 
-    socketRef.current?.emit("update", state);
+    socketRef.current?.emit("update", { ...state, boardRoom: ROOM });
   }, [state]);
 
   useEffect(() => {
