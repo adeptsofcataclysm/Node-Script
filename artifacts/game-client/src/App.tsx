@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Route, Router, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,7 +8,7 @@ import { ViewerPage } from "@/pages/ViewerPage";
 import { GamePage } from "@/pages/GamePage";
 import { SpectatorPage } from "@/pages/SpectatorPage";
 import { AdminGuard } from "@/pages/AdminGuard";
-import { AdeptsHostPage } from "@/pages/AdeptsHostPage";
+import { QuizAdeptsWheelPage } from "@/pages/QuizAdeptsWheelPage";
 
 import Adepts1Home from "@/apps/adepts-game/pages/Home";
 import Adepts1NotFound from "@/apps/adepts-game/pages/not-found";
@@ -17,6 +18,7 @@ import Adepts3Home from "@/apps/adepts-game-3/pages/Home";
 import Adepts3NotFound from "@/apps/adepts-game-3/pages/not-found";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
 import { QuizNavSync } from "@/components/QuizNavSync";
+import { QuizAdeptsWheelSync } from "@/components/QuizAdeptsWheelSync";
 import { QuizReturnToLoginSync } from "@/components/QuizReturnToLoginSync";
 import { AdeptsQuizBoardGuard } from "@/components/AdeptsQuizBoardGuard";
 import { RequireLogin } from "@/components/RequireLogin";
@@ -26,6 +28,21 @@ const queryClient = new QueryClient();
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+function AdeptsWheelLegacyRedirect() {
+  useEffect(() => {
+    window.location.replace(`${base}/adepts/watch`);
+  }, []);
+  return null;
+}
+
+function AdeptsSpinRoute() {
+  return <QuizAdeptsWheelPage viewerMode={false} />;
+}
+
+function AdeptsWatchRoute() {
+  return <QuizAdeptsWheelPage viewerMode={true} />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -34,7 +51,9 @@ function App() {
           <>
             <Switch>
               <Route path="/admin" component={AdminGuard} />
-              <Route path="/adepts" component={AdeptsHostPage} />
+              <Route path="/adepts/spin" component={AdeptsSpinRoute} />
+              <Route path="/adepts/watch" component={AdeptsWatchRoute} />
+              <Route path="/adepts" component={AdeptsWheelLegacyRedirect} />
               <Route path="/watch" component={ViewerPage} />
               <Route path="/spectate" component={SpectatorPage} />
               <Route path="/game" component={GamePage} />
@@ -79,6 +98,7 @@ function App() {
             </Switch>
             <GamePhaseArrows />
             <QuizNavSync />
+            <QuizAdeptsWheelSync />
             <QuizReturnToLoginSync />
           </>
         </Router>

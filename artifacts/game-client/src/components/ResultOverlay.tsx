@@ -9,9 +9,11 @@ const BASE_URL = import.meta.env.BASE_URL as string;
 interface ResultOverlayProps {
   result: WheelResultData | null;
   onDismiss: () => void;
+  /** false: только просмотр — кнопка и клик по фону не закрывают (закрытие синхронно от ведущего / игрока с ходом). */
+  allowDismiss?: boolean;
 }
 
-export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
+export function ResultOverlay({ result, onDismiss, allowDismiss = true }: ResultOverlayProps) {
   const isMobile = useIsMobile();
   if (!result) return null;
 
@@ -41,12 +43,12 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onDismiss}
+            onClick={allowDismiss ? onDismiss : undefined}
             style={{
               position: "fixed", inset: 0, zIndex: 50,
               display: "flex", alignItems: "center", justifyContent: "center",
               background: "rgba(0,0,0,0.88)",
-              cursor: "pointer",
+              cursor: allowDismiss ? "pointer" : "default",
             }}
           >
             {/* ── Shake wrapper (wipe only) ───────────────────────── */}
@@ -286,6 +288,8 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
 
                 {/* Close button */}
                 <motion.button
+                  type="button"
+                  aria-disabled={!allowDismiss}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{
                     opacity: 1,
@@ -303,10 +307,12 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                   }}
                   whileHover={{
                     scale: 1.08,
-                    boxShadow: "0 0 32px rgba(241,196,15,0.9), inset 0 0 18px rgba(241,196,15,0.2)",
+                    boxShadow:
+                      "0 0 32px rgba(241,196,15,0.9), inset 0 0 18px rgba(241,196,15,0.2)",
                   }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={onDismiss}
+                  onClick={allowDismiss ? onDismiss : undefined}
+                  title={!allowDismiss ? "Закроет ведущий или игрок с ходом" : undefined}
                   style={{
                     marginTop: 4,
                     fontFamily: "monospace",
@@ -318,10 +324,11 @@ export function ResultOverlay({ result, onDismiss }: ResultOverlayProps) {
                     border: "2px solid #f1c40f",
                     padding: "11px 36px",
                     borderRadius: 6,
-                    cursor: "pointer",
+                    cursor: allowDismiss ? "pointer" : "default",
                     position: "relative",
                     zIndex: 2,
                     fontWeight: "bold",
+                    pointerEvents: allowDismiss ? "auto" : "none",
                   }}
                 >
                   Отлично!

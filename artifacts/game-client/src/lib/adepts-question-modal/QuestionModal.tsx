@@ -55,9 +55,16 @@ interface QuestionModalProps {
   splashPassHoverSeat?: number | null;
   /** Только игрок с ходом обновляет наведение (pointer enter/leave). */
   onSplashPassHoverSeatChange?: (seatIndex: number | null) => void;
+  /** Ведущий: открыть колесо адептов у всех клиентов квиза (см. `/quiz-nav`). */
+  onHostBroadcastAdeptsWheel?: (payload: {
+    returnHref: string;
+    currentTurnSeat: number;
+  }) => void;
 }
 
 const TIMER_SECONDS = 30;
+/** Было 0.5; снижено на 35% для freebie-400-answer.mp3 (карточки с «Колесо Адептов»). */
+const FREEBIE_ANSWER_SOUND_VOLUME = 0.5 * 0.65;
 const RADIUS = 31;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -817,6 +824,7 @@ export function QuestionModal({
   canFinalizeDedFlySplashDismiss = false,
   splashPassHoverSeat: splashPassHoverSeatProp = null,
   onSplashPassHoverSeatChange,
+  onHostBroadcastAdeptsWheel,
 }: QuestionModalProps) {
   const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
@@ -833,6 +841,21 @@ export function QuestionModal({
 
   const activeTurnSeatNormalized =
     Number.isInteger(currentTurnSeat) ? ((Number(currentTurnSeat) % 5) + 5) % 5 : -1;
+
+  const handleAdeptsWheelNavigate = () => {
+    if (onHostBroadcastAdeptsWheel) {
+      onHostBroadcastAdeptsWheel({
+        returnHref: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        currentTurnSeat: activeTurnSeatNormalized >= 0 ? activeTurnSeatNormalized : 0,
+      });
+      return;
+    }
+    if (readonly) return;
+    const bp = import.meta.env.BASE_URL.replace(/\/$/, "");
+    window.open(`${window.location.origin}${bp}/adepts/watch`, "_blank", "noopener,noreferrer");
+  };
+
+  const adeptsWheelButtonDisabled = readonly && !onHostBroadcastAdeptsWheel;
 
   /** Панель «кому передать ход» видна всем зрителям и ведущему в фазе после енота. */
   const showRaccoonSplashPassChoicePanel =
@@ -986,7 +1009,7 @@ export function QuestionModal({
     if (isCelebration) {
       setShowFireworks(true);
       const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
-      audio.volume = 0.5;
+      audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
       audio.play().catch(() => {});
     }
   };
@@ -1005,7 +1028,7 @@ export function QuestionModal({
     spectatorCelebrationKeyRef.current = key;
     setShowFireworks(true);
     const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
-    audio.volume = 0.5;
+    audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
     audio.play().catch(() => {});
   }, [readonly, isOpen, quizStage, isCelebration, board, themeName, points]);
 
@@ -1522,7 +1545,9 @@ export function QuestionModal({
                     isWheelCard && stage === "answer" ? (
                       <Button
                         size="lg"
-                        onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                        disabled={adeptsWheelButtonDisabled}
+                        title={adeptsWheelButtonDisabled ? "Колесо откроет ведущий" : undefined}
+                        onClick={handleAdeptsWheelNavigate}
                         className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                       >
                         🎡 Колесо Адептов
@@ -1530,7 +1555,9 @@ export function QuestionModal({
                     ) : isCelebration && stage === "answer" ? (
                       <Button
                         size="lg"
-                        onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                        disabled={adeptsWheelButtonDisabled}
+                        title={adeptsWheelButtonDisabled ? "Колесо откроет ведущий" : undefined}
+                        onClick={handleAdeptsWheelNavigate}
                         className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                       >
                         🎡 Колесо Адептов
@@ -1551,7 +1578,9 @@ export function QuestionModal({
                   ) : isCelebration && stage === "answer" ? (
                     <Button
                       size="lg"
-                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      disabled={adeptsWheelButtonDisabled}
+                      title={adeptsWheelButtonDisabled ? "Колесо откроет ведущий" : undefined}
+                      onClick={handleAdeptsWheelNavigate}
                       className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                     >
                       🎡 Колесо Адептов
@@ -1559,7 +1588,9 @@ export function QuestionModal({
                   ) : question.headerUrl && stage === "answer" ? (
                     <Button
                       size="lg"
-                      onClick={() => window.open(window.location.origin + "/adepts", "_blank")}
+                      disabled={adeptsWheelButtonDisabled}
+                      title={adeptsWheelButtonDisabled ? "Колесо откроет ведущий" : undefined}
+                      onClick={handleAdeptsWheelNavigate}
                       className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_18px_hsla(45,100%,55%,0.6)]"
                     >
                       🎡 Колесо Адептов

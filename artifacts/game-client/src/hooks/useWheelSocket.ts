@@ -81,6 +81,10 @@ export function useWheelSocket(isViewer: boolean) {
       setResult(data);
     });
 
+    s.on("wheelResultDismissed", () => {
+      setResult(null);
+    });
+
     return () => {
       s.disconnect();
     };
@@ -93,8 +97,9 @@ export function useWheelSocket(isViewer: boolean) {
   }, [isSpinning]);
 
   const dismissResult = useCallback(() => {
-    setResult(null);
-  }, []);
+    if (isViewer) return;
+    socketRef.current?.emit("wheelResultDismiss");
+  }, [isViewer]);
 
   return { connected, isSpinning, spinData, result, initialRotation, spin, dismissResult };
 }

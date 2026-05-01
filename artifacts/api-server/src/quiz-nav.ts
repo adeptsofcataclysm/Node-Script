@@ -28,6 +28,11 @@ const CHAT_HISTORY_MAX = 50;
 interface ChatEntry { id: string; nick: string; role: "host" | "spectator"; text: string; }
 const chatHistory: ChatEntry[] = [];
 
+/** Квиз перешёл на «Колесо адептов» — куда вернуться по кнопке ведущего. */
+let adeptsWheelActive = false;
+let adeptsWheelReturnHref: string | null = null;
+let adeptsWheelCurrentTurnSeat = 0;
+
 function lobbyPayload(): {
   gameStarted: boolean;
   boardIndex: number;
@@ -100,6 +105,44 @@ export function setupQuizNav(io: Server) {
       );
     });
 
+    socket.on("hostAdeptsWheelOpen", (payload: unknown) => {
+      const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+      const hrefRaw = po["returnHref"];
+      const returnHref =
+        typeof hrefRaw === "string" && hrefRaw.length > 0 && hrefRaw.length < 2048 ? hrefRaw : null;
+      const rawSeat = po["currentTurnSeat"];
+      const seatNum = typeof rawSeat === "number" ? rawSeat : Number(rawSeat);
+      const currentTurnSeat =
+        Number.isInteger(seatNum) && seatNum >= 0 && seatNum <= 4 ? seatNum : 0;
+      if (!returnHref) return;
+      adeptsWheelActive = true;
+      adeptsWheelReturnHref = returnHref;
+      adeptsWheelCurrentTurnSeat = currentTurnSeat;
+      ns.emit("adeptsWheelOpened", {
+        returnHref,
+        currentTurnSeat,
+      });
+      logger.info({ returnHref, currentTurnSeat }, "Quiz adepts wheel opened");
+    });
+
+    socket.on("hostAdeptsWheelReturn", () => {
+      if (!adeptsWheelActive || !adeptsWheelReturnHref) return;
+      const href = adeptsWheelReturnHref;
+      adeptsWheelActive = false;
+      adeptsWheelReturnHref = null;
+      ns.emit("adeptsWheelReturn", { returnHref: href });
+      logger.info({ returnHref: href }, "Quiz adepts wheel return");
+    });
+
+    socket.on("requestAdeptsWheelState", () => {
+      if (adeptsWheelActive && adeptsWheelReturnHref) {
+        socket.emit("adeptsWheelOpened", {
+          returnHref: adeptsWheelReturnHref,
+          currentTurnSeat: adeptsWheelCurrentTurnSeat,
+        });
+      }
+    });
+
     socket.on("hostNavigate", (payload: { boardIndex?: unknown }) => {
       if (!gameStarted) return;
       const raw = payload?.boardIndex;
@@ -124,6 +167,8 @@ export function setupQuizNav(io: Server) {
       lastBoardIndex = null;
       seatPlayerNicks = [];
       lobbyEmojiLineIndex = -1;
+      adeptsWheelActive = false;
+      adeptsWheelReturnHref = null;
       clearQuizPlayers();
       ns.emit("returnToLogin", {});
       ns.emit("lobbyState", lobbyPayload());

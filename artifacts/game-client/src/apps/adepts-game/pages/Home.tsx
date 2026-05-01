@@ -8,6 +8,7 @@ import { GamePhaseNav } from "@/components/GamePhaseArrows";
 import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
 import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
+import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -211,6 +212,13 @@ export default function Home() {
             updateQuestion(openCard.themeIndex, openCard.questionIndex, data)
           }
           onAwardPoints={handleAwardPoints}
+          onHostBroadcastAdeptsWheel={
+            isHost
+              ? (payload) => {
+                  getQuizNavSocket().emit("hostAdeptsWheelOpen", payload);
+                }
+              : undefined
+          }
         />
       )}
     </div>

@@ -3,6 +3,7 @@ import { io, Socket } from "socket.io-client";
 import type { Player, Question } from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
+import { consumeAdeptsWheelReturnCloseQuizCardFlag } from "@/lib/quizAdeptsWheelClient";
 
 export type { Player, Question };
 
@@ -250,11 +251,17 @@ export function useGameState() {
           }))
         ),
       });
+      const closeAfterWheel = consumeAdeptsWheelReturnCloseQuizCardFlag();
+      const stateToApply = closeAfterWheel
+        ? { ...nextState, activeQuizCard: null, quizBoardHoverCell: null }
+        : nextState;
+      const rebroadcast = closeAfterWheel || hadRoster;
       skipEmitRef.current = true;
-      setState(nextState);
-      if (hadRoster) {
-        skipEmitRef.current = false;
-        queueMicrotask(() => socketRef.current?.emit("update", { ...nextState, boardRoom: ROOM }));
+      setState(stateToApply);
+      if (rebroadcast) {
+        queueMicrotask(() => {
+          socketRef.current?.emit("update", { ...stateToApply, boardRoom: ROOM });
+        });
       }
     });
 

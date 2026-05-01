@@ -47,7 +47,7 @@ export function AdminPage() {
       border: "#f1c40f",
       items: [
         { label: "Счастливчик", desc: "управление колесом", href: `${base}/`, trackKey: "host" },
-        { label: "Ведущий", desc: "Ведущий Adepts Games", href: `${base}/adepts`, trackKey: "adepts" },
+        { label: "Ведущий", desc: "Ведущий Adepts Games", href: `${base}/adepts/spin`, trackKey: "adepts" },
         { label: "Зрители", desc: "наблюдение за колесом", href: `${base}/watch`, trackKey: "watch" },
       ],
     },

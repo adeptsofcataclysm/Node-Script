@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuizLobbyState } from "@/hooks/useQuizLobbyState";
+import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -13,6 +14,12 @@ export function AdeptsQuizBoardGuard({ children }: { children: ReactNode }) {
       window.location.replace(`${base}/adepts-lobby/`);
     }
   }, [lobbyState]);
+
+  const gameStarted = lobbyState?.gameStarted === true;
+  useEffect(() => {
+    if (!gameStarted) return;
+    getQuizNavSocket().emit("requestAdeptsWheelState");
+  }, [gameStarted]);
 
   if (lobbyState == null) {
     return (

@@ -78,7 +78,7 @@ export function ViewerPage() {
         </motion.div>
       )}
 
-      <ResultOverlay result={result} onDismiss={dismissResult} />
+      <ResultOverlay result={result} onDismiss={dismissResult} allowDismiss={false} />
     </div>
   );
 }

@@ -41,9 +41,6 @@ export function setupWheel(io: Server) {
     spinDurationMs: SPIN_DURATION_MS,
   };
 
-  // Track which socket is the host (first non-viewer connection)
-  let hostSocketId: string | null = null;
-
   wheelNs.on("connection", (socket: Socket) => {
     const isViewer = socket.handshake.query.viewer === "1";
     logger.info({ socketId: socket.id, isViewer }, "Wheel connection");
@@ -60,12 +57,7 @@ export function setupWheel(io: Server) {
     });
 
     if (!isViewer) {
-      // First non-viewer becomes the host
-      if (!hostSocketId) hostSocketId = socket.id;
-
       socket.on("wheelSpin", () => {
-        // Only the designated host can spin
-        if (socket.id !== hostSocketId) return;
         if (state.isSpinning) return;
 
         state.isSpinning = true;
@@ -103,9 +95,12 @@ export function setupWheel(io: Server) {
         }, SPIN_DURATION_MS + 200);
       });
 
+      socket.on("wheelResultDismiss", () => {
+        wheelNs.emit("wheelResultDismissed", {});
+      });
+
       socket.on("disconnect", () => {
-        logger.info({ socketId: socket.id }, "Wheel host disconnected");
-        if (hostSocketId === socket.id) hostSocketId = null;
+        logger.info({ socketId: socket.id }, "Wheel spinner disconnected");
       });
     } else {
       socket.on("disconnect", () => {
