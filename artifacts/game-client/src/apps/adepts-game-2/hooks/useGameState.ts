@@ -54,12 +54,38 @@ const DEFAULT_STATE: GameState = {
     "Абилки",
   ],
   questions: [
-    // Дед прими таблетки — пустые
+    // Дед прими таблетки — видео-вопросы 100–400
     [
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
-      { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
+      {
+        text: "",
+        questionUrl: "/ded-primi-tabletki-100-question.mp4",
+        answerText: "Плащ из чешуи Ониксии",
+        answerUrl: "/ded-primi-tabletki-100-answer.png",
+        used: false,
+      },
+      {
+        text: "",
+        questionUrl: "/ded-primi-tabletki-200-question.mp4",
+        answerText:
+          "1) Нужно было поговорить с ЭТИМ огром.\n2) Глазки заметили ДЕДА",
+        answerUrl: "/ded-primi-tabletki-200-answer.png",
+        used: false,
+      },
+      {
+        text: "",
+        questionUrl: "/ded-primi-tabletki-300-question.mp4",
+        answerText:
+          "1) На самом южном островке\n2) Дед должен взять только 1 тушилку. По сути, он и \"может\" только 1 взять. Это уникальный предмет.",
+        answerUrl: "/ded-primi-tabletki-300-answer.png",
+        used: false,
+      },
+      {
+        text: "",
+        questionUrl: "/ded-primi-tabletki-400-question.mp4",
+        answerText: "Жужки на фрост резист фармятся с  химер",
+        answerUrl: "/ded-primi-tabletki-400-answer.png",
+        used: false,
+      },
       { text: "", questionUrl: "", answerText: "", answerUrl: "", used: false },
     ],
     // Тактики
@@ -308,7 +334,7 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = "adepts-game-2-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 46;
+const DATA_VERSION = 51;
 const DATA_VERSION_KEY = "adepts-game-2-data-version";
 const ROOM = "adepts-game-2";
 

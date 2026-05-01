@@ -618,6 +618,8 @@ export function QuestionModal({
     isCelebration = (themeName === "Зацени Look" && points === 500) || (themeName === "Боссы" && points === 200);
   }
 
+  const hideQuestionTimer = themeName === "Дед прими таблетки";
+
   const isWowEventsLargeQuestionMedia =
     board === 3 && themeName === "События в WoW" && [100, 200, 400, 500].includes(points);
   const questionImageMaxStyle = isWowEventsLargeQuestionMedia
@@ -673,6 +675,10 @@ export function QuestionModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    if (hideQuestionTimer) {
+      stopTimer();
+      return stopTimer;
+    }
     if (quizStage === "question") {
       startTimer();
     } else {
@@ -680,7 +686,7 @@ export function QuestionModal({
     }
     return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, quizStage]);
+  }, [isOpen, quizStage, hideQuestionTimer]);
 
   const saveAndClose = (extra: Partial<Question> = {}) => {
     stopTimer();
@@ -1304,7 +1310,7 @@ export function QuestionModal({
 
                 {/* Center — timer (only on question stage, hidden for splash cards) */}
                 <div className="flex justify-center">
-                  {stage === "question" && !question.splashUrl && !isPandora && (board === 1 || board === 2 || !isCelebration) && (
+                  {stage === "question" && !hideQuestionTimer && !question.splashUrl && !isPandora && (board === 1 || board === 2 || !isCelebration) && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
