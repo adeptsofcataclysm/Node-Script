@@ -274,8 +274,8 @@ export function Scoreboard({
         </div>
       )}
 
-      <div className="overflow-x-auto pb-0.5">
-        <div className="mx-auto grid min-w-[528px] max-w-[1080px] grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5">
+      <div className="flex justify-center overflow-x-auto pb-0.5">
+        <div className="mx-auto grid w-full min-w-[528px] max-w-[1080px] grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5">
           {players.map((player, index) => {
             const theme = ADEPTS_SLOT_THEMES[index] ?? ADEPTS_SLOT_THEMES[0]!;
             const accent = theme.hsl;

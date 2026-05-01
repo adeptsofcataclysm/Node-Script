@@ -125,34 +125,42 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        <ChatPanel className="w-[15%] flex-shrink-0 m-2" />
-
-        <main className="flex-1 min-h-0 py-3">
-          <QuizBoard
-            board={3}
-            themes={state.themes}
-            questions={state.questions}
-            onUpdateTheme={updateThemeName}
-            onQuestionClick={handleQuestionClick}
-            readonly={!canOpenCards}
-            blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
-            hoverCell={state.quizBoardHoverCell ?? null}
-            canSyncBoardHover={canOpenCards}
-            onBoardHoverCellChange={setQuizBoardHoverCell}
-          />
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
+        <aside className="flex min-h-0 min-w-0 flex-col p-2">
+          <ChatPanel className="min-h-0 w-full flex-1" />
+        </aside>
+        <main className="flex min-h-0 min-w-0 flex-col py-3">
+          <div className="mx-auto h-full w-full max-w-7xl min-h-0 px-2">
+            <QuizBoard
+              board={3}
+              themes={state.themes}
+              questions={state.questions}
+              onUpdateTheme={updateThemeName}
+              onQuestionClick={handleQuestionClick}
+              readonly={!canOpenCards}
+              blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
+              hoverCell={state.quizBoardHoverCell ?? null}
+              canSyncBoardHover={canOpenCards}
+              onBoardHoverCellChange={setQuizBoardHoverCell}
+            />
+          </div>
         </main>
+        <div className="min-h-0 min-w-0" aria-hidden="true" />
       </div>
 
-      <div className="flex-shrink-0 w-full">
-        <Scoreboard
-          players={state.players}
-          onUpdateName={updatePlayerName}
-          onUpdateScore={updatePlayerScore}
-          onResetScores={resetScores}
-          readonly={!isHost}
-          currentTurnSeat={state.currentTurnSeat}
-        />
+      <div className="grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
+        <div className="min-w-0" aria-hidden="true" />
+        <div className="min-w-0">
+          <Scoreboard
+            players={state.players}
+            onUpdateName={updatePlayerName}
+            onUpdateScore={updatePlayerScore}
+            onResetScores={resetScores}
+            readonly={!isHost}
+            currentTurnSeat={state.currentTurnSeat}
+          />
+        </div>
+        <div className="min-w-0" aria-hidden="true" />
       </div>
 
       {openCard && (
