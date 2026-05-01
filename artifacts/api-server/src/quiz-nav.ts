@@ -3,10 +3,14 @@ import { logger } from "./lib/logger";
 import {
   bindQuizSocketPresence,
   clearQuizPlayers,
+  getQuizSocketLobbyRole,
   unbindQuizSocketPresence,
 } from "./quiz-players-registry";
 
 const MAX_BOARD = 2;
+
+/** Должно совпадать с числом строк в `game-client` `lobbyEmojiRevealLines.ts`. */
+const LOBBY_EMOJI_REVEAL_MAX = 40;
 
 /** После «Запуск игры» — квиз-доски доступны; до этого только лобби */
 let gameStarted = false;
@@ -17,6 +21,9 @@ let lastBoardIndex: number | null = null;
 /** Ник на местах 1–5 на доске (после «Запуск игры», задаёт ведущий). */
 let seatPlayerNicks: string[] = [];
 
+/** Индекс текущей строки эмодзи (−1 — поле пустое; 0..n−1 — одна строка из списка, замена при «Дальше»). */
+let lobbyEmojiLineIndex = -1;
+
 const CHAT_HISTORY_MAX = 50;
 interface ChatEntry { id: string; nick: string; role: "host" | "spectator"; text: string; }
 const chatHistory: ChatEntry[] = [];
@@ -25,12 +32,18 @@ function lobbyPayload(): {
   gameStarted: boolean;
   boardIndex: number;
   seatPlayerNicks: string[];
+  lobbyEmojiLineIndex: number;
 } {
   const boardIndex =
     lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD
       ? lastBoardIndex
       : 0;
-  return { gameStarted, boardIndex, seatPlayerNicks: [...seatPlayerNicks] };
+  return {
+    gameStarted,
+    boardIndex,
+    seatPlayerNicks: [...seatPlayerNicks],
+    lobbyEmojiLineIndex,
+  };
 }
 
 export function setupQuizNav(io: Server) {
@@ -74,6 +87,7 @@ export function setupQuizNav(io: Server) {
         : [];
 
       gameStarted = true;
+      lobbyEmojiLineIndex = -1;
       if (lastBoardIndex === null || lastBoardIndex < 0 || lastBoardIndex > MAX_BOARD) {
         lastBoardIndex = 0;
       }
@@ -109,10 +123,27 @@ export function setupQuizNav(io: Server) {
       gameStarted = false;
       lastBoardIndex = null;
       seatPlayerNicks = [];
+      lobbyEmojiLineIndex = -1;
       clearQuizPlayers();
       ns.emit("returnToLogin", {});
       ns.emit("lobbyState", lobbyPayload());
       logger.info({}, "Quiz hostReturnToLogin — broadcast returnToLogin");
+    });
+
+    socket.on("lobbyEmojiNext", () => {
+      if (gameStarted) return;
+      if (getQuizSocketLobbyRole(socket.id) !== "host") return;
+      if (lobbyEmojiLineIndex >= LOBBY_EMOJI_REVEAL_MAX - 1) return;
+      lobbyEmojiLineIndex += 1;
+      ns.emit("lobbyState", lobbyPayload());
+    });
+
+    socket.on("lobbyEmojiPrev", () => {
+      if (gameStarted) return;
+      if (getQuizSocketLobbyRole(socket.id) !== "host") return;
+      if (lobbyEmojiLineIndex <= -1) return;
+      lobbyEmojiLineIndex -= 1;
+      ns.emit("lobbyState", lobbyPayload());
     });
 
     socket.on("requestChatHistory", () => {
