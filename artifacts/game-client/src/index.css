@@ -86,7 +86,7 @@
   --input: 270 20% 14%;
   --ring: 288 47% 40%;
 
-  --app-font-sans: 'Arial', sans-serif;
+  --app-font-sans: 'Arial', 'Noto Color Emoji', sans-serif;
   --app-font-serif: 'Arial', sans-serif;
   --app-font-mono: 'Courier New', monospace;
   --app-font-display: 'Arial', sans-serif;
@@ -136,7 +136,7 @@
   height: 100vh;
   background: #050208;
   color: white;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Arial', 'Noto Color Emoji', sans-serif;
   overflow: hidden;
 }
 
