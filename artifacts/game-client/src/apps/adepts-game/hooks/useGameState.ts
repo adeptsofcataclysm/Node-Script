@@ -687,17 +687,64 @@ export function useGameState(boardId: AdeptsBoardId) {
   }, []);
 
   const patchActiveQuizCard = useCallback(
-    (patch: Partial<NonNullable<GameState["activeQuizCard"]>>) => {
+    (
+      patch: Partial<NonNullable<GameState["activeQuizCard"]>>,
+      relayOpts?: { nextTurnSeat?: number },
+    ) => {
+      const RELAY_KEYS = new Set<string>([
+        "splashDismissed",
+        "splashDedFlyExitStarted",
+        "splashPassHoverSeat",
+        "splashSeatPassUsed",
+      ]);
+      const keys = Object.keys(patch);
+      const onlyRelaySplash = keys.length > 0 && keys.every((k) => RELAY_KEYS.has(k));
+
       setState((prev) => {
         if (!prev.activeQuizCard) return prev;
-        return { ...prev, activeQuizCard: { ...prev.activeQuizCard, ...patch } };
+        const nextCard = { ...prev.activeQuizCard, ...patch };
+        const nextTurnRaw = relayOpts?.nextTurnSeat;
+        const hasNext =
+          nextTurnRaw !== undefined && Number.isFinite(Number(nextTurnRaw));
+        const nextTurnSeat = hasNext
+          ? ((Math.floor(Number(nextTurnRaw)) % 5) + 5) % 5
+          : prev.currentTurnSeat;
+        return {
+          ...prev,
+          activeQuizCard: nextCard,
+          ...(hasNext ? { currentTurnSeat: nextTurnSeat } : {}),
+        };
       });
+
+      if (!isHostRole()) {
+        const emitPatch: Record<string, unknown> = {};
+        for (const k of keys) {
+          if (RELAY_KEYS.has(k)) {
+            emitPatch[k] = (patch as Record<string, unknown>)[k];
+          }
+        }
+        const nextTurnRaw = relayOpts?.nextTurnSeat;
+        const hasNextEmit =
+          nextTurnRaw !== undefined && Number.isFinite(Number(nextTurnRaw));
+        if (onlyRelaySplash || hasNextEmit) {
+          const cmd: Record<string, unknown> = { type: "activeQuizPatch", patch: emitPatch };
+          if (hasNextEmit) {
+            cmd.nextTurnSeat = ((Math.floor(Number(nextTurnRaw)) % 5) + 5) % 5;
+          }
+          if (Object.keys(emitPatch).length > 0 || hasNextEmit) {
+            getAdeptsCommandSocket().emit("command", cmd);
+          }
+        }
+      }
     },
     []
   );
 
   const setQuizBoardHoverCell = useCallback((cell: QuizBoardHoverCell) => {
     setState((prev) => ({ ...prev, quizBoardHoverCell: cell }));
+    if (!isHostRole()) {
+      getAdeptsCommandSocket().emit("command", { type: "hostSetHover", cell });
+    }
   }, []);
 
   const resetGame = useCallback(() => {

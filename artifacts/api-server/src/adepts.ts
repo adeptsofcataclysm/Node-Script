@@ -5,9 +5,10 @@ import {
   applyHostJudgeAnswer,
   applyHostQuizRelay,
   applyHostRevealAnswer,
-  applyHostSetHover,
+  applyQuizBoardHover,
   applyHostSetTurn,
   applyHostClearActiveCard,
+  applyActiveQuizPatch,
   applyPickCell,
   cloneQuizRelay,
   getQuizRelayOrDefault,
@@ -148,6 +149,28 @@ export function setupAdepts(io: Server): void {
           run();
           return;
         }
+        case "activeQuizPatch": {
+          const seatResolved = resolvePickSeat(socket, cmd, host);
+          if (!host && seatResolved === null) {
+            logger.warn({ sessionId, socketId: socket.id }, "activeQuizPatch rejected: no seat");
+            return;
+          }
+          const r = applyActiveQuizPatch(sessionId, {
+            isHost: host,
+            playerSeat: host ? null : seatResolved,
+            patch: cmd["patch"],
+            nextTurnSeat: cmd["nextTurnSeat"],
+          });
+          if (!r.ok) {
+            logger.warn(
+              { sessionId, socketId: socket.id, err: r.error },
+              "activeQuizPatch rejected",
+            );
+            return;
+          }
+          run();
+          return;
+        }
         case "pickCell": {
           const seatResolved = resolvePickSeat(socket, cmd, host);
           if (!host && seatResolved === null) {
@@ -188,17 +211,42 @@ export function setupAdepts(io: Server): void {
           return;
         }
         case "hostSetHover": {
-          if (!host) return;
+          const seatResolved = resolvePickSeat(socket, cmd, host);
+          if (!host && seatResolved === null) {
+            logger.warn({ sessionId, socketId: socket.id }, "hostSetHover rejected: no seat");
+            return;
+          }
           const cell = cmd["cell"];
+          if (cell === undefined) {
+            run();
+            return;
+          }
+
+          let parsed: { themeIndex: number; questionIndex: number } | null;
           if (cell === null) {
-            applyHostSetHover(sessionId, null);
+            parsed = null;
           } else if (cell && typeof cell === "object") {
             const o = cell as Record<string, unknown>;
             const ti = Number(o["themeIndex"]);
             const qi = Number(o["questionIndex"]);
             if (Number.isInteger(ti) && Number.isInteger(qi)) {
-              applyHostSetHover(sessionId, { themeIndex: ti, questionIndex: qi });
+              parsed = { themeIndex: ti, questionIndex: qi };
+            } else {
+              run();
+              return;
             }
+          } else {
+            run();
+            return;
+          }
+
+          const r = applyQuizBoardHover(sessionId, {
+            isHost: host,
+            playerSeat: host ? null : seatResolved!,
+          }, parsed);
+          if (!r.ok) {
+            logger.warn({ sessionId, socketId: socket.id, err: r.error }, "hostSetHover rejected");
+            return;
           }
           run();
           return;

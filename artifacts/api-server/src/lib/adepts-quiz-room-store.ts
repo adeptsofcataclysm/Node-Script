@@ -1,8 +1,39 @@
-import type { AdeptsQuizRelayPayload, AdeptsRelayActiveCard } from "./adepts-quiz-relay-types";
 import {
   defaultQuizRelayPayload,
   pointValueForQuestionIndex,
+  type AdeptsQuizRelayPayload,
+  type AdeptsRelayActiveCard,
 } from "./adepts-quiz-relay-types";
+
+const ACTIVE_QUIZ_RELAY_PATCH_KEYS = [
+  "splashDismissed",
+  "splashDedFlyExitStarted",
+  "splashPassHoverSeat",
+  "splashSeatPassUsed",
+] as const;
+
+function parseActiveQuizRelayPatch(patch: unknown): Partial<AdeptsRelayActiveCard> {
+  if (!patch || typeof patch !== "object") return {};
+  const p = patch as Record<string, unknown>;
+  const out: Partial<AdeptsRelayActiveCard> = {};
+  for (const key of ACTIVE_QUIZ_RELAY_PATCH_KEYS) {
+    if (!(key in p)) continue;
+    const v = p[key];
+    if (key === "splashPassHoverSeat") {
+      if (v === null) {
+        out.splashPassHoverSeat = null;
+      } else if (typeof v === "number") {
+        const n = Math.floor(v);
+        if (Number.isInteger(n) && n >= 0 && n <= 4) out.splashPassHoverSeat = n;
+      }
+      continue;
+    }
+    if (typeof v === "boolean") {
+      (out as Record<string, boolean>)[key] = v;
+    }
+  }
+  return out;
+}
 
 const rooms = new Map<string, AdeptsQuizRelayPayload>();
 
@@ -61,12 +92,90 @@ export function applyHostQuizRelay(sessionId: string, payload: unknown): { ok: t
   return { ok: true };
 }
 
-export function applyHostSetHover(
+/**
+ * Board hover highlight: ведущий или игрок, чей seat совпадает с currentTurnSeat.
+ */
+export function applyQuizBoardHover(
   sessionId: string,
+  opts: { isHost: boolean; playerSeat: number | null },
   cell: { themeIndex: number; questionIndex: number } | null,
-): void {
+): { ok: true } | { ok: false; error: string } {
   const s = getQuizRelayOrDefault(sessionId);
-  s.quizBoardHoverCell = cell;
+  const turn = ((s.currentTurnSeat % 5) + 5) % 5;
+  let authSeatN: number | null = null;
+  if (opts.playerSeat !== null && opts.playerSeat !== undefined) {
+    const n = Math.floor(Number(opts.playerSeat));
+    if (Number.isInteger(n) && n >= 0 && n <= 4) authSeatN = ((n % 5) + 5) % 5;
+  }
+  const allowed = opts.isHost || (authSeatN !== null && authSeatN === turn);
+  if (!allowed) return { ok: false, error: "not authorized" };
+
+  if (cell === null) {
+    s.quizBoardHoverCell = null;
+    return { ok: true };
+  }
+  const t = cell.themeIndex;
+  const q = cell.questionIndex;
+  if (!Number.isInteger(t) || !Number.isInteger(q)) return { ok: false, error: "bad cell" };
+  if (t < 0 || t >= s.questionUsedGrid.length) return { ok: false, error: "bad themeIndex" };
+  const row = s.questionUsedGrid[t];
+  if (!row || q < 0 || q >= row.length) return { ok: false, error: "bad questionIndex" };
+  if (row[q]) return { ok: false, error: "cell already used" };
+  s.quizBoardHoverCell = { themeIndex: t, questionIndex: q };
+  return { ok: true };
+}
+
+/**
+ * Merge whitelisted `activeQuizCard` fields from the current player (seat === turn) or host.
+ * Used so splash / raccoon UI syncs to all clients — non-host relay does not send `hostQuizRelay`.
+ */
+export function applyActiveQuizPatch(
+  sessionId: string,
+  opts: {
+    isHost: boolean;
+    playerSeat: number | null;
+    patch: unknown;
+    nextTurnSeat?: unknown;
+  },
+): { ok: true } | { ok: false; error: string } {
+  const s = getQuizRelayOrDefault(sessionId);
+  const c = s.activeQuizCard;
+  if (!c) return { ok: false, error: "no active card" };
+
+  const turn = ((s.currentTurnSeat % 5) + 5) % 5;
+  let authSeatN: number | null = null;
+  if (opts.playerSeat !== null && opts.playerSeat !== undefined) {
+    const n = Math.floor(Number(opts.playerSeat));
+    if (Number.isInteger(n) && n >= 0 && n <= 4) authSeatN = ((n % 5) + 5) % 5;
+  }
+
+  const allowed = opts.isHost || (authSeatN !== null && authSeatN === turn);
+  if (!allowed) return { ok: false, error: "not authorized" };
+
+  const filtered = parseActiveQuizRelayPatch(opts.patch);
+  let nextTurnN: number | null = null;
+  if (opts.nextTurnSeat !== undefined && opts.nextTurnSeat !== null) {
+    const nt = typeof opts.nextTurnSeat === "number" ? opts.nextTurnSeat : Number(opts.nextTurnSeat);
+    const n = Math.floor(nt);
+    if (!Number.isInteger(n) || n < 0 || n > 4) return { ok: false, error: "bad nextTurnSeat" };
+    nextTurnN = ((n % 5) + 5) % 5;
+  }
+
+  if (Object.keys(filtered).length === 0 && nextTurnN === null) {
+    return { ok: false, error: "empty patch" };
+  }
+
+  const merged: AdeptsRelayActiveCard = { ...c, ...filtered };
+
+  if (nextTurnN !== null) {
+    if (merged.splashSeatPassUsed !== true) {
+      return { ok: false, error: "nextTurnSeat requires splashSeatPassUsed" };
+    }
+    s.currentTurnSeat = nextTurnN;
+  }
+
+  s.activeQuizCard = merged;
+  return { ok: true };
 }
 
 export function applyPickCell(

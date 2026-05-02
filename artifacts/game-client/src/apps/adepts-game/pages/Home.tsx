@@ -230,8 +230,10 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
             patchActiveQuizCard({ splashPassHoverSeat: seat })
           }
           onPassTurnToSeat={(target) => {
-            patchActiveQuizCard({ splashSeatPassUsed: true, splashPassHoverSeat: null });
-            setCurrentTurnSeat(target);
+            patchActiveQuizCard(
+              { splashSeatPassUsed: true, splashPassHoverSeat: null },
+              { nextTurnSeat: target },
+            );
           }}
           readonly={!isHost}
           onClose={closeQuestion}
