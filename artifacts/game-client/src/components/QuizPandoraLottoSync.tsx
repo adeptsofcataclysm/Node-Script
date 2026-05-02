@@ -5,18 +5,10 @@ import {
   clientJoinsPandoraRouletteAsPlayer,
   getPandoraLottoPostUrl,
 } from "@/lib/quizPandoraRouletteClient";
+import { buildQuizBoardUrl, getQuizBoardPhaseIndexForPathname } from "@/components/GamePhaseArrows";
 import { getAdeptsSessionId, setAdeptsSessionId } from "@/lib/adeptsSessionId";
 
-function isOnPandoraLottoRoute(): boolean {
-  try {
-    const p = window.location.pathname.replace(/\/$/, "");
-    return p.endsWith("/pandora-lotto") || p.includes("/pandora-lotto/");
-  } catch {
-    return false;
-  }
-}
-
-/** Переход на `/pandora-lotto` по команде ведущего; возврат на `/game`, `/spectate` или доску квиза. */
+/** Редирект на квиз-доску по `hostPandoraLottoOpen`; возврат на `/game`, `/spectate` или доску квиза. */
 export function QuizPandoraLottoSync() {
   useEffect(() => {
     let detach: (() => void) | undefined;
@@ -25,21 +17,46 @@ export function QuizPandoraLottoSync() {
       detach?.();
       const s = getQuizNavSocket();
 
-      const onOpened = () => {
-        if (isOnPandoraLottoRoute()) return;
+      const onOpened = (raw?: unknown) => {
+        const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+        /** Реплей состояния (`requestPandoraLottoState`) не должен снова дергать навигацию. */
+        if (o["broadcastSession"] !== true) return;
         try {
           sessionStorage.setItem(QUIZ_PANDORA_LOTTO_POST_URL_KEY, getPandoraLottoPostUrl());
         } catch {
           /* ignore */
         }
+        const rawBi = o["boardIndex"];
+        const bi = typeof rawBi === "number" ? rawBi : Number(rawBi);
+        const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 2 ? bi : 0;
         const sessionId = getAdeptsSessionId();
-        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         setAdeptsSessionId(sessionId);
-        const target = `${base}/pandora-lotto?sessionId=${encodeURIComponent(sessionId)}`;
-        window.location.assign(target);
+        const quizHref = buildQuizBoardUrl(safeBi);
+        const sep = quizHref.includes("?") ? "&" : "?";
+        window.location.assign(`${quizHref}${sep}sessionId=${encodeURIComponent(sessionId)}`);
       };
 
-      const onReturn = () => {
+      const onReturn = (payload?: unknown) => {
+        const o = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+        if (o["toQuizBoard"] === true) {
+          const raw = o["boardIndex"];
+          const bi = typeof raw === "number" ? raw : Number(raw);
+          const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 2 ? bi : 0;
+          try {
+            sessionStorage.removeItem(QUIZ_PANDORA_LOTTO_POST_URL_KEY);
+          } catch {
+            /* ignore */
+          }
+          try {
+            const cur = getQuizBoardPhaseIndexForPathname(window.location.pathname);
+            if (cur === safeBi && window.location.pathname.includes("adepts-game")) return;
+          } catch {
+            /* ignore */
+          }
+          window.location.assign(buildQuizBoardUrl(safeBi));
+          return;
+        }
+
         const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         const sessionId = getAdeptsSessionId();
         let href: string | null = null;

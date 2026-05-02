@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { LottoModal } from "@/components/LottoModal";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 import { usePandoraLottoPublicViewer } from "@/hooks/usePandoraLottoPublicViewer";
+import { useQuizLobbyState } from "@/hooks/useQuizLobbyState";
 import { useRole } from "@/hooks/useRole";
 import { useSpectatorSocket } from "@/hooks/useSpectatorSocket";
 import { setAdeptsSessionId } from "@/lib/adeptsSessionId";
@@ -11,9 +12,13 @@ const BG_URL = "url('/pandora-bg.png')";
 /** Общий экран «Барабан Лото» после команды ведущего: ведущий заполняет список, остальные ждут. */
 export function PandoraLottoPage() {
   const { isHost } = useRole();
-  const { rematch, playerNames } = useSpectatorSocket();
+  const { playerNames } = useSpectatorSocket();
+  const { lobbyState } = useQuizLobbyState();
 
-  /** Игроки за столом рулетки + ник ведущего — не в список лото из лобби. */
+  /**
+   * Не в автосписок лото: ведущий, места квиза с сервера (`seatPlayerNicks` после startGame),
+   * плюс имена с сокета рулетки (на случай расхождения с ростером).
+   */
   const lottoAutoExcludeNicks = useMemo(() => {
     const out: string[] = [];
     const seen = new Set<string>();
@@ -26,9 +31,10 @@ export function PandoraLottoPage() {
       out.push(t);
     };
     if (isHost) push(localStorage.getItem("player_nick") ?? undefined);
+    for (const n of lobbyState?.seatPlayerNicks ?? []) push(n);
     for (let i = 0; i < 5; i += 1) push(playerNames[String(i)]);
     return out;
-  }, [isHost, playerNames]);
+  }, [isHost, lobbyState?.seatPlayerNicks, playerNames]);
   const lottoViewerSnapshot = usePandoraLottoPublicViewer();
 
   useEffect(() => {
@@ -45,9 +51,10 @@ export function PandoraLottoPage() {
     getQuizNavSocket().emit("hostPandoraLottoClose");
   };
 
-  const confirmReplace = () => {
-    rematch();
-    window.setTimeout(() => closeLottoSession(), 200);
+  const confirmReplace = (winnerNick: string) => {
+    const nick = winnerNick.trim().slice(0, 64);
+    if (!nick) return;
+    getQuizNavSocket().emit("hostPandoraLottoConfirmReplace", { winnerNick: nick });
   };
 
   return (
@@ -75,7 +82,9 @@ export function PandoraLottoPage() {
           readOnly
           snapshot={lottoViewerSnapshot}
           onClose={() => {}}
-          onConfirm={() => {}}
+          onConfirm={(_winnerNick: string) => {
+            /* только ведущий шлёт hostPandoraLottoConfirmReplace */
+          }}
         />
       )}
     </div>

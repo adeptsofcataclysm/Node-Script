@@ -533,7 +533,8 @@ function BurstParticle({ tx, ty, color, shape, size, rot, delay }: typeof BURST[
 
 export type LottoModalProps = {
   onClose: () => void;
-  onConfirm: () => void;
+  /** Ник с шара победителя — подставляется на место застрелившегося на доске квиза. */
+  onConfirm: (winnerNick: string) => void;
   /** Режим наблюдателя — состояние с сервера (`pandoraLottoPublicState`) */
   readOnly?: boolean;
   snapshot?: PandoraLottoPublicState | null;
@@ -566,6 +567,7 @@ export function LottoModal({
 
   const spectatorPool = useQuizSpectatorNicksForLotto(autoSpectatorExcludeNicks);
   const spectatorPoolSig = spectatorPool.join("\u0001");
+  const autoExcludeNickSig = autoSpectatorExcludeNicks.join("\u0001");
 
   const viewerSyncPending = readOnly && snapshot === null;
 
@@ -588,6 +590,19 @@ export function LottoModal({
     };
     getQuizNavSocket().emit("hostPandoraLottoPublicSync", payload);
   }, [readOnly, phase, names, drumPhase, drumKey, pickedWinner]);
+
+  /** Убрать из списка ведущего и игроков по местам (если уже успели попасть до прихода ростера). */
+  useEffect(() => {
+    if (readOnly || phase !== "setup") return;
+    const ex = new Set(
+      autoSpectatorExcludeNicks.map((n) => n.trim().toLowerCase()).filter(Boolean),
+    );
+    if (ex.size === 0) return;
+    setNames((prev) => {
+      const filtered = prev.filter((n) => !ex.has(n.trim().toLowerCase()));
+      return filtered.length === prev.length ? prev : filtered;
+    });
+  }, [readOnly, phase, autoExcludeNickSig]);
 
   /** Автодобавление зрителей из лобби квиза (не ведущий, не игроки за столом рулетки). */
   useEffect(() => {
@@ -711,7 +726,13 @@ export function LottoModal({
 
   const confirmChoice = () => {
     if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
-    onConfirm();
+    const winIdx = disp.winnerIndex;
+    const nick =
+      winIdx !== null && winIdx >= 0 && winIdx < disp.names.length
+        ? disp.names[winIdx]!.trim().slice(0, 64)
+        : "";
+    if (!nick) return;
+    onConfirm(nick);
   };
   const closeModal = () => {
     if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }

@@ -5,7 +5,7 @@ import {
   type PandoraLottoPublicState,
 } from "@/lib/pandoraLottoPublicState";
 
-/** Снимок лото с `/quiz-nav` для наблюдателей и игроков на `/pandora-lotto`. */
+/** Снимок лото с `/quiz-nav` для оверлея на квиз-доске и страницы `/pandora-lotto`. */
 export function usePandoraLottoPublicViewer(): PandoraLottoPublicState | null {
   const [snapshot, setSnapshot] = useState<PandoraLottoPublicState | null>(null);
 
@@ -22,14 +22,19 @@ export function usePandoraLottoPublicViewer(): PandoraLottoPublicState | null {
         const p = parsePandoraLottoPublicState(raw);
         if (p) setSnapshot(p);
       };
+      const onReturn = () => {
+        setSnapshot(null);
+      };
       const onConnect = () => {
         requestState();
       };
       s.on("pandoraLottoPublicState", onState);
+      s.on("pandoraLottoReturn", onReturn);
       s.on("connect", onConnect);
       if (s.connected) requestState();
       detach = () => {
         s.off("pandoraLottoPublicState", onState);
+        s.off("pandoraLottoReturn", onReturn);
         s.off("connect", onConnect);
       };
     };

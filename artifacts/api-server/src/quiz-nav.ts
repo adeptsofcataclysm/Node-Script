@@ -10,7 +10,11 @@ import {
 } from "./quiz-players-registry";
 import { applySeatNickRosterToQuizRelay, resetQuizRoomForSession } from "./lib/adepts-quiz-room-store";
 import { broadcastAdeptsQuizSync } from "./adepts";
-import { seedPandoraFromQuiz } from "./game";
+import {
+  applyPandoraLottoWinnerReplace,
+  peekPandoraEliminatedSeatIndex,
+  seedPandoraFromQuiz,
+} from "./game";
 
 function queryAdeptsRoleLower(socket: Socket): string {
   const q = socket.handshake.query["adeptsRole"];
@@ -297,11 +301,16 @@ export function setupQuizNav(io: Server) {
       const n = getNav(sessionId);
       n.pandoraLottoActive = true;
       n.pandoraLottoPublic = { ...DEFAULT_PANDORA_LOTTO_PUBLIC };
-      ns.to(sessionId).emit("pandoraLottoOpened", {});
-      socket.emit("pandoraLottoOpened", {});
+      const boardIndex =
+        n.lastBoardIndex !== null && n.lastBoardIndex >= 0 && n.lastBoardIndex <= MAX_BOARD
+          ? n.lastBoardIndex
+          : 0;
+      const openPayload = { boardIndex, broadcastSession: true as const };
+      ns.to(sessionId).emit("pandoraLottoOpened", openPayload);
+      socket.emit("pandoraLottoOpened", openPayload);
       ns.to(sessionId).emit("pandoraLottoPublicState", n.pandoraLottoPublic);
       socket.emit("pandoraLottoPublicState", n.pandoraLottoPublic);
-      logger.info({ sessionId }, "Quiz Pandora lotto opened");
+      logger.info({ sessionId, boardIndex }, "Quiz Pandora lotto opened");
     });
 
     socket.on("hostPandoraLottoPublicSync", (payload: unknown) => {
@@ -312,6 +321,68 @@ export function setupQuizNav(io: Server) {
       n.pandoraLottoPublic = next;
       ns.to(sessionId).emit("pandoraLottoPublicState", next);
       socket.emit("pandoraLottoPublicState", next);
+    });
+
+    socket.on("hostPandoraLottoConfirmReplace", (payload: unknown) => {
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
+      if (!n.pandoraLottoActive) return;
+
+      const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+      const winnerNick =
+        typeof po["winnerNick"] === "string" ? po["winnerNick"].trim().slice(0, 64) : "";
+      if (!winnerNick) return;
+
+      const elimPeek = peekPandoraEliminatedSeatIndex(sessionId);
+      if (elimPeek === null) {
+        logger.warn({ sessionId }, "hostPandoraLottoConfirmReplace no eliminated seat");
+        return;
+      }
+
+      const row = [...n.seatPlayerNicks];
+      while (row.length < 5) row.push("");
+      const normalized = row.map((x) => String(x ?? "").trim().slice(0, 64));
+      while (normalized.length < 5) normalized.push("");
+      const wKey = winnerNick.trim().toLowerCase();
+      for (let i = 0; i < 5; i += 1) {
+        if (i === elimPeek) continue;
+        const nk = (normalized[i] ?? "").trim().toLowerCase();
+        if (nk.length > 0 && nk === wKey) {
+          logger.warn({ sessionId, winnerNick }, "hostPandoraLottoConfirmReplace duplicate nick on roster");
+          return;
+        }
+      }
+
+      const result = applyPandoraLottoWinnerReplace(io, sessionId, winnerNick);
+      if (!result.ok) {
+        logger.warn(
+          { sessionId, reason: result.reason },
+          "hostPandoraLottoConfirmReplace rejected",
+        );
+        return;
+      }
+
+      const elimIdx = result.eliminatedSeatIndex;
+      normalized[elimIdx] = winnerNick.trim().slice(0, 64);
+      n.seatPlayerNicks = normalized.slice(0, 5);
+      n.pandoraRoulettePlayerNames = [...n.seatPlayerNicks];
+
+      applySeatNickRosterToQuizRelay(sessionId, n.seatPlayerNicks);
+      broadcastAdeptsQuizSync(io, sessionId, socket);
+
+      const out = lobbyPayload(sessionId);
+      ns.to(sessionId).emit("lobbyState", out);
+      socket.emit("lobbyState", out);
+
+      n.pandoraLottoActive = false;
+      n.pandoraLottoPublic = null;
+
+      const boardIndex =
+        n.lastBoardIndex !== null && n.lastBoardIndex >= 0 && n.lastBoardIndex <= MAX_BOARD
+          ? n.lastBoardIndex
+          : 0;
+      ns.to(sessionId).emit("pandoraLottoReturn", { toQuizBoard: true, boardIndex });
+      logger.info({ sessionId, elimIdx, winnerNick }, "Quiz Pandora lotto confirm replace");
     });
 
     socket.on("hostPandoraLottoClose", () => {
@@ -341,7 +412,7 @@ export function setupQuizNav(io: Server) {
     socket.on("requestPandoraLottoState", () => {
       const nav = getNav(sessionId);
       if (nav.pandoraLottoActive) {
-        socket.emit("pandoraLottoOpened", {});
+        /** Не шлём `pandoraLottoOpened` — иначе снова сработает редирект в `QuizPandoraLottoSync`. */
         const pub = nav.pandoraLottoPublic ?? { ...DEFAULT_PANDORA_LOTTO_PUBLIC };
         nav.pandoraLottoPublic = pub;
         socket.emit("pandoraLottoPublicState", pub);
@@ -376,11 +447,15 @@ export function setupQuizNav(io: Server) {
 
     socket.on("requestPandoraRouletteState", () => {
       const n = getNav(sessionId);
+      /** Пока открыт «Барабан Лото», не реплеить рулетку — иначе клиенты на доске получают `pandoraRouletteOpened` и улетают на `/game`/`/spectate`. */
+      if (n.pandoraLottoActive) return;
       if (n.pandoraRouletteActive && n.pandoraRouletteReturnHref) {
+        /** Не путать с вещанием от `hostPandoraRouletteOpen`: клиент на доске не должен уезжать на рулетку при реплее. */
         socket.emit("pandoraRouletteOpened", {
           returnHref: n.pandoraRouletteReturnHref,
           currentTurnSeat: n.pandoraRouletteCurrentTurnSeat,
           playerNames: [...n.pandoraRoulettePlayerNames],
+          stateReplay: true,
         });
       }
     });
@@ -433,6 +508,15 @@ export function setupQuizNav(io: Server) {
         return;
       }
       n.lastBoardIndex = boardIndex;
+      /**
+       * После возврата с рулетки на доску флаг часто остаётся true; смена доски ведущим = работа с квизом,
+       * реплей `requestPandoraRouletteState` не должен снова открывать рулетку.
+       */
+      if (n.pandoraRouletteActive) {
+        n.pandoraRouletteActive = false;
+        n.pandoraRouletteReturnHref = null;
+        n.pandoraRoulettePlayerNames = [];
+      }
       socket.to(sessionId).emit("phase", { boardIndex });
       /** Echo: `socket.to` excludes sender; host must receive `phase` for `QuizNavSync` (no client-side `assign` in `GamePhaseNav`). */
       socket.emit("phase", { boardIndex });

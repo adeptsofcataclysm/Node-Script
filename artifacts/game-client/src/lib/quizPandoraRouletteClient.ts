@@ -52,6 +52,14 @@ export function getPandoraLottoPostUrl(): string {
   const sessionId = getAdeptsSessionId();
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   try {
+    const fromQuizHref = sessionStorage.getItem(QUIZ_PANDORA_RETURN_KEY)?.trim();
+    if (fromQuizHref && fromQuizHref.length > 0 && fromQuizHref.length < 2048) {
+      return fromQuizHref;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
     if (window.location.pathname.includes("/adepts-game")) {
       return `${window.location.pathname}${window.location.search}`;
     }

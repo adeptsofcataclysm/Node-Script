@@ -37,8 +37,9 @@ export function AdeptsQuizBoardGuard({ children }: { children: ReactNode }) {
       /* ignore */
     }
     getQuizNavSocket().emit("requestAdeptsWheelState");
-    getQuizNavSocket().emit("requestPandoraRouletteState");
+    /** Лото приоритетнее рулетки: иначе два ответа подряд и редирект на `/spectate` перебивает `/pandora-lotto`. */
     getQuizNavSocket().emit("requestPandoraLottoState");
+    getQuizNavSocket().emit("requestPandoraRouletteState");
   }, [gameStarted]);
 
   if (lobbyState == null) {

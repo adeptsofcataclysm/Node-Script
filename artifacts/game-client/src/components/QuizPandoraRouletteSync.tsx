@@ -44,6 +44,24 @@ export function QuizPandoraRouletteSync() {
       const s = getQuizNavSocket();
 
       const onOpened = (raw: unknown) => {
+        try {
+          const p = window.location.pathname.replace(/\/$/, "");
+          if (p.endsWith("/pandora-lotto") || p.includes("/pandora-lotto/")) return;
+        } catch {
+          /* ignore */
+        }
+        const po = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+        /**
+         * Ответ на `requestPandoraRouletteState` при устаревшем `pandoraRouletteActive` на сервере
+         * (уже вернулись на доску, но флаг не сброшен). Смена доски снова дергает guard → не уводить на рулетку.
+         */
+        if (po["stateReplay"] === true) {
+          try {
+            if (window.location.pathname.includes("/adepts-game")) return;
+          } catch {
+            /* ignore */
+          }
+        }
         const parsed = normalizeOpened(raw);
         if (!parsed) return;
         try {

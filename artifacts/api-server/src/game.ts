@@ -111,6 +111,65 @@ function nextOnlineTurn(state: GameState, from: number): number {
   return first >= 0 ? first : 0;
 }
 
+/** Индекс места застрелившегося в русской рулетке (0–4), если игра в состоянии game over. */
+export function peekPandoraEliminatedSeatIndex(sessionId: string): number | null {
+  const gs = getState(sessionId);
+  if (!gs.gameOver || gs.eliminatedIndex === null) return null;
+  return gs.eliminatedIndex;
+}
+
+/**
+ * После «Барабан Лото»: место застрелившегося занимает победитель (ник на слоте),
+ * старый игрок отключается от комнаты рулетки (уходит зрителем на доску квиза).
+ * Не добавляет ник в bannedNames (в отличие от обычного rematch).
+ */
+export function applyPandoraLottoWinnerReplace(
+  io: Server,
+  sessionId: string,
+  winnerNick: string,
+): { ok: true; eliminatedSeatIndex: number } | { ok: false; reason: string } {
+  const gs = getState(sessionId);
+  if (!gs.gameOver || gs.eliminatedIndex === null) {
+    return { ok: false, reason: "not_eliminated_state" };
+  }
+  const elimIdx = gs.eliminatedIndex;
+  const safeWinner = String(winnerNick ?? "").trim().slice(0, 20);
+  if (!safeWinner) return { ok: false, reason: "empty_winner" };
+
+  const oldSlot = gs.slots[elimIdx];
+  const oldSocketId = oldSlot?.socketId ?? null;
+
+  gs.slots[elimIdx] = { socketId: null, name: safeWinner, isOnline: false };
+  gs.scores[elimIdx] = 0;
+  gs.bulletPos = -1;
+  gs.currentPos = 0;
+  gs.isSpinning = false;
+  gs.gameOver = false;
+  gs.roundCount = 0;
+  gs.eliminatedIndex = null;
+  gs.turn = nextOnlineTurn(gs, elimIdx);
+
+  if (oldSocketId) {
+    try {
+      const sock = io.sockets.sockets.get(oldSocketId);
+      if (sock) sock.disconnect(true);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  io.to(sessionId).emit("rematch", {
+    playerNames: buildPlayerNames(gs),
+    onlineStatus: buildOnlineStatus(gs),
+    turn: gs.turn,
+    count: filledSlotCount(gs),
+    eliminatedIndex: null,
+    scores: gs.scores,
+  });
+
+  return { ok: true, eliminatedSeatIndex: elimIdx };
+}
+
 export function setupGame(io: Server) {
   function adminResetSession(sessionId: string): void {
     const sid = sessionId.trim().slice(0, 128) || "default";

@@ -9,6 +9,7 @@ import { GamePhaseNav } from "@/components/GamePhaseArrows";
 import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
 import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
+import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 function resolveUrl(url: string): string {
@@ -273,6 +274,8 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           }
         />
       )}
+
+      <QuizBoardPandoraLottoOverlay />
     </div>
   );
 }
