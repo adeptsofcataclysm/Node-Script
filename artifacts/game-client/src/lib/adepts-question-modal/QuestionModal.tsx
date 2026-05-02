@@ -553,7 +553,7 @@ function SplashOverlay({
 
 const DED_FLY_IN_DURATION_SEC = 12;
 const DED_FLY_EXIT_DURATION_SEC = 1.05;
-const DED_FLY_CAPTION = "Чё суки?! Завещание хотите?";
+const DED_FLY_CAPTION = "Благословение ДЕДА!";
 
 function DedFlySplashOverlay({
   url,
@@ -595,15 +595,26 @@ function DedFlySplashOverlay({
     audioRef.current = a;
     a.play().catch(() => {});
     return () => {
-      a.pause();
-      a.src = "";
       audioRef.current = null;
+      const teardown = () => {
+        try {
+          a.src = "";
+        } catch {
+          /* ignore */
+        }
+        a.removeEventListener("ended", teardown);
+      };
+      if (a.paused || a.ended) {
+        teardown();
+        return;
+      }
+      /** Splash снимается после клика, но трек доигрывает до конца один раз. */
+      a.addEventListener("ended", teardown);
     };
   }, [audioUrl]);
 
   useEffect(() => {
     if (!dedFlyExitStarted) return;
-    audioRef.current?.pause();
     setExiting(true);
   }, [dedFlyExitStarted]);
 

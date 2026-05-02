@@ -13,6 +13,8 @@ import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 const BOARD_BG = "/funeral-board-bg.png";
 const INTRO_VIDEO = "/funeral-intro.mp4";
+const FUNERAL_BG_MUSIC = "/funeral-bg-music.mp3";
+const FUNERAL_BG_MUSIC_VOLUME = 0.07;
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -36,10 +38,24 @@ export default function FuneralRoundPage() {
   const myScore = state.players[playerSeat]?.score ?? 0;
 
   const [introDone, setIntroDone] = useState(false);
+  /** Только после `onEnded` заставки — не при пропуске ведущим. */
+  const [introPlayedThrough, setIntroPlayedThrough] = useState(false);
 
   useEffect(() => {
     fetch(`/api/track/${trackKey}`, { method: "POST" }).catch(() => {});
   }, [trackKey]);
+
+  useEffect(() => {
+    if (!introDone || !introPlayedThrough) return;
+    const a = new Audio(resolveUrl(FUNERAL_BG_MUSIC));
+    a.loop = true;
+    a.volume = FUNERAL_BG_MUSIC_VOLUME;
+    a.play().catch(() => {});
+    return () => {
+      a.pause();
+      a.src = "";
+    };
+  }, [introDone, introPlayedThrough]);
 
   /** Снова показывать таблицу пожертвований на 3-й квиз-доске после визита на похороны. */
   useEffect(() => {
@@ -55,7 +71,10 @@ export default function FuneralRoundPage() {
     []
   );
 
-  const finishIntro = useCallback(() => setIntroDone(true), []);
+  const finishIntroAfterFullVideo = useCallback(() => {
+    setIntroPlayedThrough(true);
+    setIntroDone(true);
+  }, []);
 
   const skipIntroAsHost = useCallback(() => {
     if (!isHost) return;
@@ -96,7 +115,7 @@ export default function FuneralRoundPage() {
             autoPlay
             playsInline
             controls={false}
-            onEnded={finishIntro}
+            onEnded={finishIntroAfterFullVideo}
           />
           {isHost ? (
             <p className="absolute bottom-6 left-0 right-0 text-center text-sm text-white/55">
