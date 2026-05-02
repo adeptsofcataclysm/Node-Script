@@ -1,40 +1,45 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+import { getQuizNavSocket, subscribeQuizNavSocketReplace } from "@/hooks/quizNavSocket";
 import { buildQuizBoardUrl, getQuizBoardPhaseIndexForPathname } from "@/components/GamePhaseArrows";
 
-function isQuizPhaseFollower(): boolean {
-  return localStorage.getItem("player_role") !== "host";
-}
-
-/** Синхронизация перехода между досками для зрителя и игрока с места (не для ведущего). */
+/** Синхронизация перехода между досками по событию `phase` с `/quiz-nav` (ведущий тоже — см. `GamePhaseNav`). */
 export function QuizNavSync() {
   const [location] = useLocation();
 
   useEffect(() => {
-    if (!isQuizPhaseFollower()) return;
+    let detach: (() => void) | undefined;
 
-    const s = getQuizNavSocket();
-    const onPhase = (payload: { boardIndex?: unknown }) => {
-      const raw = payload?.boardIndex;
-      const boardIndex = typeof raw === "number" ? raw : Number(raw);
-      if (!Number.isInteger(boardIndex) || boardIndex < 0 || boardIndex > 2) return;
+    const bind = () => {
+      detach?.();
+      const s = getQuizNavSocket();
+      const onPhase = (payload: { boardIndex?: unknown }) => {
+        const raw = payload?.boardIndex;
+        const boardIndex = typeof raw === "number" ? raw : Number(raw);
+        if (!Number.isInteger(boardIndex) || boardIndex < 0 || boardIndex > 2) return;
 
-      const cur = getQuizBoardPhaseIndexForPathname(window.location.pathname);
-      if (cur < 0) return;
+        const cur = getQuizBoardPhaseIndexForPathname(window.location.pathname);
+        if (cur < 0) return;
 
-      if (boardIndex === cur) return;
-      window.location.assign(buildQuizBoardUrl(boardIndex));
+        if (boardIndex === cur) return;
+        window.location.assign(buildQuizBoardUrl(boardIndex));
+      };
+
+      s.on("phase", onPhase);
+      detach = () => {
+        s.off("phase", onPhase);
+      };
     };
 
-    s.on("phase", onPhase);
+    bind();
+    const unsub = subscribeQuizNavSocketReplace(bind);
     return () => {
-      s.off("phase", onPhase);
+      unsub();
+      detach?.();
     };
   }, []);
 
   useEffect(() => {
-    if (!isQuizPhaseFollower()) return;
     if (getQuizBoardPhaseIndexForPathname(window.location.pathname) < 0) return;
     getQuizNavSocket().emit("requestPhase");
   }, [location]);

@@ -92,7 +92,7 @@ export function syncQuizLobbyClientAssignments(payload: QuizLobbyStatePayload): 
     /* ignore */
   }
 
-  const isHost = localStorage.getItem("player_role") === "host";
+  const isHost = localStorage.getItem("player_role")?.trim().toLowerCase() === "host";
   if (isHost) {
     notifyAssignmentsChanged();
     return;

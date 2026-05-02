@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { getQuizThemeIconUrl } from "@/lib/quizThemeIcons";
 import { isAdeptsWheelFaceDownCell } from "@/lib/isAdeptsWheelFaceDownCell";
@@ -52,6 +52,8 @@ interface QuizBoardProps {
   /** Ведущий или игрок с ходом — шлёт hover в общее состояние. */
   canSyncBoardHover?: boolean;
   onBoardHoverCellChange?: (cell: QuizBoardHoverCell) => void;
+  /** When true, theme titles cannot be edited (e.g. only the host may rename themes). */
+  themeEditReadonly?: boolean;
 }
 
 export function QuizBoard({
@@ -65,9 +67,17 @@ export function QuizBoard({
   hoverCell,
   canSyncBoardHover = false,
   onBoardHoverCellChange,
+  themeEditReadonly,
 }: QuizBoardProps) {
   const [editingTheme, setEditingTheme] = useState<number | null>(null);
+  const [themeDraft, setThemeDraft] = useState("");
   const theme2LineBreaks = board === 2;
+  const themeRowLocked = themeEditReadonly ?? readonly;
+
+  useEffect(() => {
+    if (editingTheme === null) return;
+    setThemeDraft(themes[editingTheme] ?? "");
+  }, [editingTheme, themes]);
 
   const hoverNorm = useMemo(
     () => normalizeBoardHover(hoverCell, themes.length, questions),
@@ -90,7 +100,7 @@ export function QuizBoard({
                 damping: 22,
                 stiffness: 180,
               }}
-              className={`w-[21%] relative flex items-center rounded-xl overflow-hidden group ${readonly ? "cursor-default" : "cursor-text"}`}
+              className={`w-[21%] relative flex items-center rounded-xl overflow-hidden group ${themeRowLocked ? "cursor-default" : "cursor-text"}`}
               style={{
                 background: "linear-gradient(105deg, hsla(270,40%,12%,0.95) 0%, hsla(270,30%,9%,0.7) 100%)",
                 borderLeft: "3px solid hsla(280,65%,58%,0.85)",
@@ -99,7 +109,7 @@ export function QuizBoard({
                 borderLeftColor: "hsla(280,65%,58%,0.85)",
                 boxShadow: "inset 0 0 30px hsla(280,60%,15%,0.4)",
               }}
-              onClick={() => !readonly && setEditingTheme(tIdx)}
+              onClick={() => !themeRowLocked && setEditingTheme(tIdx)}
             >
               <motion.div
                 className="absolute inset-0 pointer-events-none"
@@ -116,10 +126,15 @@ export function QuizBoard({
                 {editingTheme === tIdx ? (
                   <input
                     autoFocus
-                    value={theme}
-                    onChange={(e) => onUpdateTheme(tIdx, e.target.value)}
-                    onBlur={() => setEditingTheme(null)}
-                    onKeyDown={(e) => e.key === "Enter" && setEditingTheme(null)}
+                    value={themeDraft}
+                    onChange={(e) => setThemeDraft(e.target.value)}
+                    onBlur={() => {
+                      void onUpdateTheme(tIdx, themeDraft);
+                      setEditingTheme(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    }}
                     className="flex-1 bg-transparent outline-none uppercase tracking-widest text-foreground text-center"
                     style={{ fontSize: "clamp(0.75rem, 1.3vw, 1.15rem)", fontFamily: "WarCraft, sans-serif" }}
                     placeholder={`Тема ${tIdx + 1}`}

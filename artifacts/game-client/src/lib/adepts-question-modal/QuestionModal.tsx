@@ -869,14 +869,18 @@ export function QuestionModal({
     activeTurnSeatNormalized >= 0 &&
     activeTurnSeatNormalized <= 4;
 
-  /** Нажать может только игрок с текущим ходом (клиент в readonly и своё место = ход). */
+  /** Нажать может ведущий (!readonly) или игрок с текущим ходом (readonly + своё место = ход). */
   const canChooseRaccoonPassTarget =
-    readonly &&
-    typeof viewerSeatIndex === "number" &&
-    viewerSeatIndex >= 0 &&
-    viewerSeatIndex <= 4 &&
-    viewerSeatIndex === activeTurnSeatNormalized &&
-    typeof onPassTurnToSeat === "function";
+    typeof onPassTurnToSeat === "function" &&
+    (
+      !readonly ||
+      (
+        typeof viewerSeatIndex === "number" &&
+        viewerSeatIndex >= 0 &&
+        viewerSeatIndex <= 4 &&
+        viewerSeatIndex === activeTurnSeatNormalized
+      )
+    );
 
   const splashPassHoverSeatNorm =
     typeof splashPassHoverSeatProp === "number" &&
@@ -954,6 +958,16 @@ export function QuestionModal({
     return stopTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Re-sync displayed text whenever the question content changes while the modal is open
+  // and the host is not actively editing (to avoid overwriting in-flight edits).
+  useEffect(() => {
+    if (!isOpen || isEditing) return;
+    setText(question.text || "");
+    setAnswerText(question.answerText || "");
+    setAnswerUrl(question.answerUrl || "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.text, question.answerText, question.answerUrl]);
 
   useEffect(() => {
     if (!isOpen) return;

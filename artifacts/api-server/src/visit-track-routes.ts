@@ -1,5 +1,10 @@
 import type { Express } from "express";
-import { listQuizPlayersWithStatus, removeQuizPlayer } from "./quiz-players-registry";
+import { requireAdeptsHostAuth } from "./lib/adepts-quiz-board-host-auth";
+import {
+  listQuizPlayersWithStatus,
+  listQuizPlayersWithStatusForSession,
+  removeQuizPlayer,
+} from "./quiz-players-registry";
 
 const visitCounts: Record<string, number> = {};
 
@@ -29,11 +34,15 @@ export function attachVisitTrackRoutes(app: Express): void {
     res.json({ ok: true, count: visitCounts[page] });
   });
 
-  app.get("/api/admin/visit-counts", (_req, res) => {
+  app.get("/api/admin/visit-counts", requireAdeptsHostAuth, (_req, res) => {
     res.json(visitCounts);
   });
 
-  app.get("/api/admin/quiz-players", (_req, res) => {
-    res.json({ players: listQuizPlayersWithStatus() });
+  app.get("/api/admin/quiz-players", requireAdeptsHostAuth, (req, res) => {
+    const raw = typeof req.query["sessionId"] === "string" ? req.query["sessionId"] : "";
+    const players = raw.trim()
+      ? listQuizPlayersWithStatusForSession(raw)
+      : listQuizPlayersWithStatus();
+    res.json({ players });
   });
 }

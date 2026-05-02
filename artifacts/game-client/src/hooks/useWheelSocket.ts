@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
 
 export interface WheelSpinData {
   targetRotation: number;
@@ -21,7 +22,9 @@ export function useWheelSocket(isViewer: boolean) {
   const [initialRotation, setInitialRotation] = useState(0);
 
   useEffect(() => {
-    const query = isViewer ? { viewer: "1" } : {};
+    const query = isViewer
+      ? { viewer: "1", sessionId: getAdeptsSessionId() }
+      : { sessionId: getAdeptsSessionId() };
     const s = io("/wheel", {
       path: "/socket.io",
       query,

@@ -3,7 +3,7 @@ function quizCategoryPng(stem: string): string {
   return `${import.meta.env.BASE_URL}${stem}.png`;
 }
 
-/** Union of theme keys from adepts-game, adepts-game-2, adepts-game-3. */
+/** Union of theme keys across all three Adepts quiz boards (API catalog 1–3). */
 export const QUIZ_THEME_ICONS: Record<string, string> = {
   боссы: quizCategoryPng("bossy"),
   пасхалки: quizCategoryPng("pashalki"),

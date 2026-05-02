@@ -1,7 +1,9 @@
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import app from "./app";
+import { requireAdeptsHostAuth } from "./lib/adepts-quiz-board-host-auth";
 import { logger } from "./lib/logger";
+import { setupAdepts } from "./adepts";
 import { setupGame } from "./game";
 import { setupWheel } from "./wheel";
 import { setupQuiz } from "./quiz";
@@ -27,15 +29,19 @@ const io = new SocketIOServer(server, {
   pingTimeout: 20000,   // wait 20s for pong before disconnecting
 });
 
-const { adminReset } = setupGame(io);
+const { adminResetSession } = setupGame(io);
 setupWheel(io);
 setupQuiz(io);
 setupQuizNav(io);
+setupAdepts(io);
 
-// Admin endpoint — full roulette reset
-app.post("/api/admin/reset-roulette", (_req, res) => {
-  adminReset();
-  res.json({ ok: true });
+// Admin endpoint — full roulette reset for one show (`sessionId`, default `default`)
+app.post("/api/admin/reset-roulette", requireAdeptsHostAuth, (req, res) => {
+  const raw = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>)["sessionId"] : undefined;
+  const sessionId =
+    typeof raw === "string" && raw.trim() ? raw.trim().slice(0, 128) : "default";
+  adminResetSession(sessionId);
+  res.json({ ok: true, sessionId });
 });
 
 server.listen(port, () => {

@@ -13,7 +13,8 @@ export function emitLobbyQuizPresence(): void {
       s.emit("quizPlayerPresence", {});
       return;
     }
-    const role = localStorage.getItem("player_role") === "host" ? "host" : "spectator";
+    const role =
+      localStorage.getItem("player_role")?.trim().toLowerCase() === "host" ? "host" : "spectator";
     s.emit("quizPlayerPresence", { nick, role, scope: LOBBY_SCOPE });
   } catch {
     /* ignore */

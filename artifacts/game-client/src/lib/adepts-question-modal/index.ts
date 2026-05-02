@@ -1,5 +1,5 @@
 /**
- * Shared question modal for `/adepts-game`, `/adepts-game-2`, `/adepts-game-3`.
+ * Shared question modal for all Adepts quiz boards (`board` prop: 1 | 2 | 3).
  * Standalone Vite apps under `artifacts/adepts-game*` may still duplicate this file; sync from here if you update behavior.
  */
 export { QuestionModal } from "./QuestionModal";

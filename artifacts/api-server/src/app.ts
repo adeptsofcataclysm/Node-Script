@@ -6,6 +6,8 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { attachVisitTrackRoutes } from "./visit-track-routes";
+import { attachAdeptsQuizBoardRoutes } from "./adepts-quiz-board-routes";
+import { attachAdeptsSessionRoutes } from "./adepts-session-routes";
 
 const app: Express = express();
 
@@ -33,6 +35,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 attachVisitTrackRoutes(app);
+attachAdeptsQuizBoardRoutes(app);
+attachAdeptsSessionRoutes(app);
 
 app.use("/api", router);
 

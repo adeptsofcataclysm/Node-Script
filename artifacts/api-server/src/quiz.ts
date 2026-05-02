@@ -1,29 +1,21 @@
 import { Server } from "socket.io";
+import { cloneQuizRelay } from "./lib/adepts-quiz-room-store";
+import { readSocketSessionId } from "./lib/socket-session-id";
 import { logger } from "./lib/logger";
 
-type QuizState = Record<string, unknown>;
-
+/** Authoritative `/quiz` sync is driven by `/adepts` commands (no client `update`). */
 export function setupQuiz(io: Server) {
   const quizNs = io.of("/quiz");
-  const roomStates: Record<string, QuizState> = {};
-
   quizNs.on("connection", (socket) => {
-    const room = (socket.handshake.query.room as string) || "default";
-    socket.join(room);
+    const sessionId = readSocketSessionId(socket);
+    socket.join(sessionId);
 
-    logger.info({ room, socketId: socket.id }, "Quiz client connected");
+    logger.info({ sessionId, socketId: socket.id }, "Quiz client connected");
 
-    if (roomStates[room]) {
-      socket.emit("sync", roomStates[room]);
-    }
-
-    socket.on("update", (state: QuizState) => {
-      roomStates[room] = state;
-      socket.to(room).emit("sync", state);
-    });
+    socket.emit("sync", cloneQuizRelay(sessionId));
 
     socket.on("disconnect", () => {
-      logger.info({ room, socketId: socket.id }, "Quiz client disconnected");
+      logger.info({ sessionId, socketId: socket.id }, "Quiz client disconnected");
     });
   });
 }

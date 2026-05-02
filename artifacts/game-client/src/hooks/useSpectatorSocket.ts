@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
+import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
 
 const MAX_PLAYERS = 5;
 
@@ -30,7 +31,7 @@ export function useSpectatorSocket() {
   useEffect(() => {
     const s = io({
       path: "/socket.io",
-      query: { spectator: "1" },
+      query: { spectator: "1", sessionId: getAdeptsSessionId() },
       transports: ["websocket"],
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

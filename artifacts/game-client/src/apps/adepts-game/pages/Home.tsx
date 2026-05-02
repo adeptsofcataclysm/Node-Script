@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import type { AdeptsBoardId, Question } from "@/lib/adepts-quiz-types";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
 import { QuizBoard } from "@/lib/adepts-quiz-board";
@@ -16,10 +17,27 @@ function resolveUrl(url: string): string {
   return import.meta.env.BASE_URL + url.replace(/^\//, "");
 }
 
-export default function Home() {
+const BADGE_LABEL: Record<AdeptsBoardId, string> = {
+  1: "Квиз-доска 1",
+  2: "Квиз-доска 2",
+  3: "Квиз-доска 3",
+};
+
+/** Server opened a cell that is not yet in local `questions` (e.g. catalog/API drift) — still show the shell. */
+const FALLBACK_OPEN_QUESTION: Question = {
+  text: "",
+  questionUrl: "",
+  answerText: "",
+  answerUrl: "",
+  used: false,
+};
+
+export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
   const { isHost, isSpectator } = useRole();
   const {
+    catalogReady,
     state,
+    trackKey,
     updatePlayerName,
     updatePlayerScore,
     updateThemeName,
@@ -29,7 +47,8 @@ export default function Home() {
     setCurrentTurnSeat,
     patchActiveQuizCard,
     setQuizBoardHoverCell,
-  } = useGameState();
+    emitPickCell,
+  } = useGameState(boardId);
 
   const handleAwardPoints = (playerIndex: number, points: number) => {
     updatePlayerScore(playerIndex, state.players[playerIndex].score + points);
@@ -45,13 +64,25 @@ export default function Home() {
   }, [state.questions]);
 
   useEffect(() => {
-    fetch("/api/track/adepts-game", { method: "POST" }).catch(() => {});
-  }, []);
+    fetch(`/api/track/${trackKey}`, { method: "POST" }).catch(() => {});
+  }, [trackKey]);
+
+  /** Не блокировать UI целиком: `sync` может прийти с `activeQuizCard` до завершения `fetchAdeptsQuizBoard` — иначе модалка не монтируется (часто у ведущего после pick). */
+  if (!catalogReady && state.activeQuizCard == null) {
+    return (
+      <div className="adepts-quiz-theme flex h-screen items-center justify-center text-muted-foreground">
+        Загрузка доски…
+      </div>
+    );
+  }
 
   const active = state.activeQuizCard;
   const openCard =
     active &&
-    state.questions[active.themeIndex]?.[active.questionIndex] != null
+    Number.isInteger(active.themeIndex) &&
+    Number.isInteger(active.questionIndex) &&
+    active.themeIndex >= 0 &&
+    active.questionIndex >= 0
       ? active
       : null;
 
@@ -68,9 +99,8 @@ export default function Home() {
     (!isSpectator && seatIndex >= 0 && seatIndex <= 4 && seatIndex === state.currentTurnSeat);
 
   const openQuestion =
-    openCard != null &&
-    state.questions[openCard.themeIndex]?.[openCard.questionIndex] != null
-      ? state.questions[openCard.themeIndex][openCard.questionIndex]
+    openCard != null
+      ? (state.questions[openCard.themeIndex]?.[openCard.questionIndex] ?? FALLBACK_OPEN_QUESTION)
       : null;
   const canDismissSplash =
     openQuestion?.splashDismissHostOnly === true ? isHost : canDismissRaccoonSplash;
@@ -85,15 +115,11 @@ export default function Home() {
     )
       return;
     setQuizBoardHoverCell(null);
-    setActiveQuizCard({
+    emitPickCell(
       themeIndex,
       questionIndex,
-      stage: "question",
-      splashDismissed: false,
-      splashDedFlyExitStarted: false,
-      splashSeatPassUsed: false,
-      splashPassHoverSeat: null,
-    });
+      isHost ? { turnSeat: state.currentTurnSeat } : undefined
+    );
   };
 
   const closeQuestion = () => {
@@ -103,7 +129,6 @@ export default function Home() {
 
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col text-foreground overflow-hidden">
-      {/* Hidden video preloader */}
       <div style={{ display: "none" }} aria-hidden="true">
         {videoUrls.map((url) => (
           <video key={url} src={url} preload="auto" muted />
@@ -114,7 +139,7 @@ export default function Home() {
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
         <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
-          Adepts-game
+          {BADGE_LABEL[boardId]}
         </span>
         <div className="ml-auto flex items-center gap-2">
           <QuizBoardReloadButton />
@@ -133,12 +158,13 @@ export default function Home() {
         <main className="flex min-h-0 min-w-0 flex-col py-3">
           <div className="mx-auto h-full w-full max-w-7xl min-h-0 px-2">
             <QuizBoard
-              board={1}
+              board={boardId}
               themes={state.themes}
               questions={state.questions}
               onUpdateTheme={updateThemeName}
               onQuestionClick={handleQuestionClick}
               readonly={!canOpenCards}
+              themeEditReadonly={!isHost}
               blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
               hoverCell={state.quizBoardHoverCell ?? null}
               canSyncBoardHover={canOpenCards}
@@ -166,11 +192,12 @@ export default function Home() {
 
       {openCard && (
         <QuestionModal
-          board={1}
+          key={`${openCard.themeIndex}-${openCard.questionIndex}`}
+          board={boardId}
           isOpen={true}
-          themeName={state.themes[openCard.themeIndex]}
+          themeName={state.themes[openCard.themeIndex] ?? ""}
           points={(openCard.questionIndex + 1) * 100}
-          question={state.questions[openCard.themeIndex][openCard.questionIndex]}
+          question={openQuestion ?? FALLBACK_OPEN_QUESTION}
           players={state.players}
           quizStage={openCard.stage}
           onQuizStageChange={(s) => patchActiveQuizCard({ stage: s })}
@@ -216,6 +243,10 @@ export default function Home() {
             isHost
               ? (payload) => {
                   getQuizNavSocket().emit("hostAdeptsWheelOpen", payload);
+                  // Mark the question as used so the cell is grayed-out when returning from the wheel.
+                  updateQuestion(openCard.themeIndex, openCard.questionIndex, { used: true });
+                  // Close the card on all clients before the wheel page opens.
+                  closeQuestion();
                 }
               : undefined
           }

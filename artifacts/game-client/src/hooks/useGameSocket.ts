@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
+import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
 
 const MAX_PLAYERS = 5;
 
@@ -38,6 +39,7 @@ export function useGameSocket() {
   useEffect(() => {
     const s = io({
       path: "/socket.io",
+      query: { sessionId: getAdeptsSessionId() },
       transports: ["websocket"],
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

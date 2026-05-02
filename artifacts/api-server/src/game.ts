@@ -1,4 +1,5 @@
 import { type Server, type Socket } from "socket.io";
+import { readSocketSessionId } from "./lib/socket-session-id";
 import { logger } from "./lib/logger";
 
 const MAX_PLAYERS = 5;
@@ -39,6 +40,13 @@ function createFreshState(): GameState {
   };
 }
 
+const states = new Map<string, GameState>();
+
+function getState(sessionId: string): GameState {
+  if (!states.has(sessionId)) states.set(sessionId, createFreshState());
+  return states.get(sessionId)!;
+}
+
 function filledSlotCount(state: GameState): number {
   return state.slots.filter((s) => s !== null).length;
 }
@@ -74,61 +82,60 @@ function nextOnlineTurn(state: GameState, from: number): number {
     const idx = (from + i) % MAX_PLAYERS;
     if (state.slots[idx]?.isOnline) return idx;
   }
-  // Fallback: first non-null slot
   const first = state.slots.findIndex((s) => s !== null);
   return first >= 0 ? first : 0;
 }
 
 export function setupGame(io: Server) {
-  let gameState: GameState = createFreshState();
-
-  function adminReset() {
-    gameState = createFreshState();
-    // Broadcast fresh state to everyone still connected before disconnecting
-    io.emit("adminReset");
-    // Force-disconnect all sockets so players reconnect fresh
-    io.disconnectSockets(true);
-  }
-
-  // Shared rematch logic — callable from both player and spectator sockets
-  function doRematch() {
-    if (!gameState.gameOver) return;
-
-    const elimIdx = gameState.eliminatedIndex;
-
-    if (elimIdx !== null) {
-      const elimName = gameState.slots[elimIdx]?.name;
-      if (elimName && !gameState.bannedNames.includes(elimName)) {
-        gameState.bannedNames.push(elimName);
-      }
-      gameState.slots[elimIdx] = null;
-      gameState.scores[elimIdx] = 0;
-    }
-
-    gameState.bulletPos = -1;
-    gameState.currentPos = 0;
-    gameState.isSpinning = false;
-    gameState.gameOver = false;
-    gameState.roundCount = 0;
-    gameState.eliminatedIndex = null;
-
-    const startFrom = elimIdx !== null ? elimIdx : gameState.turn;
-    gameState.turn = nextOnlineTurn(gameState, startFrom);
-
-    io.emit("rematch", {
-      playerNames: buildPlayerNames(gameState),
-      onlineStatus: buildOnlineStatus(gameState),
-      turn: gameState.turn,
-      count: filledSlotCount(gameState),
-      eliminatedIndex: elimIdx,
-      scores: gameState.scores,
-    });
+  function adminResetSession(sessionId: string): void {
+    const sid = sessionId.trim().slice(0, 128) || "default";
+    states.set(sid, createFreshState());
+    io.to(sid).emit("adminReset");
+    io.in(sid).disconnectSockets(true);
   }
 
   io.on("connection", (socket: Socket) => {
-    // ── SPECTATOR ────────────────────────────────────────────────────────────
+    const sessionId = readSocketSessionId(socket);
+    socket.join(sessionId);
+
+    function doRematch(): void {
+      const gameState = getState(sessionId);
+      if (!gameState.gameOver) return;
+
+      const elimIdx = gameState.eliminatedIndex;
+
+      if (elimIdx !== null) {
+        const elimName = gameState.slots[elimIdx]?.name;
+        if (elimName && !gameState.bannedNames.includes(elimName)) {
+          gameState.bannedNames.push(elimName);
+        }
+        gameState.slots[elimIdx] = null;
+        gameState.scores[elimIdx] = 0;
+      }
+
+      gameState.bulletPos = -1;
+      gameState.currentPos = 0;
+      gameState.isSpinning = false;
+      gameState.gameOver = false;
+      gameState.roundCount = 0;
+      gameState.eliminatedIndex = null;
+
+      const startFrom = elimIdx !== null ? elimIdx : gameState.turn;
+      gameState.turn = nextOnlineTurn(gameState, startFrom);
+
+      io.to(sessionId).emit("rematch", {
+        playerNames: buildPlayerNames(gameState),
+        onlineStatus: buildOnlineStatus(gameState),
+        turn: gameState.turn,
+        count: filledSlotCount(gameState),
+        eliminatedIndex: elimIdx,
+        scores: gameState.scores,
+      });
+    }
+
     if (socket.handshake.query.spectator === "1") {
-      logger.info({ socketId: socket.id }, "Spectator connected");
+      logger.info({ socketId: socket.id, sessionId }, "Spectator connected");
+      const gameState = getState(sessionId);
       socket.emit("sync", {
         bulletPos: gameState.bulletPos,
         currentPos: gameState.currentPos,
@@ -144,14 +151,14 @@ export function setupGame(io: Server) {
       });
       socket.on("rematch", doRematch);
       socket.on("disconnect", () => {
-        logger.info({ socketId: socket.id }, "Spectator disconnected");
+        logger.info({ socketId: socket.id, sessionId }, "Spectator disconnected");
       });
-      return; // spectators receive all broadcasts but never interact
+      return;
     }
 
-    // ── PLAYER ───────────────────────────────────────────────────────────────
-    logger.info({ socketId: socket.id }, "Player connected");
+    logger.info({ socketId: socket.id, sessionId }, "Player connected");
 
+    const gameState = getState(sessionId);
     const freeIdx = gameState.slots.findIndex((s) => s === null);
     const hasOfflineSlots = gameState.slots.some((s) => s !== null && !s.isOnline);
 
@@ -166,7 +173,7 @@ export function setupGame(io: Server) {
     if (freeIdx !== -1) {
       gameState.slots[assignedIndex] = { socketId: socket.id, name: null, isOnline: true };
       socket.emit("assignedIndex", assignedIndex);
-      io.emit("updatePlayers", {
+      io.to(sessionId).emit("updatePlayers", {
         count: filledSlotCount(gameState),
         playerNames: buildPlayerNames(gameState),
         onlineStatus: buildOnlineStatus(gameState),
@@ -192,17 +199,17 @@ export function setupGame(io: Server) {
     }
 
     socket.on("setName", (name: string) => {
+      const gs = getState(sessionId);
       const safeName = String(name).slice(0, 20).trim();
       if (!safeName) return;
 
-      // Block banned names (eliminated players)
-      if (gameState.bannedNames.includes(safeName)) {
+      if (gs.bannedNames.includes(safeName)) {
         socket.emit("nameBanned");
         return;
       }
 
       if (assignedIndex === -1) {
-        const matchIdx = gameState.slots.findIndex(
+        const matchIdx = gs.slots.findIndex(
           (s) => s !== null && !s.isOnline && s.name === safeName
         );
         if (matchIdx === -1) {
@@ -210,31 +217,31 @@ export function setupGame(io: Server) {
           return;
         }
         assignedIndex = matchIdx;
-        gameState.slots[matchIdx] = { socketId: socket.id, name: safeName, isOnline: true };
+        gs.slots[matchIdx] = { socketId: socket.id, name: safeName, isOnline: true };
         socket.emit("assignedIndex", matchIdx);
         socket.emit("sync", {
-          bulletPos: gameState.bulletPos,
-          currentPos: gameState.currentPos,
-          turn: gameState.turn,
-          isSpinning: gameState.isSpinning,
-          gameOver: gameState.gameOver,
-          gameStarted: gameState.gameStarted,
-          playerCount: filledSlotCount(gameState),
-          roundCount: gameState.roundCount,
-          playerNames: buildPlayerNames(gameState),
-          onlineStatus: buildOnlineStatus(gameState),
-          scores: gameState.scores,
+          bulletPos: gs.bulletPos,
+          currentPos: gs.currentPos,
+          turn: gs.turn,
+          isSpinning: gs.isSpinning,
+          gameOver: gs.gameOver,
+          gameStarted: gs.gameStarted,
+          playerCount: filledSlotCount(gs),
+          roundCount: gs.roundCount,
+          playerNames: buildPlayerNames(gs),
+          onlineStatus: buildOnlineStatus(gs),
+          scores: gs.scores,
         });
-        io.emit("playerOnline", { playerIndex: matchIdx });
-        io.emit("updatePlayers", {
-          count: filledSlotCount(gameState),
-          playerNames: buildPlayerNames(gameState),
-          onlineStatus: buildOnlineStatus(gameState),
+        io.to(sessionId).emit("playerOnline", { playerIndex: matchIdx });
+        io.to(sessionId).emit("updatePlayers", {
+          count: filledSlotCount(gs),
+          playerNames: buildPlayerNames(gs),
+          onlineStatus: buildOnlineStatus(gs),
         });
         return;
       }
 
-      const offlineMatchIdx = gameState.slots.findIndex(
+      const offlineMatchIdx = gs.slots.findIndex(
         (s, i) =>
           s !== null &&
           !s.isOnline &&
@@ -243,117 +250,121 @@ export function setupGame(io: Server) {
       );
 
       if (offlineMatchIdx !== -1) {
-        gameState.slots[assignedIndex] = null;
+        gs.slots[assignedIndex] = null;
         assignedIndex = offlineMatchIdx;
-        gameState.slots[offlineMatchIdx] = { socketId: socket.id, name: safeName, isOnline: true };
+        gs.slots[offlineMatchIdx] = { socketId: socket.id, name: safeName, isOnline: true };
         socket.emit("assignedIndex", offlineMatchIdx);
-        io.emit("playerOnline", { playerIndex: offlineMatchIdx });
+        io.to(sessionId).emit("playerOnline", { playerIndex: offlineMatchIdx });
       } else {
-        const existing = gameState.slots[assignedIndex];
+        const existing = gs.slots[assignedIndex];
         if (existing) {
-          gameState.slots[assignedIndex] = { ...existing, name: safeName };
+          gs.slots[assignedIndex] = { ...existing, name: safeName };
         }
       }
 
-      io.emit("updatePlayers", {
-        count: filledSlotCount(gameState),
-        playerNames: buildPlayerNames(gameState),
-        onlineStatus: buildOnlineStatus(gameState),
+      io.to(sessionId).emit("updatePlayers", {
+        count: filledSlotCount(gs),
+        playerNames: buildPlayerNames(gs),
+        onlineStatus: buildOnlineStatus(gs),
       });
     });
 
     socket.on("spin", () => {
-      const slot = gameState.slots[gameState.turn];
+      const gs = getState(sessionId);
+      const slot = gs.slots[gs.turn];
       if (!slot || slot.socketId !== socket.id) return;
-      if (gameState.isSpinning) return;
-      if (gameState.gameOver) return;
-      // First game requires all slots filled; after that, play continues with whoever is left
-      if (!gameState.gameStarted && !allSlotsReady(gameState)) return;
+      if (gs.isSpinning) return;
+      if (gs.gameOver) return;
+      if (!gs.gameStarted && !allSlotsReady(gs)) return;
 
-      gameState.isSpinning = true;
-      gameState.gameStarted = true;
-      gameState.bulletPos = Math.floor(Math.random() * 6);
-      gameState.currentPos = 0;
-      gameState.roundCount += 1;
+      gs.isSpinning = true;
+      gs.gameStarted = true;
+      gs.bulletPos = Math.floor(Math.random() * 6);
+      gs.currentPos = 0;
+      gs.roundCount += 1;
 
-      io.emit("startSpin");
+      io.to(sessionId).emit("startSpin");
 
       setTimeout(() => {
-        gameState.isSpinning = false;
-        io.emit("stopSpin", { roundCount: gameState.roundCount, currentPos: gameState.currentPos });
+        const g2 = getState(sessionId);
+        g2.isSpinning = false;
+        io.to(sessionId).emit("stopSpin", { roundCount: g2.roundCount, currentPos: g2.currentPos });
       }, 1700);
     });
 
     socket.on("shoot", () => {
-      const slot = gameState.slots[gameState.turn];
+      const gs = getState(sessionId);
+      const slot = gs.slots[gs.turn];
       if (!slot || slot.socketId !== socket.id) return;
-      if (gameState.isSpinning) return;
-      if (gameState.bulletPos === -1) return;
-      if (gameState.gameOver) return;
+      if (gs.isSpinning) return;
+      if (gs.bulletPos === -1) return;
+      if (gs.gameOver) return;
 
-      const isBang = gameState.currentPos === gameState.bulletPos;
-      const shooterIndex = gameState.turn;
+      const isBang = gs.currentPos === gs.bulletPos;
+      const shooterIndex = gs.turn;
 
       if (isBang) {
-        gameState.gameOver = true;
-        gameState.bulletPos = -1;
-        gameState.eliminatedIndex = shooterIndex;
-        io.emit("shotResult", { isBang: true, playerIndex: shooterIndex, pos: gameState.currentPos });
+        gs.gameOver = true;
+        gs.bulletPos = -1;
+        gs.eliminatedIndex = shooterIndex;
+        io.to(sessionId).emit("shotResult", { isBang: true, playerIndex: shooterIndex, pos: gs.currentPos });
       } else {
-        gameState.currentPos = (gameState.currentPos + 1) % 6;
-        gameState.turn = nextOnlineTurn(gameState, gameState.turn);
-        gameState.scores[shooterIndex] = (gameState.scores[shooterIndex] ?? 0) + 1;
-        io.emit("shotResult", { isBang: false, playerIndex: shooterIndex, pos: gameState.currentPos });
-        io.emit("nextTurn", { turn: gameState.turn });
+        gs.currentPos = (gs.currentPos + 1) % 6;
+        gs.turn = nextOnlineTurn(gs, gs.turn);
+        gs.scores[shooterIndex] = (gs.scores[shooterIndex] ?? 0) + 1;
+        io.to(sessionId).emit("shotResult", { isBang: false, playerIndex: shooterIndex, pos: gs.currentPos });
+        io.to(sessionId).emit("nextTurn", { turn: gs.turn });
       }
     });
 
     socket.on("setFate", (text: string) => {
-      if (!gameState.gameOver) return;
-      if (gameState.eliminatedIndex === null) return;
-      const slot = gameState.slots[gameState.eliminatedIndex];
+      const gs = getState(sessionId);
+      if (!gs.gameOver) return;
+      if (gs.eliminatedIndex === null) return;
+      const slot = gs.slots[gs.eliminatedIndex];
       if (!slot || slot.socketId !== socket.id) return;
       const safeText = String(text).slice(0, 300);
-      io.emit("fateAnnounced", { name: slot.name, text: safeText });
+      io.to(sessionId).emit("fateAnnounced", { name: slot.name, text: safeText });
     });
 
     socket.on("rematch", doRematch);
 
     socket.on("disconnect", () => {
-      logger.info({ socketId: socket.id }, "Player disconnected");
+      logger.info({ socketId: socket.id, sessionId }, "Player disconnected");
 
       if (assignedIndex === -1) return;
 
-      const slot = gameState.slots[assignedIndex];
+      const gs = getState(sessionId);
+      const slot = gs.slots[assignedIndex];
       if (!slot) return;
 
       if (slot.name) {
-        gameState.slots[assignedIndex] = { ...slot, socketId: null, isOnline: false };
+        gs.slots[assignedIndex] = { ...slot, socketId: null, isOnline: false };
 
-        if (gameState.turn === assignedIndex && !gameState.gameOver) {
-          const online = onlineIndices(gameState);
+        if (gs.turn === assignedIndex && !gs.gameOver) {
+          const online = onlineIndices(gs);
           if (online.length > 0) {
-            gameState.turn = nextOnlineTurn(gameState, assignedIndex);
-            io.emit("nextTurn", { turn: gameState.turn });
+            gs.turn = nextOnlineTurn(gs, assignedIndex);
+            io.to(sessionId).emit("nextTurn", { turn: gs.turn });
           }
         }
 
-        io.emit("updatePlayers", {
-          count: filledSlotCount(gameState),
-          playerNames: buildPlayerNames(gameState),
-          onlineStatus: buildOnlineStatus(gameState),
+        io.to(sessionId).emit("updatePlayers", {
+          count: filledSlotCount(gs),
+          playerNames: buildPlayerNames(gs),
+          onlineStatus: buildOnlineStatus(gs),
         });
-        io.emit("playerOffline", { playerIndex: assignedIndex });
+        io.to(sessionId).emit("playerOffline", { playerIndex: assignedIndex });
       } else {
-        gameState.slots[assignedIndex] = null;
-        io.emit("updatePlayers", {
-          count: filledSlotCount(gameState),
-          playerNames: buildPlayerNames(gameState),
-          onlineStatus: buildOnlineStatus(gameState),
+        gs.slots[assignedIndex] = null;
+        io.to(sessionId).emit("updatePlayers", {
+          count: filledSlotCount(gs),
+          playerNames: buildPlayerNames(gs),
+          onlineStatus: buildOnlineStatus(gs),
         });
       }
     });
   });
 
-  return { adminReset };
+  return { adminResetSession };
 }

@@ -1,9 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { io, Socket } from "socket.io-client";
-import type { Player, Question } from "@/lib/adepts-quiz-types";
+import type { AdeptsBoardId, Player, Question } from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
 import { consumeAdeptsWheelReturnCloseQuizCardFlag } from "@/lib/quizAdeptsWheelClient";
+import type { AdeptsQuizBoardPayload } from "@/lib/adeptsQuizBoardApi";
+import {
+  fetchAdeptsQuizBoard,
+  patchAdeptsQuizQuestion,
+  patchAdeptsQuizTheme,
+} from "@/lib/adeptsQuizBoardApi";
+import {
+  buildAdeptsQuizRelayPayload,
+  deriveThemesAndQuestionsFromQuizIncoming,
+} from "@/lib/adeptsQuizSocketRelay";
+import {
+  getAdeptsCommandSocket,
+  getAdeptsCommandSocketClientKey,
+  readAdeptsPlayerSeatIndexForSocket,
+} from "@/lib/adeptsCommandSocket";
+import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
+import { withClosedActiveQuizIfCellUsed } from "@/lib/withClosedActiveQuizIfCellUsed";
 
 export type { Player, Question };
 
@@ -11,13 +27,9 @@ export type ActiveQuizCard = {
   themeIndex: number;
   questionIndex: number;
   stage: "question" | "answer";
-  /** Клик ведущего / ходящего по вылетающему еноту — синхронно всем клиентам */
   splashDismissed?: boolean;
-  /** dedFly: ведущий нажал — вылет вправо синхронно у всех зрителей и игроков */
   splashDedFlyExitStarted?: boolean;
-  /** После передачи хода по еноту — один раз за открытую карточку, для всех клиентов */
   splashSeatPassUsed?: boolean;
-  /** Подсветка цели передачи хода (место 0–4), синхронно всем; null — нет наведения */
   splashPassHoverSeat?: number | null;
 };
 
@@ -25,108 +37,79 @@ export type GameState = {
   players: Player[];
   themes: string[];
   questions: Question[][];
-  /** Открытая карточка квиза — синхронизируется с зрителем по /quiz */
   activeQuizCard: ActiveQuizCard | null;
-  /** Текущий ход: индекс места игрока 0..4 */
   currentTurnSeat: number;
-  /** Подсветка ячейки доски под курсором ведущего / игрока с ходом */
   quizBoardHoverCell?: QuizBoardHoverCell;
   dataVersion?: number;
-  /** Идентификатор доски — проверяется в sync-обработчике для отклонения данных чужой доски */
   boardRoom?: string;
 };
 
-const DEFAULT_STATE: GameState = {
+const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
+  id: `p${i}`,
+  name: `Player ${i + 1}`,
+  score: 0,
+}));
+
+function emptyGrid(): Pick<GameState, "themes" | "questions"> {
+  const themeCount = 8;
+  return {
+    themes: Array.from({ length: themeCount }, () => ""),
+    questions: Array.from({ length: themeCount }, () =>
+      Array.from({ length: 5 }, () => ({
+        text: "",
+        questionUrl: "",
+        answerText: "",
+        answerUrl: "",
+        used: false,
+      }))
+    ),
+  };
+}
+
+const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   activeQuizCard: null,
   currentTurnSeat: 0,
   quizBoardHoverCell: null,
-  players: Array.from({ length: 5 }, (_, i) => ({
-    id: `p${i}`,
-    name: `Player ${i + 1}`,
-    score: 0,
-  })),
-  themes: [
-    "Боссы",
-    "Пасхалки",
-    "Цитаты и Фразы",
-    "Лор WOW",
-    "Всратый косплей",
-    "Халява",
-    "Локации",
-    "Профессии",
-  ],
-  questions: [
-    // Боссы
-    [
-      { text: "Что это за босс?", questionUrl: "/bossy-100.mp4", answerText: "Ониксия", answerUrl: "/bossy-100-answer.jpg", used: false },
-      { text: "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.", questionUrl: "", answerText: "Атрамед", answerUrl: "/bossy-200-answer.jpg", used: false },
-      { text: "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.", questionUrl: "", answerText: "Валестраз", answerUrl: "/bossy-300-answer.webp", used: false },
-      { text: "Назовите этого босса?", questionUrl: "https://wow.zamimg.com/uploads/screenshots/normal/945708-controlling-the-elements.jpg", answerText: "Ал'акир", answerUrl: "", used: false },
-      { text: "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...", questionUrl: "", answerText: "Алгалона", answerUrl: "/bossy-500-answer.jpg", used: false, splashUrl: "/raccoon.png" },
-    ],
-    // Пасхалки
-    [
-      { text: "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.", questionUrl: "", answerText: "Харрисон Джонс", answerUrl: "/pashalki-100-answer.jpg", used: false, splashUrl: "/raccoon.png" },
-      { text: "В ЛБРС рука робота около лавы — к чему эта пасхалка?", questionUrl: "", answerText: "Терминатор 2", answerUrl: "/pashalki-200-answer.jpg", used: false },
-      { text: "", questionUrl: "/pashalki-300-question.mp4", answerText: "Вы получаете 3 крутки Колеса Адептов", answerUrl: "/freebie-400-question.png", used: false },
-      { text: "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?", questionUrl: "", answerText: "Остаться в живых (Lost)", answerUrl: "/pashalki-400-answer.jpg", used: false },
-      { text: "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?", questionUrl: "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg", answerText: "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)", answerUrl: "/pashalki-500-answer.jpg", used: false },
-    ],
-    // Цитаты и Фразы
-    [
-      { text: "Кто это говорит?\n«Вы не готовы!»", questionUrl: "", answerText: "Иллидан", answerUrl: "/vy-ne-gotovy.mp4", used: false },
-      { text: "Продолжите цитату:\nAllright chamss. Let's do this, [...]", questionUrl: "", answerText: "LEEEEROY JANKINS", answerUrl: "/leeroy.mp4", used: false },
-      { text: "Разрешите доебаться... (с)", questionUrl: "", answerText: "Джентельменыч", answerUrl: "/razreshite.mp4", used: false },
-      { text: "Закончите уравнение:\n3x³ + [...]", questionUrl: "", answerText: "const... ну что там?", answerUrl: "/3x3.mp4", used: false },
-      { text: "Закончите цитату:\nYou think you do, [...]", questionUrl: "", answerText: "but you don't.", answerUrl: "/you-think.mp4", used: false },
-    ],
-    // Лор WOW
-    [
-      { text: "Как назывался единый континент на Азероте до Великого Раскола?", questionUrl: "", answerText: "Калимдор", answerUrl: "/lor-wow-100-answer.webp", used: false, headerUrl: "/wheel.png" },
-      { text: "Чем закончилась Первая война против орды?", questionUrl: "", answerText: "Разрушением Штормграда", answerUrl: "/lor-wow-200-answer.jpg", used: false },
-      { text: "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?", questionUrl: "", answerText: "Иллидан", answerUrl: "/lor-wow-300-answer.jpg", used: false },
-      { text: "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?", questionUrl: "", answerText: "Дух Жизни", answerUrl: "/lor-wow-400-answer.webp", used: false },
-      { text: "Какое событие изображено на картинке?", questionUrl: "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg", answerText: "Битва у Врат Гнева", answerUrl: "", used: false, splashUrl: "/raccoon.png" },
-    ],
-    // Всратый косплей
-    [
-      { text: "", questionUrl: "/cosplay-100-question.jpg", answerText: "", answerUrl: "/cosplay-100-answer.jpg", used: false },
-      { text: "", questionUrl: "/cosplay-200-question.jpg", answerText: "", answerUrl: "/cosplay-200-answer.jpg", used: false },
-      { text: "", questionUrl: "/cosplay-300-question.jpg", answerText: "", answerUrl: "/cosplay-300-answer.jpg", used: false },
-      { text: "", questionUrl: "/cosplay-400-question.jpg", answerText: "", answerUrl: "/cosplay-400-answer.jpg", used: false },
-      { text: "", questionUrl: "/cosplay-500-question.jpg", answerText: "Ауриайя", answerUrl: "/cosplay-500-answer.jpg", used: false },
-    ],
-    // Халява
-    [
-      { text: "100", questionUrl: "", answerText: "100", answerUrl: "", used: false },
-      { text: "200", questionUrl: "", answerText: "200", answerUrl: "", used: false },
-      { text: "300", questionUrl: "", answerText: "300", answerUrl: "", used: false, splashUrl: "/raccoon.png" },
-      { text: "", questionUrl: "/freebie-400-question.mp4", answerText: "Вы получаете 3 крутки Колеса Адептов", answerUrl: "/freebie-400-question.png", used: false },
-      { text: "Ящик Пандоры", questionUrl: "/halyava-500-question.mp4", answerText: "", answerUrl: "", used: false },
-    ],
-    // Локации
-    [
-      { text: "В какой локации расположен вход в легендарное подземелье «Огненные Недра» (Molten Core)?", questionUrl: "", answerText: "Чёрная гора", answerUrl: "/locations-200-answer.jpg", used: false },
-      { text: "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?", questionUrl: "", answerText: "Оргриммар", answerUrl: "/locations-100-answer.jpg", used: false },
-      { text: "Как называлось Мировое древо, у которого располагалась столица ночных эльфов Дарнас?", questionUrl: "", answerText: "Тельдрасил", answerUrl: "/locations-300-answer.webp", used: false },
-      { text: "Через какой перевал в Восточных королевствах можно попасть в локацию Болото Печали, если идти из Сумеречного леса?", questionUrl: "", answerText: "Перевал мёртвого ветра", answerUrl: "/locations-400-answer.jpg", used: false },
-      { text: "В какой локации Пандарии игроки могли выращивать собственные овощи и строить отношения с фракцией Земледельцев?", questionUrl: "", answerText: "Ферма солнечной песни", answerUrl: "/locations-500-answer.webp", used: false },
-    ],
-    // Профессии
-    [
-      { text: "«Гоблинская» и «Гномская» — о какой профессии идёт речь?", questionUrl: "", answerText: "Инженерия", answerUrl: "/professions-100-answer.png", used: false },
-      { text: "Обладатели какой профессии могли изготавливать волшебные масла?", questionUrl: "", answerText: "Наложение чар", answerUrl: "/professions-200-answer.png", used: false, splashUrl: "/raccoon.png" },
-      { text: "Какая новая профессия появилась в WotLK?", questionUrl: "", answerText: "Начертание", answerUrl: "/professions-300-answer.png", used: false },
-      { text: "С помощью какой профессии призывался один из боссов в дополнении TBC?", questionUrl: "", answerText: "Рыбалка", answerUrl: "/professions-400-answer.png", used: false },
-      { text: "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.", questionUrl: "", answerText: "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.", answerUrl: "/professions-500-answer.png", used: false },
-    ],
-  ],
+  players: DEFAULT_PLAYERS,
+  dataVersion: undefined,
+  boardRoom: undefined,
 };
 
-const STORAGE_KEY = "adepts-game-state";
 const PLAYERS_KEY = "adepts-shared-players";
-const DATA_VERSION = 58;
-const ROOM = "adepts-game";
+
+type BoardRuntime = {
+  storageKey: string;
+  dataVersion: number;
+  dataVersionKey: string | null;
+};
+
+function boardRuntime(boardId: AdeptsBoardId): BoardRuntime {
+  switch (boardId) {
+    case 1:
+      return { storageKey: "adepts-game-state", dataVersion: 59, dataVersionKey: null };
+    case 2:
+      return {
+        storageKey: "adepts-game-2-state",
+        dataVersion: 52,
+        dataVersionKey: "adepts-game-2-data-version",
+      };
+    case 3:
+      return {
+        storageKey: "adepts-game-3-state",
+        dataVersion: 17,
+        dataVersionKey: "adepts-game-3-data-version",
+      };
+  }
+}
+
+function mergeBoardWithUsed(board: AdeptsQuizBoardPayload, prevQuestions: Question[][]): Question[][] {
+  return board.questions.map((row, tIdx) =>
+    row.map((q, qIdx) => ({
+      ...q,
+      used: prevQuestions[tIdx]?.[qIdx]?.used ?? false,
+    }))
+  );
+}
 
 function restoreLegacyWheelCards(state: GameState): GameState {
   const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
@@ -165,7 +148,6 @@ function restoreLegacyWheelCards(state: GameState): GameState {
     };
   }
 
-  // Лор WOW 100 — иконка колеса в шапке карточки (старые сохранения без headerUrl)
   if (nextQuestions[3]?.[0]) {
     nextQuestions[3][0] = {
       ...nextQuestions[3][0],
@@ -176,19 +158,190 @@ function restoreLegacyWheelCards(state: GameState): GameState {
   return { ...state, questions: nextQuestions };
 }
 
-function loadInitialState(): GameState {
+function restoreLegacyPandoraVideos(state: GameState): GameState {
+  const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
+
+  if (nextQuestions[3]?.[4]) {
+    nextQuestions[3][4] = {
+      ...nextQuestions[3][4],
+      questionUrl: "/halyava-500-question.mp4",
+    };
+  }
+
+  return { ...state, questions: nextQuestions };
+}
+
+function restoreRaccoonCards(state: GameState): GameState {
+  const nextQuestions = state.questions.map((theme) => theme.map((question) => ({ ...question })));
+  const raccoonCards: Array<[number, number]> = [
+    [0, 2],
+    [1, 4],
+    [4, 2],
+    [6, 1],
+    [7, 4],
+  ];
+
+  for (const [themeIdx, questionIdx] of raccoonCards) {
+    if (nextQuestions[themeIdx]?.[questionIdx]) {
+      nextQuestions[themeIdx][questionIdx] = {
+        ...nextQuestions[themeIdx][questionIdx],
+        splashUrl: "/raccoon.png",
+      };
+    }
+  }
+
+  const cursedCosplayUrls = [
+    "/cursed-cosplay-200.png",
+    "/cursed-cosplay-400.png",
+    "/cursed-cosplay-100.png",
+    "/cursed-cosplay-300.png",
+  ] as const;
+  cursedCosplayUrls.forEach((url, qIdx) => {
+    if (nextQuestions[1]?.[qIdx]) {
+      nextQuestions[1][qIdx] = {
+        ...nextQuestions[1][qIdx],
+        questionUrl: url,
+      };
+    }
+  });
+
+  if (nextQuestions[1]?.[2]) {
+    nextQuestions[1][2] = {
+      ...nextQuestions[1][2],
+      answerUrl: "/cursed-cosplay-300-answer.png",
+    };
+  }
+  if (nextQuestions[1]?.[3]) {
+    nextQuestions[1][3] = {
+      ...nextQuestions[1][3],
+      answerUrl: "/cursed-cosplay-400-answer.png",
+    };
+  }
+
+  if (nextQuestions[3]?.[1]) {
+    nextQuestions[3][1] = {
+      ...nextQuestions[3][1],
+      text: "Ящик Пандоры",
+      questionUrl: "/halyava-500-question.mp4",
+    };
+  }
+
+  if (nextQuestions[0]?.[3]) {
+    const q = nextQuestions[0][3];
+    const u = (q.questionUrl || "").toLowerCase();
+    if (/lor-400-question\.(png|jpg|gif)$/i.test(u) && !u.startsWith("http")) {
+      nextQuestions[0][3] = { ...q, questionUrl: "/lor-400-question.gif" };
+    }
+  }
+
+  if (nextQuestions[3]?.[0]?.answerUrl?.includes("8ea3f54ef99a2e90ed1ef1f34bcc085f.gif@jpg")) {
+    const q = nextQuestions[3][0];
+    nextQuestions[3][0] = {
+      ...q,
+      answerUrl: "https://images.cybersport.ru/images/as-is/plain/8e/8ea3f54ef99a2e90ed1ef1f34bcc085f.gif",
+    };
+  }
+
+  if (nextQuestions[2]?.[0]) {
+    nextQuestions[2][0] = {
+      ...nextQuestions[2][0],
+      headerUrl: "/wheel.png",
+    };
+  }
+
+  if (nextQuestions[4]?.[1]) {
+    nextQuestions[4][1] = {
+      ...nextQuestions[4][1],
+      questionUrl: "/zaceni-look-200-question.png",
+    };
+  }
+  if (nextQuestions[4]?.[3]) {
+    nextQuestions[4][3] = {
+      ...nextQuestions[4][3],
+      questionUrl: "/zaceni-look-400-question.png",
+    };
+  }
+
+  if (nextQuestions[4]?.[4]) {
+    nextQuestions[4][4] = {
+      ...nextQuestions[4][4],
+      questionUrl: "/zaceni-look-500-question.mp4",
+    };
+  }
+  if (nextQuestions[5]?.[1]) {
+    nextQuestions[5][1] = {
+      ...nextQuestions[5][1],
+      questionUrl: "/bosses-200-question.mp4",
+    };
+  }
+
+  if (nextQuestions[6]?.[3]) {
+    nextQuestions[6][3] = {
+      ...nextQuestions[6][3],
+      text: '[4.Поиск спутников]: "Помогу с фармом «Тёмных ларцов» для репутации с фракцией <????>. Подробности в ПМ."\nО какой фракции идёт речь?',
+    };
+  }
+
+  if (nextQuestions[7]?.[0]) {
+    nextQuestions[7][0] = { ...nextQuestions[7][0], questionUrl: "/wow-events-100-question.png" };
+  }
+  if (nextQuestions[7]?.[3]) {
+    nextQuestions[7][3] = {
+      ...nextQuestions[7][3],
+      questionUrl: "/wow-events-400-question.png",
+      answerUrl: "/wow-events-400-answer.png",
+    };
+  }
+  if (nextQuestions[7]?.[4]) {
+    nextQuestions[7][4] = { ...nextQuestions[7][4], questionUrl: "/wow-events-500-question.png" };
+  }
+  if (nextQuestions[7]?.[2]) {
+    nextQuestions[7][2] = { ...nextQuestions[7][2], answerUrl: "/wow-events-300-answer.png" };
+  }
+
+  return { ...state, questions: nextQuestions };
+}
+
+function migrateCatalog(boardId: AdeptsBoardId, state: GameState): GameState {
+  if (boardId === 1) return restoreLegacyWheelCards(state);
+  if (boardId === 2) return restoreLegacyPandoraVideos(state);
+  return restoreRaccoonCards(state);
+}
+
+function loadInitialState(boardId: AdeptsBoardId): GameState {
+  const rt = boardRuntime(boardId);
+  let rosterPlayers = DEFAULT_PLAYERS;
   try {
     const storedPlayers = localStorage.getItem(PLAYERS_KEY);
-    const players = storedPlayers ? JSON.parse(storedPlayers) : DEFAULT_STATE.players;
-    const stored = localStorage.getItem(STORAGE_KEY);
+    rosterPlayers = storedPlayers ? JSON.parse(storedPlayers) : DEFAULT_PLAYERS;
+
+    if (rt.dataVersionKey) {
+      const storedVersion = localStorage.getItem(rt.dataVersionKey);
+      if (storedVersion !== String(rt.dataVersion)) {
+        localStorage.setItem(rt.dataVersionKey, String(rt.dataVersion));
+        localStorage.removeItem(rt.storageKey);
+        return migrateCatalog(boardId, {
+          ...DEFAULT_CORE,
+          ...emptyGrid(),
+          players: rosterPlayers,
+        });
+      }
+    }
+
+    const stored = localStorage.getItem(rt.storageKey);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (parsed.dataVersion !== DATA_VERSION) {
-        return restoreLegacyWheelCards({ ...DEFAULT_STATE, players, dataVersion: DATA_VERSION });
+      if (boardId === 1 && parsed.dataVersion !== rt.dataVersion) {
+        return migrateCatalog(boardId, {
+          ...DEFAULT_CORE,
+          ...emptyGrid(),
+          players: rosterPlayers,
+          dataVersion: rt.dataVersion,
+        });
       }
-      return restoreLegacyWheelCards({
+      return migrateCatalog(boardId, {
         ...parsed,
-        players,
+        players: rosterPlayers,
         activeQuizCard: parsed.activeQuizCard ?? null,
         currentTurnSeat: Number.isInteger(parsed.currentTurnSeat)
           ? ((Number(parsed.currentTurnSeat) % 5) + 5) % 5
@@ -204,90 +357,228 @@ function loadInitialState(): GameState {
   } catch (err) {
     console.error("Failed to load state", err);
   }
-  return restoreLegacyWheelCards({ ...DEFAULT_STATE, dataVersion: DATA_VERSION });
+  if (boardId === 1) {
+    return migrateCatalog(boardId, {
+      ...DEFAULT_CORE,
+      ...emptyGrid(),
+      players: rosterPlayers,
+      dataVersion: rt.dataVersion,
+    });
+  }
+  return migrateCatalog(boardId, {
+    ...DEFAULT_CORE,
+    ...emptyGrid(),
+    players: rosterPlayers,
+  });
 }
 
-export function useGameState() {
-  const [state, setState] = useState<GameState>(loadInitialState);
+function isHostRole(): boolean {
+  if (typeof localStorage === "undefined") return false;
+  const r = localStorage.getItem("player_role")?.trim().toLowerCase();
+  return r === "host";
+}
 
-  const socketRef = useRef<Socket | null>(null);
+const TRACK_KEYS: Record<AdeptsBoardId, string> = {
+  1: "adepts-game",
+  2: "adepts-game-2",
+  3: "adepts-game-3",
+};
+
+export function useGameState(boardId: AdeptsBoardId) {
+  const rt = boardRuntime(boardId);
+  const [state, setState] = useState<GameState>(() => loadInitialState(boardId));
+  const [catalogReady, setCatalogReady] = useState(false);
+
   const skipEmitRef = useRef(false);
+  const catalogRef = useRef<AdeptsQuizBoardPayload | null>(null);
+  const pendingCatalogEmitRef = useRef(false);
+  const allowQuizPushRef = useRef(false);
 
-  // Connect to Socket.io /quiz namespace for real-time sync
   useEffect(() => {
-    const socket = io("/quiz", {
-      path: "/socket.io",
-      query: { room: ROOM },
-      transports: ["websocket"],
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    });
-    socketRef.current = socket;
+    fetchAdeptsQuizBoard(boardId)
+      .then((board) => {
+        catalogRef.current = board;
+        setState((prev) =>
+          migrateCatalog(boardId, {
+            ...prev,
+            themes: board.themes,
+            questions: mergeBoardWithUsed(board, prev.questions),
+          })
+        );
+        setCatalogReady(true);
+      })
+      .catch((err) => {
+        console.error("Failed to load quiz board from API", err);
+        setCatalogReady(true);
+      });
+  }, [boardId]);
 
-    socket.on("sync", (incoming: GameState) => {
-      const basePlayers = incoming.players?.length ? incoming.players : DEFAULT_STATE.players;
+  const adeptsSocketKey = getAdeptsCommandSocketClientKey();
+
+  useEffect(() => {
+    const socket = getAdeptsCommandSocket();
+
+    const onConnect = () => {
+      allowQuizPushRef.current = isHostRole();
+      socket.emit("requestAdeptsSync");
+    };
+    const onDisconnect = () => {
+      if (!isHostRole()) allowQuizPushRef.current = false;
+    };
+
+    const applyQuizIncoming = (incoming: unknown) => {
+      allowQuizPushRef.current = isHostRole();
+      if (!incoming || typeof incoming !== "object") return;
+      const rec = incoming as Record<string, unknown>;
+      const basePlayers = Array.isArray(rec["players"]) && (rec["players"] as Player[]).length
+        ? (rec["players"] as Player[])
+        : DEFAULT_PLAYERS;
       const { merged, hadRoster } = mergeSeatRosterIntoQuizPlayers([...basePlayers]);
       const hostResetTurn =
-        hadRoster &&
-        typeof localStorage !== "undefined" &&
-        localStorage.getItem("player_role") === "host";
-      const isSameBoard = incoming.boardRoom === ROOM;
-      const nextState = restoreLegacyWheelCards({
-        ...incoming,
-        themes: isSameBoard ? (incoming.themes ?? DEFAULT_STATE.themes) : DEFAULT_STATE.themes,
-        players: merged,
-        activeQuizCard: incoming.activeQuizCard ?? null,
-        currentTurnSeat: hostResetTurn
-          ? 0
-          : Number.isInteger(incoming.currentTurnSeat)
-            ? ((Number(incoming.currentTurnSeat) % 5) + 5) % 5
-            : 0,
-        questions: DEFAULT_STATE.questions.map((themeQs, tIdx) =>
-          themeQs.map((defaultQ, qIdx) => ({
-            ...defaultQ,
-            used: isSameBoard
-              ? (incoming.questions?.[tIdx]?.[qIdx]?.used ?? defaultQ.used)
-              : defaultQ.used,
-          }))
-        ),
+        hadRoster && typeof localStorage !== "undefined" && isHostRole();
+      const isSameBoard = rec["boardRoom"] === getAdeptsSessionId();
+      const cat = catalogRef.current;
+
+      /**
+       * All boards share the same socket room ("adepts-game"). A relay tagged with a different
+       * `boardId` was emitted by a client on another board — strip every board-specific field
+       * (catalog, questionUsedGrid, activeQuizCard, hover, dataVersion) so it cannot overwrite
+       * this board's themes/questions/used-state/open-card. Cross-board fields (players, turn)
+       * are still applied so scores stay in sync during a round transition.
+       */
+      const relayBoardId = typeof rec["boardId"] === "number" ? rec["boardId"] : null;
+      const boardMismatch = relayBoardId !== null && relayBoardId !== boardId;
+      const recToUse: Record<string, unknown> = boardMismatch
+        ? {
+            boardRoom: rec["boardRoom"],
+            boardId: rec["boardId"],
+            players: rec["players"],
+            currentTurnSeat: rec["currentTurnSeat"],
+            // Reset all board-specific fields to safe defaults
+            activeQuizCard: null,
+            quizBoardHoverCell: null,
+            questionUsedGrid: undefined,
+            catalogIncluded: false,
+          }
+        : rec;
+
+      setState((prev) => {
+        const { themes, questions, receivedCatalog } = deriveThemesAndQuestionsFromQuizIncoming(
+          recToUse,
+          prev,
+          cat,
+          isSameBoard
+        );
+        if (receivedCatalog) {
+          catalogRef.current = receivedCatalog;
+        }
+
+        const rawTurn = recToUse["currentTurnSeat"];
+        const incomingTurn =
+          typeof rawTurn === "number"
+            ? rawTurn
+            : typeof rawTurn === "string"
+              ? Number(rawTurn)
+              : NaN;
+        const relayTurn =
+          Number.isInteger(incomingTurn) ? ((incomingTurn % 5) + 5) % 5 : null;
+
+        const rawCard = (recToUse["activeQuizCard"] as GameState["activeQuizCard"]) ?? null;
+        let hoverFromRelay: GameState["quizBoardHoverCell"] =
+          recToUse["quizBoardHoverCell"] !== undefined
+            ? (recToUse["quizBoardHoverCell"] as GameState["quizBoardHoverCell"])
+            : prev.quizBoardHoverCell;
+        if (
+          rawCard &&
+          hoverFromRelay &&
+          typeof hoverFromRelay === "object" &&
+          hoverFromRelay.themeIndex === rawCard.themeIndex &&
+          hoverFromRelay.questionIndex === rawCard.questionIndex
+        ) {
+          hoverFromRelay = null;
+        }
+
+        let nextState = withClosedActiveQuizIfCellUsed(
+          migrateCatalog(boardId, {
+            ...prev,
+            boardRoom: typeof recToUse["boardRoom"] === "string" ? recToUse["boardRoom"] : prev.boardRoom,
+            themes,
+            questions,
+            players: merged,
+            activeQuizCard: rawCard,
+            // Relay is authoritative: never let host+Roster merge stomp server `currentTurnSeat`.
+            currentTurnSeat:
+              relayTurn !== null ? relayTurn : hostResetTurn ? 0 : prev.currentTurnSeat,
+            quizBoardHoverCell: hoverFromRelay,
+            dataVersion:
+              typeof recToUse["dataVersion"] === "number" ? recToUse["dataVersion"] : prev.dataVersion,
+          })
+        );
+
+        const closeAfterWheel = consumeAdeptsWheelReturnCloseQuizCardFlag();
+        const stateToApply = closeAfterWheel
+          ? { ...nextState, activeQuizCard: null, quizBoardHoverCell: null }
+          : nextState;
+        const rebroadcast = closeAfterWheel || hadRoster;
+        skipEmitRef.current = true;
+        if (rebroadcast) {
+            queueMicrotask(() => {
+            getAdeptsCommandSocket().emit("command", {
+              type: "hostQuizRelay",
+              payload: buildAdeptsQuizRelayPayload(stateToApply, getAdeptsSessionId(), false, boardId),
+            });
+          });
+        }
+        return stateToApply;
       });
-      const closeAfterWheel = consumeAdeptsWheelReturnCloseQuizCardFlag();
-      const stateToApply = closeAfterWheel
-        ? { ...nextState, activeQuizCard: null, quizBoardHoverCell: null }
-        : nextState;
-      const rebroadcast = closeAfterWheel || hadRoster;
-      skipEmitRef.current = true;
-      setState(stateToApply);
-      if (rebroadcast) {
-        queueMicrotask(() => {
-          socketRef.current?.emit("update", { ...stateToApply, boardRoom: ROOM });
-        });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
     };
-  }, []);
 
-  // Save to localStorage and emit to server on every state change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
+    const onAdeptsSync = (payload: unknown) => {
+      if (!payload || typeof payload !== "object") return;
+      const quiz = (payload as Record<string, unknown>)["quiz"];
+      if (quiz && typeof quiz === "object") applyQuizIncoming(quiz);
+    };
 
-    if (skipEmitRef.current) {
-      skipEmitRef.current = false;
-      return;
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("sync", onAdeptsSync);
+
+    if (socket.connected) {
+      allowQuizPushRef.current = isHostRole();
+      socket.emit("requestAdeptsSync");
     }
 
-    socketRef.current?.emit("update", { ...state, boardRoom: ROOM });
-  }, [state]);
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("sync", onAdeptsSync);
+    };
+  }, [boardId, adeptsSocketKey]);
 
-  // Cross-tab sync via StorageEvent (same machine, different tabs)
   useEffect(() => {
+    localStorage.setItem(rt.storageKey, JSON.stringify(state));
+    localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
+
+    /** Consume before `catalogReady` / `allowQuizPush` returns — otherwise skip stays true and a later `hostQuizRelay` can stomp relay (host pick then no modal). */
+    const skipThisCommit = skipEmitRef.current;
+    if (skipThisCommit) skipEmitRef.current = false;
+
+    if (!catalogReady) return;
+    if (!allowQuizPushRef.current) return;
+    if (skipThisCommit) return;
+
+    const includeCatalog = pendingCatalogEmitRef.current;
+    pendingCatalogEmitRef.current = false;
+    getAdeptsCommandSocket().emit("command", {
+      type: "hostQuizRelay",
+      payload: buildAdeptsQuizRelayPayload(state, getAdeptsSessionId(), includeCatalog, boardId),
+    });
+  }, [state, catalogReady, rt.storageKey]);
+
+  useEffect(() => {
+    const storageKey = rt.storageKey;
     const handler = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
+      if (e.key === storageKey && e.newValue) {
         try {
           skipEmitRef.current = true;
           setState(JSON.parse(e.newValue));
@@ -297,13 +588,13 @@ export function useGameState() {
         try {
           const players = JSON.parse(e.newValue);
           skipEmitRef.current = true;
-          setState(prev => ({ ...prev, players }));
+          setState((prev) => ({ ...prev, players }));
         } catch {}
       }
     };
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
-  }, []);
+  }, [rt.storageKey]);
 
   const updatePlayerName = useCallback((index: number, name: string) => {
     setState((prev) => {
@@ -323,30 +614,60 @@ export function useGameState() {
     });
   }, []);
 
-  const updateThemeName = useCallback((index: number, name: string) => {
-    setState((prev) => {
-      const next = { ...prev };
-      next.themes = [...prev.themes];
-      next.themes[index] = name;
-      return next;
-    });
-  }, []);
+  const updateThemeName = useCallback(
+    async (index: number, name: string) => {
+      if (!isHostRole()) return;
+      try {
+        const board = await patchAdeptsQuizTheme(boardId, index, name);
+        catalogRef.current = board;
+        pendingCatalogEmitRef.current = true;
+        setState((prev) => ({
+          ...prev,
+          themes: board.themes,
+          questions: mergeBoardWithUsed(board, prev.questions),
+        }));
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [boardId]
+  );
 
   const updateQuestion = useCallback(
-    (themeIndex: number, questionIndex: number, data: Partial<Question>) => {
+    async (themeIndex: number, questionIndex: number, data: Partial<Question>) => {
+      if (!isHostRole()) return;
+      const { used, ...catalogPatch } = data;
+      let board: AdeptsQuizBoardPayload | null = null;
+      if (Object.keys(catalogPatch).length > 0) {
+        try {
+          board = await patchAdeptsQuizQuestion(boardId, themeIndex, questionIndex, catalogPatch);
+        } catch (e) {
+          console.error(e);
+          return;
+        }
+      }
       setState((prev) => {
-        const next = { ...prev };
-        next.questions = prev.questions.map((theme, tIdx) =>
-          tIdx === themeIndex
-            ? theme.map((q, qIdx) =>
-                qIdx === questionIndex ? { ...q, ...data } : q
-              )
-            : theme
-        );
-        return next;
+        let themes = prev.themes;
+        let questions = prev.questions;
+        if (board) {
+          catalogRef.current = board;
+          pendingCatalogEmitRef.current = true;
+          themes = board.themes;
+          questions = mergeBoardWithUsed(board, prev.questions);
+        }
+        if (used !== undefined) {
+          questions = questions.map((row, tIdx) =>
+            tIdx === themeIndex
+              ? row.map((q, qIdx) =>
+                  qIdx === questionIndex ? { ...q, used } : q
+                )
+              : row
+          );
+        }
+        return withClosedActiveQuizIfCellUsed({ ...prev, themes, questions });
       });
     },
-    []
+    [boardId]
   );
 
   const resetScores = useCallback(() => {
@@ -380,11 +701,48 @@ export function useGameState() {
   }, []);
 
   const resetGame = useCallback(() => {
-    setState(DEFAULT_STATE);
-  }, []);
+    setState((prev) =>
+      migrateCatalog(boardId, {
+        ...DEFAULT_CORE,
+        themes: catalogRef.current?.themes ?? prev.themes,
+        questions: (catalogRef.current?.questions ?? prev.questions).map((row) =>
+          row.map((q) => ({ ...q, used: false }))
+        ),
+        players: DEFAULT_PLAYERS.map((p) => ({ ...p })),
+        dataVersion: rt.dataVersion,
+        boardRoom: getAdeptsSessionId(),
+      })
+    );
+  }, [boardId, rt.dataVersion]);
+
+  /** Pass `turnSeat` from the board when the clicker is host — avoids stale `useCallback` state vs `localStorage` host flag. */
+  const emitPickCell = useCallback(
+    (themeIndex: number, questionIndex: number, opts?: { turnSeat?: number }) => {
+      /**
+       * Host: `Home` clears hover then calls here; batched `setState` runs the persist effect before `sync`
+       * returns. Without this, `hostQuizRelay` goes out with stale relay (no card) and can overwrite `pickCell`
+       * on the server — players never push relay, so only the host saw the bug.
+       */
+      skipEmitRef.current = true;
+      const raw = opts?.turnSeat;
+      const seatForCmd =
+        raw !== undefined && Number.isFinite(Number(raw))
+          ? ((Math.floor(Number(raw)) % 5) + 5) % 5
+          : readAdeptsPlayerSeatIndexForSocket();
+      getAdeptsCommandSocket().emit("command", {
+        type: "pickCell",
+        themeIndex,
+        questionIndex,
+        seat: seatForCmd,
+      });
+    },
+    []
+  );
 
   return {
+    catalogReady,
     state,
+    trackKey: TRACK_KEYS[boardId],
     updatePlayerName,
     updatePlayerScore,
     updateThemeName,
@@ -395,5 +753,6 @@ export function useGameState() {
     patchActiveQuizCard,
     setQuizBoardHoverCell,
     resetGame,
+    emitPickCell,
   };
 }

@@ -28,7 +28,7 @@ export function buildQuizAdeptsWheelWatchUrl(): string {
 }
 
 export function clientCanSpinAdeptsWheel(currentTurnSeat: number): boolean {
-  const role = localStorage.getItem("player_role");
+  const role = localStorage.getItem("player_role")?.trim().toLowerCase() ?? "";
   const isHost = role === "host";
   const isSpectator = role === "spectator";
   const seatRaw = Number(localStorage.getItem("player_seat_index"));

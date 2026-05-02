@@ -2,11 +2,15 @@ import { useMemo, type MouseEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+import {
+  QUIZ_BOARD_PHASE_HREFS,
+  buildQuizBoardUrl,
+  getQuizBoardPhaseIndexForPathname,
+} from "@/lib/adeptsQuizBoardRoute";
+
+export { QUIZ_BOARD_PHASE_HREFS, buildQuizBoardUrl, getQuizBoardPhaseIndexForPathname };
 
 type Phase = { href: string; label: string };
-
-/** Порядок совпадает с индексом на сервере `/quiz-nav` (0..2) */
-export const QUIZ_BOARD_PHASE_HREFS = ["/adepts-game/", "/adepts-game-2/", "/adepts-game-3/"] as const;
 
 const PHASES: Phase[] = [
   { href: QUIZ_BOARD_PHASE_HREFS[0], label: "Квиз-доска 1" },
@@ -14,21 +18,8 @@ const PHASES: Phase[] = [
   { href: QUIZ_BOARD_PHASE_HREFS[2], label: "Квиз-доска 3" },
 ];
 
-export function buildQuizBoardUrl(boardIndex: number): string {
-  const b = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const href = QUIZ_BOARD_PHASE_HREFS[boardIndex];
-  if (href === undefined) return `${b}/`;
-  return b + href;
-}
-
-export function getQuizBoardPhaseIndexForPathname(fullPathname: string): number {
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const rel = stripBase(fullPathname, base);
-  return phaseIndexForPath(rel);
-}
-
 /** Routes that render their own inline phase nav inside a header. */
-const HEADER_NAV_ROUTES = ["/adepts-lobby", "/adepts-game", "/adepts-game-2", "/adepts-game-3"];
+const HEADER_NAV_ROUTES = ["/adepts-lobby", "/adepts-game"];
 
 function stripBase(pathname: string, base: string): string {
   const b = base.replace(/\/$/, "");
@@ -45,16 +36,6 @@ function normalize(p: string): string {
   return p.replace(/\/+$/, "") || "/";
 }
 
-function phaseIndexForPath(relPath: string): number {
-  const norm = normalize(relPath);
-  for (let i = 0; i < PHASES.length; i++) {
-    const key = normalize(PHASES[i].href);
-    if (norm === key) return i;
-    if (key !== "/" && norm.startsWith(`${key}/`)) return i;
-  }
-  return -1;
-}
-
 function usePhaseIndex() {
   const [location] = useLocation();
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -62,7 +43,7 @@ function usePhaseIndex() {
   return useMemo(() => {
     const fullPath = typeof window !== "undefined" ? window.location.pathname : location;
     const rel = stripBase(fullPath, base);
-    return { index: phaseIndexForPath(rel), rel };
+    return { index: getQuizBoardPhaseIndexForPathname(fullPath), rel };
   }, [location, base]);
 }
 
@@ -123,19 +104,17 @@ export function GamePhaseArrows() {
  *  Uses plain <a> tags so nested wouter routers don't mangle the absolute hrefs. */
 export function GamePhaseNav() {
   const { index } = usePhaseIndex();
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-
   if (index < 0) return null;
 
   const prev = index > 0 ? PHASES[index - 1] : null;
   const next = index < PHASES.length - 1 ? PHASES[index + 1] : null;
 
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const toHref = (phase: Phase) => base + phase.href;
 
-  const navigateBoard = (phase: Phase, targetIndex: number) => (e: MouseEvent<HTMLAnchorElement>) => {
+  const navigateBoard = (_phase: Phase, targetIndex: number) => (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     getQuizNavSocket().emit("hostNavigate", { boardIndex: targetIndex });
-    window.location.assign(toHref(phase));
   };
 
   return (

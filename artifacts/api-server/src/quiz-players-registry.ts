@@ -12,7 +12,7 @@ export type QuizPlayerRowWithStatus = QuizPlayerRow & {
 const byNick = new Map<string, QuizPlayerRow>();
 
 /** socket.id → присутствие в квизе (только залогиненные клиенты шлют quizPlayerPresence). */
-const presenceBySocket = new Map<string, { nick: string; role: "host" | "spectator" }>();
+const presenceBySocket = new Map<string, { nick: string; role: "host" | "spectator"; sessionId: string }>();
 const socketIdsByNick = new Map<string, Set<string>>();
 
 function normalizeNick(nick: string): string {
@@ -49,12 +49,14 @@ function reconcileNickRole(nick: string): void {
 export function bindQuizSocketPresence(
   socketId: string,
   nick: string,
-  role: "host" | "spectator"
+  role: "host" | "spectator",
+  sessionId: string
 ): void {
   const t = normalizeNick(nick);
   if (!t) return;
+  const sid = sessionId.trim().slice(0, 128) || "default";
   unbindQuizSocketPresence(socketId);
-  presenceBySocket.set(socketId, { nick: t, role });
+  presenceBySocket.set(socketId, { nick: t, role, sessionId: sid });
   let set = socketIdsByNick.get(t);
   if (!set) {
     set = new Set();
@@ -101,6 +103,21 @@ export function listQuizPlayersWithStatus(now = Date.now()): QuizPlayerRowWithSt
       online: (socketIdsByNick.get(p.nick)?.size ?? 0) > 0 && p.lastSeen >= cutoff,
     }))
     .sort((a, b) => a.firstSeen - b.firstSeen);
+}
+
+function nickHasPresenceInQuizSession(nick: string, sessionId: string): boolean {
+  const set = socketIdsByNick.get(nick);
+  if (!set || set.size === 0) return false;
+  for (const socketId of set) {
+    if (presenceBySocket.get(socketId)?.sessionId === sessionId) return true;
+  }
+  return false;
+}
+
+/** Список участников, у которых есть сокет с `quizPlayerPresence` в этой `sessionId` (как `/quiz-nav`). */
+export function listQuizPlayersWithStatusForSession(sessionId: string, now = Date.now()): QuizPlayerRowWithStatus[] {
+  const sid = sessionId.trim().slice(0, 128) || "default";
+  return listQuizPlayersWithStatus(now).filter((p) => nickHasPresenceInQuizSession(p.nick, sid));
 }
 
 export function removeQuizPlayer(nick: string): void {

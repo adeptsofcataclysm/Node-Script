@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getQuizNavSocket } from "./quizNavSocket";
+import { getQuizNavSocket, subscribeQuizNavSocketReplace } from "./quizNavSocket";
 
 export interface ChatMessage {
   id: string;
@@ -34,31 +34,40 @@ export function useChat() {
   const [text, setText] = useState("");
 
   useEffect(() => {
-    const socket = getQuizNavSocket();
+    let detach: (() => void) | undefined;
 
-    const onHistory = (history: ChatMessage[]) => {
-      cachedMessages = history;
-      writeSession(cachedMessages);
-      setMessages([...cachedMessages]);
+    const bind = () => {
+      detach?.();
+      const socket = getQuizNavSocket();
+
+      const onHistory = (history: ChatMessage[]) => {
+        cachedMessages = history;
+        writeSession(cachedMessages);
+        setMessages([...cachedMessages]);
+      };
+
+      const onMessage = (msg: ChatMessage) => {
+        if (cachedMessages.some((m) => m.id === msg.id)) return;
+        cachedMessages = [...cachedMessages, msg];
+        writeSession(cachedMessages);
+        setMessages([...cachedMessages]);
+      };
+
+      socket.on("chatHistory", onHistory);
+      socket.on("chatMessage", onMessage);
+      socket.emit("requestChatHistory");
+
+      detach = () => {
+        socket.off("chatHistory", onHistory);
+        socket.off("chatMessage", onMessage);
+      };
     };
 
-    const onMessage = (msg: ChatMessage) => {
-      if (cachedMessages.some((m) => m.id === msg.id)) return;
-      cachedMessages = [...cachedMessages, msg];
-      writeSession(cachedMessages);
-      setMessages([...cachedMessages]);
-    };
-
-    socket.on("chatHistory", onHistory);
-    socket.on("chatMessage", onMessage);
-
-    // Request history after listeners are registered to avoid the race where
-    // the server fires chatHistory before useEffect has run.
-    socket.emit("requestChatHistory");
-
+    bind();
+    const unsub = subscribeQuizNavSocketReplace(bind);
     return () => {
-      socket.off("chatHistory", onHistory);
-      socket.off("chatMessage", onMessage);
+      unsub();
+      detach?.();
     };
   }, []);
 
@@ -66,7 +75,7 @@ export function useChat() {
     const trimmed = msgText.trim();
     if (!trimmed) return;
     const nick = localStorage.getItem("player_nick") || "Аноним";
-    const roleRaw = localStorage.getItem("player_role");
+    const roleRaw = localStorage.getItem("player_role")?.trim().toLowerCase();
     const role = roleRaw === "host" ? "host" : "spectator";
     getQuizNavSocket().emit("chatMessage", { nick, role, text: trimmed });
   }, []);

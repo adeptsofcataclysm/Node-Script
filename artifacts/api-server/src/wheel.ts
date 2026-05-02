@@ -1,51 +1,26 @@
 import { type Server, type Socket } from "socket.io";
+import {
+  cloneWheelRoomState,
+  endWheelSpin,
+  getWheelRoomState,
+  startWheelSpin,
+  WHEEL_SEGMENTS,
+  WHEEL_SPIN_DURATION_MS,
+} from "./lib/wheel-room-store";
+import { readSocketSessionId } from "./lib/socket-session-id";
 import { logger } from "./lib/logger";
-
-const SEGMENTS = [
-  "ВАЙП",
-  "-100",
-  "СВАП",
-  "+100",
-  "Рассказать стишок",
-  "-500",
-  "ДЖЕКПОТ",
-  "-300",
-  "+500",
-  "ДЕРЖИ ВОРА",
-  "+300",
-];
-
-const NUM_SEGMENTS = SEGMENTS.length;
-const SEGMENT_ANGLE = 360 / NUM_SEGMENTS;
-const SPIN_DURATION_MS = 10400;
-
-interface WheelState {
-  isSpinning: boolean;
-  lastSegmentIndex: number;
-  totalRotation: number;
-  previousTotalRotation: number;
-  spinStartTime: number | null;
-  spinTargetRotation: number;
-  spinDurationMs: number;
-}
 
 export function setupWheel(io: Server) {
   const wheelNs = io.of("/wheel");
-  const state: WheelState = {
-    isSpinning: false,
-    lastSegmentIndex: 0,
-    totalRotation: 0,
-    previousTotalRotation: 0,
-    spinStartTime: null,
-    spinTargetRotation: 0,
-    spinDurationMs: SPIN_DURATION_MS,
-  };
 
   wheelNs.on("connection", (socket: Socket) => {
-    const isViewer = socket.handshake.query.viewer === "1";
-    logger.info({ socketId: socket.id, isViewer }, "Wheel connection");
+    const sessionId = readSocketSessionId(socket);
+    socket.join(sessionId);
 
-    // Send current state to the newly connected client
+    const isViewer = socket.handshake.query.viewer === "1";
+    logger.info({ socketId: socket.id, sessionId, isViewer }, "Wheel connection");
+
+    const state = cloneWheelRoomState(sessionId);
     socket.emit("wheelSync", {
       isSpinning: state.isSpinning,
       lastSegmentIndex: state.lastSegmentIndex,
@@ -58,53 +33,35 @@ export function setupWheel(io: Server) {
 
     if (!isViewer) {
       socket.on("wheelSpin", () => {
-        if (state.isSpinning) return;
+        const spin = startWheelSpin(sessionId);
+        if (!spin) return;
 
-        state.isSpinning = true;
-
-        const segmentIndex = Math.floor(Math.random() * NUM_SEGMENTS);
-        // Pointer is at 90° (right/3 o'clock). After CSS rotate(θ), segment i
-        // originally at segCenterAngle appears at (segCenterAngle + θ) mod 360.
-        // We need (segCenterAngle + θ) ≡ 90 (mod 360), so:
-        const segCenterAngle = segmentIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-        const currentMod = ((state.totalRotation % 360) + 360) % 360;
-        const adjustment = ((90 - segCenterAngle - currentMod) % 360 + 360) % 360;
-        const fullSpins = 8 + Math.floor(Math.random() * 6);
-        const targetRotation = state.totalRotation + fullSpins * 360 + adjustment;
-
-        state.previousTotalRotation = state.totalRotation;
-        state.totalRotation = targetRotation;
-        state.lastSegmentIndex = segmentIndex;
-        state.spinStartTime = Date.now();
-        state.spinTargetRotation = targetRotation;
-        state.spinDurationMs = SPIN_DURATION_MS;
-
-        wheelNs.emit("wheelSpinStart", {
-          targetRotation,
-          durationMs: SPIN_DURATION_MS,
-          segmentIndex,
+        const st = getWheelRoomState(sessionId);
+        wheelNs.to(sessionId).emit("wheelSpinStart", {
+          targetRotation: st.spinTargetRotation,
+          durationMs: WHEEL_SPIN_DURATION_MS,
+          segmentIndex: spin.segmentIndex,
         });
 
         setTimeout(() => {
-          state.isSpinning = false;
-          state.spinStartTime = null;
-          wheelNs.emit("wheelResult", {
-            segmentIndex,
-            label: SEGMENTS[segmentIndex],
+          endWheelSpin(sessionId);
+          wheelNs.to(sessionId).emit("wheelResult", {
+            segmentIndex: spin.segmentIndex,
+            label: WHEEL_SEGMENTS[spin.segmentIndex],
           });
-        }, SPIN_DURATION_MS + 200);
+        }, WHEEL_SPIN_DURATION_MS + 200);
       });
 
       socket.on("wheelResultDismiss", () => {
-        wheelNs.emit("wheelResultDismissed", {});
+        wheelNs.to(sessionId).emit("wheelResultDismissed", {});
       });
 
       socket.on("disconnect", () => {
-        logger.info({ socketId: socket.id }, "Wheel spinner disconnected");
+        logger.info({ socketId: socket.id, sessionId }, "Wheel spinner disconnected");
       });
     } else {
       socket.on("disconnect", () => {
-        logger.info({ socketId: socket.id }, "Wheel viewer disconnected");
+        logger.info({ socketId: socket.id, sessionId }, "Wheel viewer disconnected");
       });
     }
   });

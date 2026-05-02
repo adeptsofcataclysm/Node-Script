@@ -3,7 +3,7 @@ import { useQuizLobbyState } from "@/hooks/useQuizLobbyState";
 import { useRole } from "@/hooks/useRole";
 import { buildQuizBoardUrl } from "@/components/GamePhaseArrows";
 import { emitLobbyQuizPresence, notifyQuizPlayerLeft } from "@/lib/trackQuizPlayerPresence";
-import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+import { getQuizNavSocket, subscribeQuizNavSocketReplace } from "@/hooks/quizNavSocket";
 import { LobbyQuizPlayersTable, type LobbyQuizPollPlayerRow } from "@/components/LobbyQuizPlayersTable";
 import { computeTopSeatNicks } from "@/lib/computeTopSeatNicks";
 import { SEAT_ROSTER_SESSION_KEY } from "@/lib/quizLobbyClientAssignments";
@@ -12,7 +12,7 @@ import {
   LOBBY_EMOJI_REVEAL_LINES,
   LOBBY_EMOJI_REVEAL_LINE_COUNT,
 } from "@/lib/lobbyEmojiRevealLines";
-
+import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function exitToLoginPage() {
@@ -45,27 +45,44 @@ export function AdeptsLobbyPage() {
   }, [lobbyState]);
 
   useEffect(() => {
-    const load = () =>
-      fetch("/api/admin/quiz-players")
-        .then((r) => r.json())
-        .then((d: { players?: LobbyQuizPollPlayerRow[] }) =>
-          setLobbyTablePlayers(Array.isArray(d.players) ? d.players : [])
-        )
-        .catch(() => {});
-    load();
-    const id = setInterval(load, 2000);
-    return () => clearInterval(id);
-  }, []);
+    let detachSocket: (() => void) | undefined;
 
-  useEffect(() => {
-    const s = getQuizNavSocket();
-    const onConnect = () => emitLobbyQuizPresence();
-    s.on("connect", onConnect);
-    emitLobbyQuizPresence();
-    const id = setInterval(emitLobbyQuizPresence, 8000);
+    const bind = () => {
+      detachSocket?.();
+      const s = getQuizNavSocket();
+      const mySession = () => getAdeptsSessionId();
+      const onRoster = (payload: unknown) => {
+        const o = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+        if (o["allSessions"] === true) {
+          setLobbyTablePlayers([]);
+          return;
+        }
+        const sid = o["sessionId"];
+        if (sid != null && String(sid) !== mySession()) return;
+        const pl = o["players"];
+        setLobbyTablePlayers(Array.isArray(pl) ? (pl as LobbyQuizPollPlayerRow[]) : []);
+      };
+      const onConnect = () => {
+        emitLobbyQuizPresence();
+        s.emit("requestQuizLobbyRoster");
+      };
+      s.on("quizLobbyRoster", onRoster);
+      s.on("connect", onConnect);
+      emitLobbyQuizPresence();
+      s.emit("requestQuizLobbyRoster");
+      const id = setInterval(emitLobbyQuizPresence, 8000);
+      detachSocket = () => {
+        s.off("quizLobbyRoster", onRoster);
+        s.off("connect", onConnect);
+        clearInterval(id);
+      };
+    };
+
+    bind();
+    const unsub = subscribeQuizNavSocketReplace(bind);
     return () => {
-      s.off("connect", onConnect);
-      clearInterval(id);
+      unsub();
+      detachSocket?.();
       notifyQuizPlayerLeft();
     };
   }, []);

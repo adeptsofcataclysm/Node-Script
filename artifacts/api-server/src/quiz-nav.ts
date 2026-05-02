@@ -1,61 +1,111 @@
-import type { Server } from "socket.io";
+import type { Server, Socket } from "socket.io";
+import { readSocketSessionId } from "./lib/socket-session-id";
 import { logger } from "./lib/logger";
 import {
   bindQuizSocketPresence,
   clearQuizPlayers,
   getQuizSocketLobbyRole,
+  listQuizPlayersWithStatusForSession,
   unbindQuizSocketPresence,
 } from "./quiz-players-registry";
+import { resetQuizRoomForSession } from "./lib/adepts-quiz-room-store";
+
+function queryAdeptsRoleLower(socket: Socket): string {
+  const q = socket.handshake.query["adeptsRole"];
+  const raw = Array.isArray(q) ? q[0] : q;
+  return typeof raw === "string" ? raw.trim().toLowerCase() : "";
+}
+
+/**
+ * Ведущий: запись из `quizPlayerPresence` (лобби) **или** тот же `adeptsRole` в query, что на `/adepts`
+ * (после обновления страницы на доске реестр может быть пуст).
+ */
+function isQuizNavLobbyHost(socket: Socket): boolean {
+  if (getQuizSocketLobbyRole(socket.id) === "host") return true;
+  return queryAdeptsRoleLower(socket) === "host";
+}
+
+function canMutateLobbyEmoji(socket: Socket): boolean {
+  return isQuizNavLobbyHost(socket);
+}
 
 const MAX_BOARD = 2;
 
 /** Должно совпадать с числом строк в `game-client` `lobbyEmojiRevealLines.ts`. */
 const LOBBY_EMOJI_REVEAL_MAX = 40;
 
-/** После «Запуск игры» — квиз-доски доступны; до этого только лобби */
-let gameStarted = false;
-
-/** Текущая квиз-доска (0..2) */
-let lastBoardIndex: number | null = null;
-
-/** Ник на местах 1–5 на доске (после «Запуск игры», задаёт ведущий). */
-let seatPlayerNicks: string[] = [];
-
-/** Индекс текущей строки эмодзи (−1 — поле пустое; 0..n−1 — одна строка из списка, замена при «Дальше»). */
-let lobbyEmojiLineIndex = -1;
-
 const CHAT_HISTORY_MAX = 50;
-interface ChatEntry { id: string; nick: string; role: "host" | "spectator"; text: string; }
-const chatHistory: ChatEntry[] = [];
+interface ChatEntry {
+  id: string;
+  nick: string;
+  role: "host" | "spectator";
+  text: string;
+}
 
-/** Квиз перешёл на «Колесо адептов» — куда вернуться по кнопке ведущего. */
-let adeptsWheelActive = false;
-let adeptsWheelReturnHref: string | null = null;
-let adeptsWheelCurrentTurnSeat = 0;
+interface QuizNavSession {
+  gameStarted: boolean;
+  lastBoardIndex: number | null;
+  seatPlayerNicks: string[];
+  lobbyEmojiLineIndex: number;
+  chatHistory: ChatEntry[];
+  adeptsWheelActive: boolean;
+  adeptsWheelReturnHref: string | null;
+  adeptsWheelCurrentTurnSeat: number;
+}
 
-function lobbyPayload(): {
+const navBySession = new Map<string, QuizNavSession>();
+
+function getNav(sessionId: string): QuizNavSession {
+  let s = navBySession.get(sessionId);
+  if (!s) {
+    s = {
+      gameStarted: false,
+      lastBoardIndex: null,
+      seatPlayerNicks: [],
+      lobbyEmojiLineIndex: -1,
+      chatHistory: [],
+      adeptsWheelActive: false,
+      adeptsWheelReturnHref: null,
+      adeptsWheelCurrentTurnSeat: 0,
+    };
+    navBySession.set(sessionId, s);
+  }
+  return s;
+}
+
+function lobbyPayload(sessionId: string): {
   gameStarted: boolean;
   boardIndex: number;
   seatPlayerNicks: string[];
   lobbyEmojiLineIndex: number;
 } {
+  const nav = getNav(sessionId);
   const boardIndex =
-    lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD
-      ? lastBoardIndex
+    nav.lastBoardIndex !== null && nav.lastBoardIndex >= 0 && nav.lastBoardIndex <= MAX_BOARD
+      ? nav.lastBoardIndex
       : 0;
   return {
-    gameStarted,
+    gameStarted: nav.gameStarted,
     boardIndex,
-    seatPlayerNicks: [...seatPlayerNicks],
-    lobbyEmojiLineIndex,
+    seatPlayerNicks: [...nav.seatPlayerNicks],
+    lobbyEmojiLineIndex: nav.lobbyEmojiLineIndex,
   };
 }
 
 export function setupQuizNav(io: Server) {
   const ns = io.of("/quiz-nav");
 
-  ns.on("connection", (socket) => {
-    logger.info({ socketId: socket.id }, "Quiz nav client connected");
+  function emitQuizLobbyRoster(sessionId: string): void {
+    const players = listQuizPlayersWithStatusForSession(sessionId);
+    /** Всем в namespace: клиент отфильтрует по своему `sessionId` (надёжнее, чем только `to(room)`). */
+    ns.emit("quizLobbyRoster", { sessionId, players });
+  }
+
+  ns.on("connection", (socket: Socket) => {
+    const sessionId = readSocketSessionId(socket);
+    socket.join(sessionId);
+
+    logger.info({ socketId: socket.id, sessionId }, "Quiz nav client connected");
 
     socket.on("quizPlayerPresence", (payload: unknown) => {
       const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
@@ -67,45 +117,66 @@ export function setupQuizNav(io: Server) {
       const lobbyOnly = scope === "lobby";
       if (!lobbyOnly || !trimmed) {
         unbindQuizSocketPresence(socket.id);
+        emitQuizLobbyRoster(sessionId);
         return;
       }
       const roleRaw = po["role"];
       const roleStr = roleRaw == null ? "spectator" : String(roleRaw);
       const role = roleStr === "host" ? "host" : "spectator";
-      bindQuizSocketPresence(socket.id, trimmed, role);
+      bindQuizSocketPresence(socket.id, trimmed, role, sessionId);
+      emitQuizLobbyRoster(sessionId);
     });
 
-    socket.emit("lobbyState", lobbyPayload());
-    if (chatHistory.length > 0) {
-      socket.emit("chatHistory", chatHistory);
+    socket.emit("lobbyState", lobbyPayload(sessionId));
+    const nav = getNav(sessionId);
+    if (nav.chatHistory.length > 0) {
+      socket.emit("chatHistory", nav.chatHistory);
     }
 
-    if (gameStarted && lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD) {
-      socket.emit("phase", { boardIndex: lastBoardIndex });
+    if (
+      nav.gameStarted &&
+      nav.lastBoardIndex !== null &&
+      nav.lastBoardIndex >= 0 &&
+      nav.lastBoardIndex <= MAX_BOARD
+    ) {
+      socket.emit("phase", { boardIndex: nav.lastBoardIndex });
     }
 
     socket.on("startGame", (payload: unknown) => {
+      if (!isQuizNavLobbyHost(socket)) {
+        logger.warn(
+          { sessionId, socketId: socket.id },
+          "startGame ignored: socket is not registered as lobby host (quizPlayerPresence)",
+        );
+        return;
+      }
+      const n = getNav(sessionId);
       const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
       const raw = po["seatPlayerNicks"];
-      seatPlayerNicks = Array.isArray(raw)
+      n.seatPlayerNicks = Array.isArray(raw)
         ? raw.map((x) => String(x ?? "").trim().slice(0, 64)).filter(Boolean).slice(0, 5)
         : [];
 
-      gameStarted = true;
-      lobbyEmojiLineIndex = -1;
-      if (lastBoardIndex === null || lastBoardIndex < 0 || lastBoardIndex > MAX_BOARD) {
-        lastBoardIndex = 0;
+      n.gameStarted = true;
+      n.lobbyEmojiLineIndex = -1;
+      if (n.lastBoardIndex === null || n.lastBoardIndex < 0 || n.lastBoardIndex > MAX_BOARD) {
+        n.lastBoardIndex = 0;
       }
-      const out = lobbyPayload();
-      ns.emit("lobbyState", out);
-      ns.emit("phase", { boardIndex: out.boardIndex });
+      const out = lobbyPayload(sessionId);
+      ns.to(sessionId).emit("lobbyState", out);
+      ns.to(sessionId).emit("phase", { boardIndex: out.boardIndex });
+      /* Same as lobbyEmojiNext: room broadcast can miss the initiator; host must get lobbyState to redirect. */
+      socket.emit("lobbyState", out);
+      socket.emit("phase", { boardIndex: out.boardIndex });
       logger.info(
-        { gameStarted: true, boardIndex: out.boardIndex, seatCount: seatPlayerNicks.length },
-        "Quiz game started"
+        { sessionId, gameStarted: true, boardIndex: out.boardIndex, seatCount: n.seatPlayerNicks.length },
+        "Quiz game started",
       );
     });
 
     socket.on("hostAdeptsWheelOpen", (payload: unknown) => {
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
       const po = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
       const hrefRaw = po["returnHref"];
       const returnHref =
@@ -115,87 +186,131 @@ export function setupQuizNav(io: Server) {
       const currentTurnSeat =
         Number.isInteger(seatNum) && seatNum >= 0 && seatNum <= 4 ? seatNum : 0;
       if (!returnHref) return;
-      adeptsWheelActive = true;
-      adeptsWheelReturnHref = returnHref;
-      adeptsWheelCurrentTurnSeat = currentTurnSeat;
-      ns.emit("adeptsWheelOpened", {
+      n.adeptsWheelActive = true;
+      n.adeptsWheelReturnHref = returnHref;
+      n.adeptsWheelCurrentTurnSeat = currentTurnSeat;
+      ns.to(sessionId).emit("adeptsWheelOpened", {
         returnHref,
         currentTurnSeat,
       });
-      logger.info({ returnHref, currentTurnSeat }, "Quiz adepts wheel opened");
+      logger.info({ sessionId, returnHref, currentTurnSeat }, "Quiz adepts wheel opened");
     });
 
     socket.on("hostAdeptsWheelReturn", () => {
-      if (!adeptsWheelActive || !adeptsWheelReturnHref) return;
-      const href = adeptsWheelReturnHref;
-      adeptsWheelActive = false;
-      adeptsWheelReturnHref = null;
-      ns.emit("adeptsWheelReturn", { returnHref: href });
-      logger.info({ returnHref: href }, "Quiz adepts wheel return");
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
+
+      // Primary path: wheel was opened in this socket's session.
+      let targetSessionId = sessionId;
+      let targetNav = n;
+
+      // Fallback: if this session has no active wheel (e.g. the socket reconnected to
+      // the wrong room after a page reload), scan all sessions for one that does.
+      if (!n.adeptsWheelActive || !n.adeptsWheelReturnHref) {
+        for (const [sid, nav] of navBySession.entries()) {
+          if (nav.adeptsWheelActive && nav.adeptsWheelReturnHref) {
+            targetSessionId = sid;
+            targetNav = nav;
+            break;
+          }
+        }
+        if (!targetNav.adeptsWheelActive || !targetNav.adeptsWheelReturnHref) return;
+      }
+
+      const href = targetNav.adeptsWheelReturnHref;
+      targetNav.adeptsWheelActive = false;
+      targetNav.adeptsWheelReturnHref = null;
+      ns.to(targetSessionId).emit("adeptsWheelReturn", { returnHref: href });
+      logger.info({ sessionId, targetSessionId, returnHref: href }, "Quiz adepts wheel return");
     });
 
     socket.on("requestAdeptsWheelState", () => {
-      if (adeptsWheelActive && adeptsWheelReturnHref) {
+      const n = getNav(sessionId);
+      if (n.adeptsWheelActive && n.adeptsWheelReturnHref) {
         socket.emit("adeptsWheelOpened", {
-          returnHref: adeptsWheelReturnHref,
-          currentTurnSeat: adeptsWheelCurrentTurnSeat,
+          returnHref: n.adeptsWheelReturnHref,
+          currentTurnSeat: n.adeptsWheelCurrentTurnSeat,
         });
       }
     });
 
     socket.on("hostNavigate", (payload: { boardIndex?: unknown }) => {
-      if (!gameStarted) return;
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
+      if (!n.gameStarted) return;
       const raw = payload?.boardIndex;
       const boardIndex = typeof raw === "number" ? raw : Number(raw);
       if (!Number.isInteger(boardIndex) || boardIndex < 0 || boardIndex > MAX_BOARD) {
         return;
       }
-      lastBoardIndex = boardIndex;
-      socket.broadcast.emit("phase", { boardIndex });
+      n.lastBoardIndex = boardIndex;
+      socket.to(sessionId).emit("phase", { boardIndex });
+      /** Echo: `socket.to` excludes sender; host must receive `phase` for `QuizNavSync` (no client-side `assign` in `GamePhaseNav`). */
+      socket.emit("phase", { boardIndex });
     });
 
     socket.on("requestPhase", () => {
-      socket.emit("lobbyState", lobbyPayload());
-      if (!gameStarted) return;
-      if (lastBoardIndex !== null && lastBoardIndex >= 0 && lastBoardIndex <= MAX_BOARD) {
-        socket.emit("phase", { boardIndex: lastBoardIndex });
+      socket.emit("lobbyState", lobbyPayload(sessionId));
+      const n = getNav(sessionId);
+      if (!n.gameStarted) return;
+      if (n.lastBoardIndex !== null && n.lastBoardIndex >= 0 && n.lastBoardIndex <= MAX_BOARD) {
+        socket.emit("phase", { boardIndex: n.lastBoardIndex });
       }
     });
 
+    socket.on("requestQuizLobbyRoster", () => {
+      socket.emit("quizLobbyRoster", {
+        sessionId,
+        players: listQuizPlayersWithStatusForSession(sessionId),
+      });
+    });
+
     socket.on("hostReturnToLogin", () => {
-      gameStarted = false;
-      lastBoardIndex = null;
-      seatPlayerNicks = [];
-      lobbyEmojiLineIndex = -1;
-      adeptsWheelActive = false;
-      adeptsWheelReturnHref = null;
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
+      n.gameStarted = false;
+      n.lastBoardIndex = null;
+      n.seatPlayerNicks = [];
+      n.lobbyEmojiLineIndex = -1;
+      n.adeptsWheelActive = false;
+      n.adeptsWheelReturnHref = null;
+      resetQuizRoomForSession(sessionId);
       clearQuizPlayers();
-      ns.emit("returnToLogin", {});
-      ns.emit("lobbyState", lobbyPayload());
-      logger.info({}, "Quiz hostReturnToLogin — broadcast returnToLogin");
+      ns.emit("quizLobbyRoster", { allSessions: true, players: [] });
+      ns.to(sessionId).emit("returnToLogin", {});
+      ns.to(sessionId).emit("lobbyState", lobbyPayload(sessionId));
+      logger.info({ sessionId }, "Quiz hostReturnToLogin — broadcast returnToLogin");
     });
 
     socket.on("lobbyEmojiNext", () => {
-      if (gameStarted) return;
-      if (getQuizSocketLobbyRole(socket.id) !== "host") return;
-      if (lobbyEmojiLineIndex >= LOBBY_EMOJI_REVEAL_MAX - 1) return;
-      lobbyEmojiLineIndex += 1;
-      ns.emit("lobbyState", lobbyPayload());
+      if (!canMutateLobbyEmoji(socket)) return;
+      const n = getNav(sessionId);
+      if (n.gameStarted) return;
+      if (n.lobbyEmojiLineIndex >= LOBBY_EMOJI_REVEAL_MAX - 1) return;
+      n.lobbyEmojiLineIndex += 1;
+      const out = lobbyPayload(sessionId);
+      ns.to(sessionId).emit("lobbyState", out);
+      /* Room broadcast alone can miss the initiator (join timing / adapter); always echo to this socket. */
+      socket.emit("lobbyState", out);
     });
 
     socket.on("lobbyEmojiPrev", () => {
-      if (gameStarted) return;
-      if (getQuizSocketLobbyRole(socket.id) !== "host") return;
-      if (lobbyEmojiLineIndex <= -1) return;
-      lobbyEmojiLineIndex -= 1;
-      ns.emit("lobbyState", lobbyPayload());
+      if (!canMutateLobbyEmoji(socket)) return;
+      const n = getNav(sessionId);
+      if (n.gameStarted) return;
+      if (n.lobbyEmojiLineIndex <= -1) return;
+      n.lobbyEmojiLineIndex -= 1;
+      const out = lobbyPayload(sessionId);
+      ns.to(sessionId).emit("lobbyState", out);
+      socket.emit("lobbyState", out);
     });
 
     socket.on("requestChatHistory", () => {
-      socket.emit("chatHistory", chatHistory);
+      socket.emit("chatHistory", getNav(sessionId).chatHistory);
     });
 
     socket.on("chatMessage", (payload: unknown) => {
+      const n = getNav(sessionId);
       const po =
         payload && typeof payload === "object"
           ? (payload as Record<string, unknown>)
@@ -214,14 +329,15 @@ export function setupQuizNav(io: Server) {
         role,
         text,
       };
-      chatHistory.push(entry);
-      if (chatHistory.length > CHAT_HISTORY_MAX) chatHistory.shift();
-      ns.emit("chatMessage", entry);
+      n.chatHistory.push(entry);
+      if (n.chatHistory.length > CHAT_HISTORY_MAX) n.chatHistory.shift();
+      ns.to(sessionId).emit("chatMessage", entry);
     });
 
     socket.on("disconnect", () => {
       unbindQuizSocketPresence(socket.id);
-      logger.info({ socketId: socket.id }, "Quiz nav client disconnected");
+      emitQuizLobbyRoster(sessionId);
+      logger.info({ socketId: socket.id, sessionId }, "Quiz nav client disconnected");
     });
   });
 }

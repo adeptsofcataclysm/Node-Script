@@ -24,9 +24,27 @@ export function AdminPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
   const [resetQuizKey, setResetQuizKey] = useState<string | null>(null);
+  const [visitCountsError, setVisitCountsError] = useState<string | null>(null);
 
   useEffect(() => {
-    const load = () => fetch("/api/admin/visit-counts").then(r => r.json()).then(setVisitCounts).catch(() => {});
+    const load = () =>
+      fetch("/api/admin/visit-counts")
+        .then((r) => {
+          if (!r.ok) {
+            setVisitCountsError(`Счётчики недоступны (${r.status}).`);
+            setVisitCounts({});
+            return null;
+          }
+          setVisitCountsError(null);
+          return r.json() as Promise<Record<string, number>>;
+        })
+        .then((d) => {
+          if (d) setVisitCounts(d);
+        })
+        .catch(() => {
+          setVisitCountsError("Не удалось загрузить счётчики.");
+          setVisitCounts({});
+        });
     load();
     const id = setInterval(load, 1000);
     return () => clearInterval(id);
@@ -68,8 +86,8 @@ export function AdminPage() {
       border: "#1abc9c",
       items: [
         { label: "Квиз-доска 1", desc: "табло с вопросами и очками", href: `${base}/adepts-game/`, trackKey: "adepts-game" },
-        { label: "Квиз-доска 2", desc: "табло с вопросами и очками", href: `${base}/adepts-game-2/`, trackKey: "adepts-game-2" },
-        { label: "Квиз-доска 3", desc: "табло с вопросами и очками", href: `${base}/adepts-game-3/`, trackKey: "adepts-game-3" },
+        { label: "Квиз-доска 2", desc: "табло с вопросами и очками", href: `${base}/adepts-game/2/`, trackKey: "adepts-game-2" },
+        { label: "Квиз-доска 3", desc: "табло с вопросами и очками", href: `${base}/adepts-game/3/`, trackKey: "adepts-game-3" },
       ],
     },
   ];
@@ -78,7 +96,11 @@ export function AdminPage() {
     if (resetStatus === "loading") return;
     setResetStatus("loading");
     try {
-      const res = await fetch("/api/admin/reset-roulette", { method: "POST" });
+      const res = await fetch("/api/admin/reset-roulette", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: "default" }),
+      });
       if (res.ok) {
         setResetStatus("done");
         setTimeout(() => setResetStatus("idle"), 3000);
@@ -143,6 +165,27 @@ export function AdminPage() {
       >
         ↺ Обновить
       </button>
+
+      {visitCountsError && (
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: "100%",
+            maxWidth: 560,
+            marginBottom: 16,
+            padding: "12px 16px",
+            borderRadius: 8,
+            border: "1px solid rgba(241,196,15,0.35)",
+            background: "rgba(0,0,0,0.35)",
+            fontSize: 11,
+            color: "rgba(241,196,15,0.9)",
+            lineHeight: 1.4,
+          }}
+        >
+          {visitCountsError}
+        </div>
+      )}
 
       {/* Title */}
       <div style={{ position: "relative", zIndex: 1, marginBottom: 48, textAlign: "center" }}>

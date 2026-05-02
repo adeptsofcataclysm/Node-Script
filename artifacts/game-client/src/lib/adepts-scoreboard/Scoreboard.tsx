@@ -238,9 +238,9 @@ export function Scoreboard({
       : undefined;
 
   return (
-    <div className="w-full shrink-0 border-t border-[hsla(275,55%,42%,0.35)] bg-gradient-to-t from-[hsla(278,42%,6%,1)] via-[hsla(274,42%,5%,0.97)] to-[hsla(270,42%,9%,0.92)] px-2 py-2 backdrop-blur-md md:py-2.5">
+    <div className="w-screen max-w-[100vw] shrink-0 border-t border-[hsla(275,55%,42%,0.35)] bg-gradient-to-t from-[hsla(278,42%,6%,1)] via-[hsla(274,42%,5%,0.97)] to-[hsla(270,42%,9%,0.92)] py-2 backdrop-blur-md md:py-2.5 ml-[calc(50%-50vw)]">
       {!readonly && (
-        <div className="mb-2 flex justify-end">
+        <div className="mx-auto mb-2 flex w-full max-w-[1080px] justify-end px-2">
           <div className="flex items-center gap-2">
             {confirmReset ? (
               <div className="flex flex-wrap items-center justify-end gap-2 animate-in fade-in">
@@ -274,7 +274,7 @@ export function Scoreboard({
         </div>
       )}
 
-      <div className="flex justify-center overflow-x-auto pb-0.5">
+      <div className="flex justify-center overflow-x-auto px-2 pb-0.5">
         <div className="mx-auto grid w-full min-w-[528px] max-w-[1080px] grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5">
           {players.map((player, index) => {
             const theme = ADEPTS_SLOT_THEMES[index] ?? ADEPTS_SLOT_THEMES[0]!;

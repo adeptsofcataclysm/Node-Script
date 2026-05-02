@@ -9,6 +9,9 @@ import { useWheelSounds } from "@/hooks/useWheelSounds";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useRole } from "@/hooks/useRole";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+import { setAdeptsSessionId } from "@/lib/adeptsSessionId";
+import { getAdeptsQuizSocketSessionIdFromPath } from "@/lib/adeptsQuizBoardRoute";
+import { QUIZ_ADEPTS_WHEEL_RETURN_KEY, QUIZ_ADEPTS_WHEEL_CLOSE_CARD_FLAG } from "@/lib/quizAdeptsWheelClient";
 
 type Props = { viewerMode: boolean };
 
@@ -22,6 +25,28 @@ export function QuizAdeptsWheelPage({ viewerMode }: Props) {
   useEffect(() => {
     fetch(viewerMode ? "/api/track/watch" : "/api/track/host", { method: "POST" }).catch(() => {});
   }, [viewerMode]);
+
+  // On mount: restore the correct quiz-nav session so the return event reaches the
+  // right server room. The wheel page URL (/adepts/spin) has no path-based session;
+  // the session is passed as ?sessionId= when navigating here, but if the user reloads
+  // directly, the socket may have connected with "default". Re-derive from the stored
+  // returnHref (saved by QuizAdeptsWheelSync when navigating to the wheel) and force a
+  // socket reconnect when the derived session differs from the current one.
+  useEffect(() => {
+    try {
+      const returnHref = sessionStorage.getItem(QUIZ_ADEPTS_WHEEL_RETURN_KEY);
+      if (!returnHref) return;
+      const derived = getAdeptsQuizSocketSessionIdFromPath(returnHref);
+      if (!derived) return;
+      setAdeptsSessionId(derived);
+      // Trigger socket recreation: getQuizNavSocket compares getAdeptsSessionId() to
+      // lastSessionId and reconnects when they differ.
+      getQuizNavSocket();
+    } catch {
+      /* ignore */
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const badgeLabel = viewerMode ? "Зритель" : isHost ? "Ведущий" : "Ваш ход";
   const badgeBorder = viewerMode ? "#3498db" : isHost ? "#f1c40f" : "#2ecc71";
@@ -68,7 +93,27 @@ export function QuizAdeptsWheelPage({ viewerMode }: Props) {
       {isHost && !viewerMode && (
         <button
           type="button"
-          onClick={() => getQuizNavSocket().emit("hostAdeptsWheelReturn")}
+          onClick={() => {
+            // Notify the server (and all viewers) via the socket event.
+            getQuizNavSocket().emit("hostAdeptsWheelReturn");
+            // Short delay lets the WebSocket flush before the page unloads.
+            // If adeptsWheelReturn arrives in time, QuizAdeptsWheelSync.onReturn
+            // navigates and the timeout fires harmlessly on an unloaded page.
+            // If the server lost wheel state (restart) the timeout is the fallback.
+            setTimeout(() => {
+              try {
+                sessionStorage.setItem(QUIZ_ADEPTS_WHEEL_CLOSE_CARD_FLAG, "1");
+                const stored = sessionStorage.getItem(QUIZ_ADEPTS_WHEEL_RETURN_KEY);
+                const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+                window.location.assign(
+                  stored && stored.length > 0 ? stored : `${base}/adepts-game/`,
+                );
+              } catch {
+                const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+                window.location.assign(`${base}/adepts-game/`);
+              }
+            }, 250);
+          }}
           className="adepts-quiz-theme fixed bottom-[18px] right-[18px] z-30 cursor-pointer whitespace-nowrap rounded-lg border border-primary/50 bg-primary/15 px-4 py-2.5 font-display text-xs font-bold uppercase tracking-[0.2em] text-primary glow-text shadow-[0_0_20px_hsla(45,93%,47%,0.22)] backdrop-blur-sm transition hover:border-primary hover:bg-primary/25 hover:shadow-[0_0_28px_hsla(45,93%,47%,0.4)]"
         >
           Самый Душный
