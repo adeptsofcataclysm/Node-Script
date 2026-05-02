@@ -6,6 +6,7 @@ import { QuizBoardReloadButton } from "@/components/QuizBoardReloadButton";
 import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
+import { DonationsTable } from "@/components/DonationsTable";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 const BOARD_BG = "/funeral-board-bg.png";
@@ -146,7 +147,9 @@ export default function FuneralRoundPage() {
             aria-label="Сцена похорон"
           />
         </main>
-        <div className="min-h-0 min-w-0" aria-hidden="true" />
+        <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
+          <DonationsTable players={state.players} donations={state.donations} />
+        </aside>
       </div>
 
       <div className="relative z-[110] grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">

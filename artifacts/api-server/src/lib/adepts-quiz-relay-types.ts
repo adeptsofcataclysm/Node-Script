@@ -27,6 +27,8 @@ export type AdeptsQuizRelayPayload = {
   themes?: string[];
   questions?: unknown[][];
   dataVersion?: number;
+  /** Пожертвования по 5 местам; общие для сессии. */
+  donations?: (number | null)[];
 };
 
 const THEME_COUNT = 8;
@@ -49,6 +51,7 @@ export function defaultQuizRelayPayload(sessionId: string): AdeptsQuizRelayPaylo
     quizBoardHoverCell: null,
     questionUsedGrid,
     dataVersion: 59,
+    donations: [null, null, null, null, null],
   };
 }
 

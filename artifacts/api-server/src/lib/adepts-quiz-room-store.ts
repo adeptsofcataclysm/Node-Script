@@ -43,6 +43,9 @@ export function getQuizRelayOrDefault(sessionId: string): AdeptsQuizRelayPayload
     s = defaultQuizRelayPayload(sessionId);
     rooms.set(sessionId, s);
   }
+  if (!s.donations || s.donations.length !== 5) {
+    s.donations = [null, null, null, null, null];
+  }
   return s;
 }
 
@@ -67,6 +70,18 @@ export function setQuizRelayFull(sessionId: string, payload: AdeptsQuizRelayPayl
   base.quizBoardHoverCell = payload.quizBoardHoverCell ?? null;
   base.questionUsedGrid = structuredClone(payload.questionUsedGrid);
   if (payload.dataVersion !== undefined) base.dataVersion = payload.dataVersion;
+
+  const rawDon = (payload as Record<string, unknown>)["donations"];
+  if (Array.isArray(rawDon) && rawDon.length === 5) {
+    base.donations = rawDon.map((v) => {
+      if (v === null || v === undefined) return null;
+      if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.round(n) : null;
+    }) as (number | null)[];
+  } else if (!base.donations || base.donations.length !== 5) {
+    base.donations = [null, null, null, null, null];
+  }
 
   if (payload.catalogIncluded && payload.themes && payload.questions) {
     base.catalogIncluded = true;

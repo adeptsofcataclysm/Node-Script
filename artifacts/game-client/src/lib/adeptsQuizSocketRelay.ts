@@ -32,7 +32,28 @@ export type AdeptsQuizRelayPayload = {
   themes?: string[];
   questions?: Question[][];
   dataVersion?: number;
+  /** Пожертвования по местам 1–5; общие для всей сессии квиза. */
+  donations?: (number | null)[];
 };
+
+export function normalizeQuizDonations(raw: unknown): (number | null)[] | null {
+  if (!Array.isArray(raw) || raw.length !== 5) return null;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < 5; i++) {
+    const v = raw[i];
+    if (v === null || v === undefined) {
+      out.push(null);
+      continue;
+    }
+    if (typeof v === "number" && Number.isFinite(v)) {
+      out.push(Math.round(v));
+      continue;
+    }
+    const n = Number(v);
+    out.push(Number.isFinite(n) ? Math.round(n) : null);
+  }
+  return out;
+}
 
 export function buildAdeptsQuizRelayPayload(
   slice: {
@@ -43,6 +64,7 @@ export function buildAdeptsQuizRelayPayload(
     currentTurnSeat: number;
     quizBoardHoverCell?: QuizBoardHoverCell | null;
     dataVersion?: number;
+    donations: (number | null)[];
   },
   boardRoom: string,
   includeCatalog: boolean,
@@ -55,6 +77,7 @@ export function buildAdeptsQuizRelayPayload(
     currentTurnSeat: slice.currentTurnSeat,
     quizBoardHoverCell: slice.quizBoardHoverCell ?? null,
     questionUsedGrid: slice.questions.map((row) => row.map((q) => Boolean(q.used))),
+    donations: normalizeQuizDonations(slice.donations) ?? [null, null, null, null, null],
   };
   if (boardId !== undefined) out.boardId = boardId;
   if (slice.dataVersion !== undefined) out.dataVersion = slice.dataVersion;
