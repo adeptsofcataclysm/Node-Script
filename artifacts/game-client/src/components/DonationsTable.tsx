@@ -1,17 +1,14 @@
-import type { Player } from "@/lib/adepts-quiz-types";
+import type { DonationLogEntry } from "@/lib/donationLog";
 
 type Props = {
-  players: Player[];
-  donations: (number | null)[];
+  donationLog: DonationLogEntry[];
 };
 
-/** Компактная таблица пожертвований — общая для всех фаз квиза (синхрон через relay). */
-export function DonationsTable({ players, donations }: Props) {
-  const rows = players.slice(0, 5);
-  const d =
-    donations.length >= 5
-      ? donations
-      : [...donations, ...Array(Math.max(0, 5 - donations.length)).fill(null)].slice(0, 5);
+/** Журнал пожертвований — общий для всех фаз квиза (синхрон через relay). */
+export function DonationsTable({ donationLog }: Props) {
+  const rows = [...(donationLog ?? [])].sort(
+    (a, b) => (a.seatIndex ?? 100) - (b.seatIndex ?? 100)
+  );
 
   return (
     <div
@@ -19,28 +16,34 @@ export function DonationsTable({ players, donations }: Props) {
       aria-label="Пожертвования игроков"
     >
       <table className="w-full border-collapse text-left font-display text-[11px] leading-tight sm:text-xs">
-        <caption className="sr-only">Пожертвования по игрокам</caption>
+        <caption className="sr-only">Журнал пожертвований</caption>
         <thead>
           <tr className="border-b border-amber-500/50 text-amber-100/95">
             <th scope="col" className="pb-1.5 pr-2 font-semibold tracking-wide">
               Игрок
             </th>
             <th scope="col" className="pb-1.5 font-semibold tracking-wide">
-              Пожертвования
+              Пожертвование
             </th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((p, i) => (
-            <tr key={p.id} className="border-b border-white/10 last:border-b-0">
-              <td className="max-w-[5.5rem] truncate py-1 pr-2 text-foreground/95" title={p.name}>
-                {p.name}
-              </td>
-              <td className="py-1 tabular-nums text-amber-50/95">
-                {d[i] === null || d[i] === undefined ? "—" : d[i]}
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={2} className="py-2 text-center text-muted-foreground/80">
+                —
               </td>
             </tr>
-          ))}
+          ) : (
+            rows.map((row) => (
+              <tr key={row.id} className="border-b border-white/10 last:border-b-0">
+                <td className="max-w-[5.5rem] truncate py-1 pr-2 text-foreground/95" title={row.name}>
+                  {row.name}
+                </td>
+                <td className="py-1 tabular-nums text-amber-50/95">{row.amount}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

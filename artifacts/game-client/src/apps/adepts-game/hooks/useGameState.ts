@@ -15,8 +15,9 @@ import {
 import {
   buildAdeptsQuizRelayPayload,
   deriveThemesAndQuestionsFromQuizIncoming,
-  normalizeQuizDonations,
 } from "@/lib/adeptsQuizSocketRelay";
+import type { DonationLogEntry } from "@/lib/donationLog";
+import { normalizeDonationLog } from "@/lib/donationLog";
 import {
   getAdeptsCommandSocket,
   getAdeptsCommandSocketClientKey,
@@ -46,8 +47,8 @@ export type GameState = {
   quizBoardHoverCell?: QuizBoardHoverCell;
   dataVersion?: number;
   boardRoom?: string;
-  /** Пожертвования по 5 местам; общие для всех раундов квиза. */
-  donations: (number | null)[];
+  /** Журнал пожертвований (строки); общий для всех раундов квиза. */
+  donationLog: DonationLogEntry[];
 };
 
 const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
@@ -72,7 +73,7 @@ function emptyGrid(): Pick<GameState, "themes" | "questions"> {
   };
 }
 
-const DEFAULT_DONATIONS: (number | null)[] = [null, null, null, null, null];
+const DEFAULT_DONATION_LOG: DonationLogEntry[] = [];
 
 const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   activeQuizCard: null,
@@ -81,20 +82,20 @@ const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   players: DEFAULT_PLAYERS,
   dataVersion: undefined,
   boardRoom: undefined,
-  donations: [...DEFAULT_DONATIONS],
+  donationLog: [...DEFAULT_DONATION_LOG],
 };
 
 const PLAYERS_KEY = "adepts-shared-players";
-const DONATIONS_KEY = "adepts-shared-donations";
+const DONATION_LOG_KEY = "adepts-shared-donation-log";
 
-function loadSharedDonations(): (number | null)[] {
+function loadSharedDonationLog(): DonationLogEntry[] {
   try {
-    const s = localStorage.getItem(DONATIONS_KEY);
-    if (!s) return [...DEFAULT_DONATIONS];
+    const s = localStorage.getItem(DONATION_LOG_KEY);
+    if (!s) return [...DEFAULT_DONATION_LOG];
     const parsed = JSON.parse(s) as unknown;
-    return normalizeQuizDonations(parsed) ?? [...DEFAULT_DONATIONS];
+    return normalizeDonationLog(parsed) ?? [...DEFAULT_DONATION_LOG];
   } catch {
-    return [...DEFAULT_DONATIONS];
+    return [...DEFAULT_DONATION_LOG];
   }
 }
 
@@ -345,7 +346,7 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
           ...DEFAULT_CORE,
           ...emptyGrid(),
           players: rosterPlayers,
-          donations: loadSharedDonations(),
+          donationLog: loadSharedDonationLog(),
         });
       }
     }
@@ -359,13 +360,13 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
           ...emptyGrid(),
           players: rosterPlayers,
           dataVersion: rt.dataVersion,
-          donations: loadSharedDonations(),
+          donationLog: loadSharedDonationLog(),
         });
       }
       return migrateCatalog(boardId, {
         ...parsed,
         players: rosterPlayers,
-        donations: normalizeQuizDonations(parsed.donations) ?? loadSharedDonations(),
+        donationLog: normalizeDonationLog(parsed.donationLog) ?? loadSharedDonationLog(),
         activeQuizCard: parsed.activeQuizCard ?? null,
         currentTurnSeat: Number.isInteger(parsed.currentTurnSeat)
           ? ((Number(parsed.currentTurnSeat) % 5) + 5) % 5
@@ -387,14 +388,14 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
       ...emptyGrid(),
       players: rosterPlayers,
       dataVersion: rt.dataVersion,
-      donations: loadSharedDonations(),
+      donationLog: loadSharedDonationLog(),
     });
   }
   return migrateCatalog(boardId, {
     ...DEFAULT_CORE,
     ...emptyGrid(),
     players: rosterPlayers,
-    donations: loadSharedDonations(),
+    donationLog: loadSharedDonationLog(),
   });
 }
 
@@ -480,7 +481,7 @@ export function useGameState(boardId: AdeptsBoardId) {
             boardId: rec["boardId"],
             players: rec["players"],
             currentTurnSeat: rec["currentTurnSeat"],
-            donations: rec["donations"],
+            donationLog: rec["donationLog"],
             // Reset all board-specific fields to safe defaults
             activeQuizCard: null,
             quizBoardHoverCell: null,
@@ -525,8 +526,8 @@ export function useGameState(boardId: AdeptsBoardId) {
           hoverFromRelay = null;
         }
 
-        const incomingDonations = normalizeQuizDonations(recToUse["donations"]);
-        const nextDonations = incomingDonations ?? prev.donations;
+        const incomingLog = normalizeDonationLog(recToUse["donationLog"]);
+        const nextDonationLog = incomingLog ?? prev.donationLog;
 
         let nextState = withClosedActiveQuizIfCellUsed(
           migrateCatalog(boardId, {
@@ -535,7 +536,7 @@ export function useGameState(boardId: AdeptsBoardId) {
             themes,
             questions,
             players: merged,
-            donations: nextDonations,
+            donationLog: nextDonationLog,
             activeQuizCard: rawCard,
             // Relay is authoritative: never let host+Roster merge stomp server `currentTurnSeat`.
             currentTurnSeat:
@@ -596,7 +597,7 @@ export function useGameState(boardId: AdeptsBoardId) {
   useEffect(() => {
     localStorage.setItem(rt.storageKey, JSON.stringify(state));
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
-    localStorage.setItem(DONATIONS_KEY, JSON.stringify(state.donations));
+    localStorage.setItem(DONATION_LOG_KEY, JSON.stringify(state.donationLog));
 
     /** Consume before `catalogReady` / `allowQuizPush` returns — otherwise skip stays true and a later `hostQuizRelay` can stomp relay (host pick then no modal). */
     const skipThisCommit = skipEmitRef.current;
@@ -630,12 +631,12 @@ export function useGameState(boardId: AdeptsBoardId) {
           setState((prev) => ({ ...prev, players }));
         } catch {}
       }
-      if (e.key === DONATIONS_KEY && e.newValue) {
+      if (e.key === DONATION_LOG_KEY && e.newValue) {
         try {
-          const d = normalizeQuizDonations(JSON.parse(e.newValue));
+          const d = normalizeDonationLog(JSON.parse(e.newValue));
           if (d) {
             skipEmitRef.current = true;
-            setState((prev) => ({ ...prev, donations: d }));
+            setState((prev) => ({ ...prev, donationLog: d }));
           }
         } catch {}
       }
@@ -806,13 +807,16 @@ export function useGameState(boardId: AdeptsBoardId) {
         players: DEFAULT_PLAYERS.map((p) => ({ ...p })),
         dataVersion: rt.dataVersion,
         boardRoom: getAdeptsSessionId(),
-        donations:
-          prev.donations?.length === 5 ? [...prev.donations] : [...DEFAULT_DONATIONS],
+        donationLog: Array.isArray(prev.donationLog) ? [...prev.donationLog] : [...DEFAULT_DONATION_LOG],
       })
     );
   }, [boardId, rt.dataVersion]);
 
   /** Pass `turnSeat` from the board when the clicker is host — avoids stale `useCallback` state vs `localStorage` host flag. */
+  const submitPlayerDonation = useCallback((amount: number) => {
+    getAdeptsCommandSocket().emit("command", { type: "playerDonation", amount });
+  }, []);
+
   const emitPickCell = useCallback(
     (themeIndex: number, questionIndex: number, opts?: { turnSeat?: number }) => {
       /**
@@ -851,5 +855,6 @@ export function useGameState(boardId: AdeptsBoardId) {
     setQuizBoardHoverCell,
     resetGame,
     emitPickCell,
+    submitPlayerDonation,
   };
 }

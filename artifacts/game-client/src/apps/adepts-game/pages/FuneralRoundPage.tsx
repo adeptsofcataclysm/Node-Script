@@ -7,6 +7,8 @@ import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { DonationsTable } from "@/components/DonationsTable";
+import { FuneralDonationHat } from "@/components/FuneralDonationHat";
+import { readAdeptsPlayerSeatIndexForSocket } from "@/lib/adeptsCommandSocket";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 const BOARD_BG = "/funeral-board-bg.png";
@@ -19,7 +21,7 @@ function resolveUrl(url: string): string {
 }
 
 export default function FuneralRoundPage() {
-  const { isHost } = useRole();
+  const { isHost, isSeatPlayer } = useRole();
   const {
     catalogReady,
     state,
@@ -27,7 +29,11 @@ export default function FuneralRoundPage() {
     updatePlayerName,
     updatePlayerScore,
     resetScores,
+    submitPlayerDonation,
   } = useGameState(2);
+
+  const playerSeat = readAdeptsPlayerSeatIndexForSocket();
+  const myScore = state.players[playerSeat]?.score ?? 0;
 
   const [introDone, setIntroDone] = useState(false);
 
@@ -142,13 +148,21 @@ export default function FuneralRoundPage() {
         </aside>
         <main className="relative flex min-h-0 min-w-0 flex-col py-3">
           <div
-            className="mx-auto h-full w-full max-w-7xl min-h-0 rounded-lg border border-white/10 px-2"
-            style={bgStyle}
+            className="relative mx-auto h-full w-full max-w-7xl min-h-0 overflow-visible rounded-lg border border-white/10 px-2"
             aria-label="Сцена похорон"
-          />
+          >
+            <div className="absolute inset-0 rounded-lg" style={bgStyle} />
+            {introDone ? (
+              <FuneralDonationHat
+                interactive={isSeatPlayer}
+                playerScore={myScore}
+                onSubmit={submitPlayerDonation}
+              />
+            ) : null}
+          </div>
         </main>
         <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
-          <DonationsTable players={state.players} donations={state.donations} />
+          <DonationsTable donationLog={state.donationLog} />
         </aside>
       </div>
 

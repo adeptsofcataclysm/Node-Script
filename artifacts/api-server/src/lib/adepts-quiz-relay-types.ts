@@ -14,6 +14,14 @@ export type AdeptsRelayActiveCard = {
 
 export type AdeptsRelayHover = { themeIndex: number; questionIndex: number } | null;
 
+export type AdeptsDonationLogEntry = {
+  id: string;
+  name: string;
+  amount: number;
+  /** 0–4; повторные пожертвования того же места суммируются в одной строке. */
+  seatIndex?: number;
+};
+
 export type AdeptsQuizRelayPayload = {
   boardRoom: string;
   /** Board id (1 | 2 | 3). Used to detect cross-board relay contamination. */
@@ -27,8 +35,8 @@ export type AdeptsQuizRelayPayload = {
   themes?: string[];
   questions?: unknown[][];
   dataVersion?: number;
-  /** Пожертвования по 5 местам; общие для сессии. */
-  donations?: (number | null)[];
+  /** Журнал пожертвований. */
+  donationLog?: AdeptsDonationLogEntry[];
 };
 
 const THEME_COUNT = 8;
@@ -51,7 +59,7 @@ export function defaultQuizRelayPayload(sessionId: string): AdeptsQuizRelayPaylo
     quizBoardHoverCell: null,
     questionUsedGrid,
     dataVersion: 59,
-    donations: [null, null, null, null, null],
+    donationLog: [],
   };
 }
 

@@ -10,6 +10,7 @@ import {
   applyHostClearActiveCard,
   applyActiveQuizPatch,
   applyPickCell,
+  applyPlayerDonation,
   cloneQuizRelay,
   getQuizRelayOrDefault,
 } from "./lib/adepts-quiz-room-store";
@@ -47,6 +48,16 @@ function readSeat(socket: Socket): number | null {
   const n = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isInteger(n) || n < 0 || n > 4) return null;
   return n;
+}
+
+function socketClaimsPlayerRole(socket: Socket): boolean {
+  const auth = socket.handshake.auth as Record<string, unknown> | undefined;
+  const role = auth?.["role"];
+  if (typeof role === "string" && role.trim().toLowerCase() === "player") return true;
+  const q = socket.handshake.query as Record<string, unknown> | undefined;
+  const ar = q?.["adeptsRole"];
+  const s = Array.isArray(ar) ? ar[0] : ar;
+  return typeof s === "string" && s.trim().toLowerCase() === "player";
 }
 
 /**
@@ -195,6 +206,22 @@ export function setupAdepts(io: Server): void {
               { sessionId, socketId: socket.id, err: r.error, themeIndex: t, questionIndex: q, seat: seatForPick },
               "pickCell rejected",
             );
+            return;
+          }
+          run();
+          return;
+        }
+        case "playerDonation": {
+          if (host) return;
+          if (!socketClaimsPlayerRole(socket)) return;
+          const authSeat = readSeat(socket);
+          if (authSeat === null) return;
+          const rawAmt = cmd["amount"];
+          const amount = typeof rawAmt === "number" ? rawAmt : Number(rawAmt);
+          if (!Number.isFinite(amount)) return;
+          const r = applyPlayerDonation(sessionId, authSeat, Math.floor(amount));
+          if (!r.ok) {
+            logger.warn({ sessionId, socketId: socket.id, err: r.error }, "playerDonation rejected");
             return;
           }
           run();

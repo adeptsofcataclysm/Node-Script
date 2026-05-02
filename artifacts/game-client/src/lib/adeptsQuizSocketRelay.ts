@@ -1,6 +1,8 @@
 import type { Player, Question } from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import type { AdeptsQuizBoardPayload } from "@/lib/adeptsQuizBoardApi";
+import type { DonationLogEntry } from "@/lib/donationLog";
+import { normalizeDonationLog } from "@/lib/donationLog";
 
 /** Mirrors `ActiveQuizCard` from adepts-game hooks — socket payload only. */
 export type AdeptsQuizRelayActiveCard = {
@@ -32,28 +34,9 @@ export type AdeptsQuizRelayPayload = {
   themes?: string[];
   questions?: Question[][];
   dataVersion?: number;
-  /** Пожертвования по местам 1–5; общие для всей сессии квиза. */
-  donations?: (number | null)[];
+  /** Журнал пожертвований (строки «ник — сумма»). */
+  donationLog?: DonationLogEntry[];
 };
-
-export function normalizeQuizDonations(raw: unknown): (number | null)[] | null {
-  if (!Array.isArray(raw) || raw.length !== 5) return null;
-  const out: (number | null)[] = [];
-  for (let i = 0; i < 5; i++) {
-    const v = raw[i];
-    if (v === null || v === undefined) {
-      out.push(null);
-      continue;
-    }
-    if (typeof v === "number" && Number.isFinite(v)) {
-      out.push(Math.round(v));
-      continue;
-    }
-    const n = Number(v);
-    out.push(Number.isFinite(n) ? Math.round(n) : null);
-  }
-  return out;
-}
 
 export function buildAdeptsQuizRelayPayload(
   slice: {
@@ -64,7 +47,7 @@ export function buildAdeptsQuizRelayPayload(
     currentTurnSeat: number;
     quizBoardHoverCell?: QuizBoardHoverCell | null;
     dataVersion?: number;
-    donations: (number | null)[];
+    donationLog: DonationLogEntry[];
   },
   boardRoom: string,
   includeCatalog: boolean,
@@ -77,7 +60,7 @@ export function buildAdeptsQuizRelayPayload(
     currentTurnSeat: slice.currentTurnSeat,
     quizBoardHoverCell: slice.quizBoardHoverCell ?? null,
     questionUsedGrid: slice.questions.map((row) => row.map((q) => Boolean(q.used))),
-    donations: normalizeQuizDonations(slice.donations) ?? [null, null, null, null, null],
+    donationLog: normalizeDonationLog(slice.donationLog) ?? [],
   };
   if (boardId !== undefined) out.boardId = boardId;
   if (slice.dataVersion !== undefined) out.dataVersion = slice.dataVersion;

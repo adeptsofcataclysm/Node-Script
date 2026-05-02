@@ -175,7 +175,7 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           </div>
         </main>
         <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
-          <DonationsTable players={state.players} donations={state.donations} />
+          <DonationsTable donationLog={state.donationLog} />
         </aside>
       </div>
 

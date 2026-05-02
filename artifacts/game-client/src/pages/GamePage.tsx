@@ -398,7 +398,7 @@ export function GamePage() {
               className="text-sm font-bold uppercase tracking-[3px]"
               style={{ color: turnColor }}
             >
-              {isMyTurn ? "Your Turn" : `${turnPlayerName}'s Turn`}
+              Ход: {turnPlayerName}
             </motion.p>
           ) : null}
         </div>

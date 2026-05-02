@@ -1,6 +1,7 @@
 import {
   defaultQuizRelayPayload,
   pointValueForQuestionIndex,
+  type AdeptsDonationLogEntry,
   type AdeptsQuizRelayPayload,
   type AdeptsRelayActiveCard,
 } from "./adepts-quiz-relay-types";
@@ -43,8 +44,8 @@ export function getQuizRelayOrDefault(sessionId: string): AdeptsQuizRelayPayload
     s = defaultQuizRelayPayload(sessionId);
     rooms.set(sessionId, s);
   }
-  if (!s.donations || s.donations.length !== 5) {
-    s.donations = [null, null, null, null, null];
+  if (!Array.isArray(s.donationLog)) {
+    s.donationLog = [];
   }
   return s;
 }
@@ -71,16 +72,27 @@ export function setQuizRelayFull(sessionId: string, payload: AdeptsQuizRelayPayl
   base.questionUsedGrid = structuredClone(payload.questionUsedGrid);
   if (payload.dataVersion !== undefined) base.dataVersion = payload.dataVersion;
 
-  const rawDon = (payload as Record<string, unknown>)["donations"];
-  if (Array.isArray(rawDon) && rawDon.length === 5) {
-    base.donations = rawDon.map((v) => {
-      if (v === null || v === undefined) return null;
-      if (typeof v === "number" && Number.isFinite(v)) return Math.round(v);
-      const n = Number(v);
-      return Number.isFinite(n) ? Math.round(n) : null;
-    }) as (number | null)[];
-  } else if (!base.donations || base.donations.length !== 5) {
-    base.donations = [null, null, null, null, null];
+  const rawLog = (payload as Record<string, unknown>)["donationLog"];
+  if (Array.isArray(rawLog)) {
+    const next: AdeptsDonationLogEntry[] = [];
+    for (const row of rawLog) {
+      if (!row || typeof row !== "object") continue;
+      const o = row as Record<string, unknown>;
+      const id = typeof o.id === "string" ? o.id.trim() : "";
+      const name = typeof o.name === "string" ? o.name.trim().slice(0, 64) : "";
+      const amtRaw = o.amount;
+      const amt = typeof amtRaw === "number" ? amtRaw : Number(amtRaw);
+      const siRaw = o.seatIndex;
+      const seatIndex =
+        typeof siRaw === "number" && Number.isInteger(siRaw) && siRaw >= 0 && siRaw <= 4
+          ? siRaw
+          : undefined;
+      if (!id || !Number.isFinite(amt) || !Number.isInteger(amt)) continue;
+      next.push({ id, name: name || "Игрок", amount: amt, ...(seatIndex !== undefined ? { seatIndex } : {}) });
+    }
+    base.donationLog = next;
+  } else if (!base.donationLog) {
+    base.donationLog = [];
   }
 
   if (payload.catalogIncluded && payload.themes && payload.questions) {
@@ -301,6 +313,48 @@ export function applySeatNickRosterToQuizRelay(sessionId: string, seatNicks: str
     const nick = row[i] ?? "";
     p.name = nick.length > 0 ? nick : `Игрок ${i + 1}`;
   }
+}
+
+export function applyPlayerDonation(
+  sessionId: string,
+  seat: number,
+  amount: number,
+): { ok: true } | { ok: false; error: string } {
+  const seatN = ((Math.floor(seat) % 5) + 5) % 5;
+  if (!Number.isInteger(amount) || amount < 1) return { ok: false, error: "amount" };
+  const s = getQuizRelayOrDefault(sessionId);
+  const p = s.players[seatN];
+  if (!p) return { ok: false, error: "player" };
+  if (p.score < 0 || amount > p.score) return { ok: false, error: "no funds" };
+
+  const name = String(p.name ?? "").trim().slice(0, 64) || `Игрок ${seatN + 1}`;
+  const nameKey = name.trim().toLowerCase();
+  if (!s.donationLog) s.donationLog = [];
+
+  let mergeLegacy = 0;
+  s.donationLog = s.donationLog.filter((e) => {
+    if (typeof e.seatIndex === "number") return true;
+    if (String(e.name ?? "").trim().toLowerCase() === nameKey) {
+      mergeLegacy += e.amount;
+      return false;
+    }
+    return true;
+  });
+
+  p.score -= amount;
+
+  const addTotal = amount + mergeLegacy;
+  const existing = s.donationLog.find(
+    (e) => typeof e.seatIndex === "number" && e.seatIndex === seatN,
+  );
+  if (existing) {
+    existing.amount += addTotal;
+    existing.name = name;
+  } else {
+    const id = `d-seat-${seatN}-${Date.now()}`;
+    s.donationLog.push({ id, name, amount: addTotal, seatIndex: seatN });
+  }
+  return { ok: true };
 }
 
 export function __resetQuizRoomsForTests(): void {
