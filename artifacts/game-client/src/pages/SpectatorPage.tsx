@@ -206,8 +206,8 @@ export function SpectatorPage() {
         </button>
       )}
 
-      {/* Bottom-right: legacy wheel link (если не режим возврата с квиза) */}
-      {!(isHost && fromQuizPandora) && (
+      {/* Bottom-right: legacy wheel link — только ведущий на /spectate (не зрители) */}
+      {isHost && !fromQuizPandora && (
         <a
           href="https://node-script--gg22last.replit.app/adepts"
           style={{

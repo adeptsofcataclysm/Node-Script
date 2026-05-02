@@ -850,7 +850,7 @@ export function LottoModal({
               Барабан Лото
             </h2>
             <p className="text-xs font-mono uppercase tracking-[3px] text-center" style={{ color: "#555" }}>
-              {readOnly ? "Участники (ведущий управляет списком)" : "Добавьте участников (мин. 2, макс. 12)"}
+              {readOnly ? "Участники:" : "Добавьте участников (мин. 2, макс. 12)"}
             </p>
 
             {!readOnly ? (
@@ -894,7 +894,7 @@ export function LottoModal({
               </div>
             ) : (
               <p className="text-center font-mono text-[10px] uppercase tracking-[2px]" style={{ color: "#444" }}>
-                Ожидайте, пока ведущий запустит барабан (нужно минимум 2 участника)
+                Ожидайте, пока ведущий запустит барабан.
               </p>
             )}
           </motion.div>
@@ -1032,7 +1032,20 @@ export function LottoModal({
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
                       className="flex flex-col items-center gap-1">
-                      <p className="font-mono text-xs uppercase tracking-[4px]" style={{ color: "#666" }}>Счастливчик</p>
+                      <p
+                        className="font-mono text-xs uppercase tracking-[4px]"
+                        style={{
+                          background: "linear-gradient(165deg, #fffef5 0%, #f7dc6f 38%, #f1c40f 58%, #b8860b 100%)",
+                          WebkitBackgroundClip: "text",
+                          backgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          color: "transparent",
+                          filter:
+                            "drop-shadow(0 0 5px rgba(255, 220, 140, 0.95)) drop-shadow(0 0 14px rgba(241, 196, 15, 0.75)) drop-shadow(0 0 28px rgba(255, 180, 0, 0.4))",
+                        }}
+                      >
+                        Счастливчик
+                      </p>
                       <motion.p className="text-4xl font-bold uppercase tracking-[3px]" style={{ color: chosenColor }}
                         animate={{ textShadow: [`0 0 20px ${chosenColor}88`, `0 0 50px ${chosenColor}ff`, `0 0 20px ${chosenColor}88`] }}
                         transition={{ duration: 1.4, repeat: Infinity }}>
