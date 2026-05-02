@@ -15,6 +15,16 @@ export function consumeAdeptsWheelReturnCloseQuizCardFlag(): boolean {
   }
 }
 
+/** Пока выставлен — пользователь только что вернулся с колеса на доску (до consume в sync). */
+export function peekAdeptsWheelReturnCloseCardFlag(): boolean {
+  if (typeof sessionStorage === "undefined") return false;
+  try {
+    return sessionStorage.getItem(QUIZ_ADEPTS_WHEEL_CLOSE_CARD_FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function quizAdeptsWheelBasePath(): string {
   return import.meta.env.BASE_URL.replace(/\/$/, "");
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import type { AdeptsBoardId, Question, Player } from "@/lib/adepts-quiz-types";
+import { peekAdeptsWheelReturnCloseCardFlag } from "@/lib/quizAdeptsWheelClient";
 
 type Stage = "question" | "answer";
 
@@ -1022,9 +1023,11 @@ export function QuestionModal({
     setIsEditing(false);
     if (isCelebration) {
       setShowFireworks(true);
-      const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
-      audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
-      audio.play().catch(() => {});
+      if (!peekAdeptsWheelReturnCloseCardFlag()) {
+        const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
+        audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
+        audio.play().catch(() => {});
+      }
     }
   };
 
@@ -1041,9 +1044,11 @@ export function QuestionModal({
     if (spectatorCelebrationKeyRef.current === key) return;
     spectatorCelebrationKeyRef.current = key;
     setShowFireworks(true);
-    const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
-    audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
-    audio.play().catch(() => {});
+    if (!peekAdeptsWheelReturnCloseCardFlag()) {
+      const audio = new Audio(resolveUrl("/freebie-400-answer.mp3"));
+      audio.volume = FREEBIE_ANSWER_SOUND_VOLUME;
+      audio.play().catch(() => {});
+    }
   }, [readonly, isOpen, quizStage, isCelebration, board, themeName, points]);
 
   const questionFontSizeStyle = adaptiveFontSize(text);
