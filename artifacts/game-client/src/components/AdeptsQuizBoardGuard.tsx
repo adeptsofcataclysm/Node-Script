@@ -37,6 +37,8 @@ export function AdeptsQuizBoardGuard({ children }: { children: ReactNode }) {
       /* ignore */
     }
     getQuizNavSocket().emit("requestAdeptsWheelState");
+    getQuizNavSocket().emit("requestPandoraRouletteState");
+    getQuizNavSocket().emit("requestPandoraLottoState");
   }, [gameStarted]);
 
   if (lobbyState == null) {

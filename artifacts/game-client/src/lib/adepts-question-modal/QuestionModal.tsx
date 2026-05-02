@@ -61,6 +61,8 @@ interface QuestionModalProps {
     returnHref: string;
     currentTurnSeat: number;
   }) => void;
+  /** Ведущий: открыть русскую рулетку у всех клиентов квиза (`/quiz-nav` → `/game` или `/spectate`). */
+  onHostBroadcastPandoraRoulette?: () => void;
 }
 
 const TIMER_SECONDS = 30;
@@ -826,6 +828,7 @@ export function QuestionModal({
   splashPassHoverSeat: splashPassHoverSeatProp = null,
   onSplashPassHoverSeatChange,
   onHostBroadcastAdeptsWheel,
+  onHostBroadcastPandoraRoulette,
 }: QuestionModalProps) {
   const stage = quizStage;
   const [isEditing, setIsEditing] = useState(false);
@@ -857,6 +860,18 @@ export function QuestionModal({
   };
 
   const adeptsWheelButtonDisabled = readonly && !onHostBroadcastAdeptsWheel;
+  /** Только ведущий получает `onHostBroadcastPandoraRoulette` из `Home` — не смешивать с `readonly` (иначе кнопка гаснет у ведущего). */
+  const pandoraRouletteButtonDisabled = !onHostBroadcastPandoraRoulette;
+
+  const handlePandoraRouletteNavigate = () => {
+    if (onHostBroadcastPandoraRoulette) {
+      onHostBroadcastPandoraRoulette();
+      return;
+    }
+    if (readonly) return;
+    const bp = import.meta.env.BASE_URL.replace(/\/$/, "");
+    window.open(`${window.location.origin}${bp}/spectate`, "_blank", "noopener,noreferrer");
+  };
 
   /** Панель «кому передать ход» видна всем зрителям и ведущему в фазе после енота. */
   const showRaccoonSplashPassChoicePanel =
@@ -1537,15 +1552,20 @@ export function QuestionModal({
                 <div className="flex justify-start">
                   {isPandora ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <a
-                        href="https://node-script--gg22last.replit.app/spectate"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider border border-purple-500/60 bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 hover:text-purple-200 transition-colors shadow-[0_0_12px_hsla(280,70%,50%,0.35)]"
+                      <Button
+                        size="lg"
+                        disabled={pandoraRouletteButtonDisabled}
+                        title={
+                          pandoraRouletteButtonDisabled
+                            ? "Рулетку откроет ведущий"
+                            : undefined
+                        }
+                        onClick={handlePandoraRouletteNavigate}
+                        className="font-bold tracking-wide gap-2 text-base px-6 lg:px-8 border border-purple-500/70 bg-purple-950/60 text-purple-200 hover:bg-purple-900/70 hover:text-purple-100 shadow-[0_0_18px_hsla(280,70%,45%,0.45)]"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        Ящик пандоры
-                      </a>
+                        Ящик Пандоры
+                      </Button>
                       {!readonly && question.used && (
                         <Button
                           variant="outline"
@@ -1657,7 +1677,7 @@ export function QuestionModal({
 
                 {/* Right */}
                 <div className="flex justify-end gap-2">
-                  {!readonly && (stage === "question" && !isPandora ? (
+                  {!readonly && (stage === "question" ? (
                     <Button
                       size="lg"
                       onClick={handleShowAnswer}

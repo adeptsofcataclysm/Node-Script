@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { AdeptsBoardId, Player, Question } from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
-import { mergeSeatRosterIntoQuizPlayers } from "@/lib/quizLobbyClientAssignments";
+import {
+  ADEPTS_QUIZ_ASSIGNMENTS_EVENT,
+  mergeSeatRosterIntoQuizPlayers,
+} from "@/lib/quizLobbyClientAssignments";
 import { consumeAdeptsWheelReturnCloseQuizCardFlag } from "@/lib/quizAdeptsWheelClient";
 import type { AdeptsQuizBoardPayload } from "@/lib/adeptsQuizBoardApi";
 import {
@@ -548,7 +551,14 @@ export function useGameState(boardId: AdeptsBoardId) {
       socket.emit("requestAdeptsSync");
     }
 
+    /** `lobbyState` пишет ростер в sessionStorage после первого sync — без повторного sync merge имён не случится. */
+    const onAssignments = () => {
+      if (socket.connected) socket.emit("requestAdeptsSync");
+    };
+    window.addEventListener(ADEPTS_QUIZ_ASSIGNMENTS_EVENT, onAssignments);
+
     return () => {
+      window.removeEventListener(ADEPTS_QUIZ_ASSIGNMENTS_EVENT, onAssignments);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("sync", onAdeptsSync);

@@ -21,8 +21,12 @@ function parseLobbyPayload(p: unknown): QuizLobbyStatePayload | null {
   const bi = Number.isInteger(boardIndex) && boardIndex >= 0 && boardIndex <= 2 ? boardIndex : 0;
   const sn = o["seatPlayerNicks"];
   const seatPlayerNicks = Array.isArray(sn)
-    ? sn.map((x) => String(x ?? "").trim().slice(0, 64)).filter(Boolean).slice(0, 5)
-    : [];
+    ? (() => {
+        const row = sn.map((x) => String(x ?? "").trim().slice(0, 64)).slice(0, 5);
+        while (row.length < 5) row.push("");
+        return row;
+      })()
+    : ["", "", "", "", ""];
   const rawIdx = o["lobbyEmojiLineIndex"];
   const nIdx = typeof rawIdx === "number" ? rawIdx : Number(rawIdx);
   let lobbyEmojiLineIndex = -1;

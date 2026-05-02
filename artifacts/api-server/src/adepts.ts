@@ -96,7 +96,8 @@ function emitAdeptsStateToSocket(socket: Socket, sessionId: string): void {
   });
 }
 
-function broadcastSync(io: Server, sessionId: string, originSocket?: Socket): void {
+/** Синк квиза + сессии рулетки в комнату `sessionId` (например после старта игры из `quiz-nav`). */
+export function broadcastAdeptsQuizSync(io: Server, sessionId: string, originSocket?: Socket): void {
   mirrorSessionTurnFromQuiz(sessionId);
   const session = getMutableAdeptsSession(sessionId);
   const quiz = cloneQuizRelay(sessionId);
@@ -110,6 +111,10 @@ function broadcastSync(io: Server, sessionId: string, originSocket?: Socket): vo
   io.of("/quiz").to(sessionId).emit("sync", quiz);
   /** Some adapters / `to(room)` paths omit the initiating socket; echo so pick/host always applies locally. */
   originSocket?.emit("sync", payload);
+}
+
+function broadcastSync(io: Server, sessionId: string, originSocket?: Socket): void {
+  broadcastAdeptsQuizSync(io, sessionId, originSocket);
 }
 
 export function setupAdepts(io: Server): void {

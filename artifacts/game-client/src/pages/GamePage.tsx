@@ -7,6 +7,7 @@ import { DefeatScreen } from "../components/DefeatScreen";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
 import { Input } from "@/components/ui/input";
 import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
+import { peekFromQuizPandoraSession } from "@/lib/quizPandoraRouletteClient";
 
 const BG_URL = "url('/pandora-bg.png')";
 const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png";
@@ -195,6 +196,8 @@ export function GamePage() {
     if (nameInput.trim()) connectAndSetName(nameInput.trim());
   };
 
+  const fromQuizPandora = peekFromQuizPandoraSession();
+
   if (roomFull) {
     return (
       <div className="game-root flex items-center justify-center p-4">
@@ -209,6 +212,34 @@ export function GamePage() {
   }
 
   if (!myName) {
+    if (fromQuizPandora && !slotReserved && !nameBanned) {
+      return (
+        <div className="game-root flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 z-0"
+            style={{
+              backgroundImage: BG_URL,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "brightness(0.3) contrast(1.2)",
+            }}
+          />
+          <img src="/my-image.png" alt="" className="corner-logo" />
+          <div className="pandora-card text-center p-10 rounded-xl max-w-md w-full relative z-10">
+            <h1
+              className="text-3xl font-bold uppercase tracking-widest mb-4"
+              style={{ color: "#9b59b6" }}
+            >
+              Ящик Пандоры
+            </h1>
+            <p className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
+              {connected ? "Подключение к столу квиза…" : "Соединение…"}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="game-root flex items-center justify-center p-4">
         <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3) contrast(1.2)" }} />
@@ -387,7 +418,7 @@ export function GamePage() {
             Крутить
           </PandoraButton>
           <PandoraButton onClick={shoot} disabled={!isMyTurn || isSpinning || gameOver} data-testid="button-shoot">
-            Испытать судьбу
+            Нажать на курок
           </PandoraButton>
         </div>
 

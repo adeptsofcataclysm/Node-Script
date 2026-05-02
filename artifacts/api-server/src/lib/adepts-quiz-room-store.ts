@@ -275,6 +275,19 @@ export function resetQuizRoomForSession(sessionId: string): void {
   rooms.set(sessionId, defaultQuizRelayPayload(sessionId));
 }
 
+/** Имена мест 0–4 из лобби при «Запуск игры» — сразу в relay, чтобы все клиенты увидели ники в `sync`. */
+export function applySeatNickRosterToQuizRelay(sessionId: string, seatNicks: string[]): void {
+  const s = getQuizRelayOrDefault(sessionId);
+  const row = [...seatNicks.map((x) => String(x ?? "").trim().slice(0, 64))];
+  while (row.length < 5) row.push("");
+  for (let i = 0; i < 5; i++) {
+    const p = s.players[i];
+    if (!p) continue;
+    const nick = row[i] ?? "";
+    p.name = nick.length > 0 ? nick : `Игрок ${i + 1}`;
+  }
+}
+
 export function __resetQuizRoomsForTests(): void {
   rooms.clear();
 }

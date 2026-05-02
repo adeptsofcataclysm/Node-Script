@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSpectatorSocket } from "../hooks/useSpectatorSocket";
+import { useRole } from "@/hooks/useRole";
+import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 import { useIsMobile } from "../hooks/useIsMobile";
+import {
+  QUIZ_PANDORA_FROM_QUIZ_KEY,
+  QUIZ_PANDORA_RETURN_KEY,
+} from "@/lib/quizPandoraRouletteClient";
 import { Cylinder } from "../components/Cylinder";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
-import { LottoModal } from "../components/LottoModal";
 import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
 
 const BG_URL = "url('/pandora-bg.png')";
@@ -12,7 +17,17 @@ const GHOST_URL = "https://s3-eu-west-1.amazonaws.com/wdildnproject2/toasty.png"
 
 export function SpectatorPage() {
   useEffect(() => { fetch("/api/track/spectate", { method: "POST" }).catch(() => {}); }, []);
+  const { isHost } = useRole();
   const isMobile = useIsMobile();
+  const [fromQuizPandora, setFromQuizPandora] = useState(false);
+
+  useEffect(() => {
+    try {
+      setFromQuizPandora(sessionStorage.getItem(QUIZ_PANDORA_FROM_QUIZ_KEY) === "1");
+    } catch {
+      setFromQuizPandora(false);
+    }
+  }, []);
   const {
     playerCount,
     playerNames,
@@ -29,28 +44,12 @@ export function SpectatorPage() {
     maxPlayers,
     allSlotsReady,
     connected,
-    rematch,
   } = useSpectatorSocket();
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const bangRef = useRef<HTMLAudioElement | null>(null);
   const mutedRef = useRef(false);
   const [muted, setMuted] = useState(false);
-  const [showLotto, setShowLotto] = useState(false);
-
-  // Pause background music while lotto modal is open; resume only if game is running
-  useEffect(() => {
-    if (!musicRef.current) return;
-    if (showLotto) {
-      musicRef.current.pause();
-    } else {
-      // Only resume if game is actively running (not on game-over screen)
-      if (!mutedRef.current && allSlotsReady && !gameOver) {
-        musicRef.current.play().catch(() => {});
-      }
-    }
-  }, [showLotto]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const gameReady = allSlotsReady;
 
   const toggleMute = () => {
@@ -182,26 +181,53 @@ export function SpectatorPage() {
       <div className="fixed inset-0 z-0" style={{ backgroundImage: BG_URL, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25) contrast(1.2)" }} />
       <img src="/my-image.png" alt="" className="corner-logo" />
 
-      {/* Bottom-right: Host (wheel) button */}
-      <a
-        href="https://node-script--gg22last.replit.app/adepts"
-        style={{
-          position: "fixed", bottom: 18, right: 18, zIndex: 30,
-          padding: "9px 20px",
-          border: "1px solid #f1c40f",
-          background: "rgba(0,0,0,0.75)",
-          color: "#f1c40f",
-          fontFamily: "monospace", fontSize: 12,
-          textTransform: "uppercase", letterSpacing: "3px",
-          textDecoration: "none",
-          textShadow: "0 0 10px rgba(241,196,15,0.6)",
-          boxShadow: "0 0 14px rgba(241,196,15,0.15)",
-          borderRadius: 4,
-          whiteSpace: "nowrap",
-        }}
-      >
-        Колесо Адептов
-      </a>
+      {/* Bottom-right: ведущий — возврат на квиз после «Ящика Пандоры» с доски */}
+      {isHost && fromQuizPandora && (
+        <button
+          type="button"
+          onClick={() => {
+            getQuizNavSocket().emit("hostPandoraRouletteReturn");
+            setTimeout(() => {
+              try {
+                const stored = sessionStorage.getItem(QUIZ_PANDORA_RETURN_KEY);
+                const bp = import.meta.env.BASE_URL.replace(/\/$/, "");
+                window.location.assign(
+                  stored && stored.length > 0 ? stored : `${bp}/adepts-game/`,
+                );
+              } catch {
+                const bp = import.meta.env.BASE_URL.replace(/\/$/, "");
+                window.location.assign(`${bp}/adepts-game/`);
+              }
+            }, 250);
+          }}
+          className="adepts-quiz-theme fixed bottom-[18px] right-[18px] z-30 cursor-pointer whitespace-nowrap rounded-lg border border-purple-500/60 bg-purple-950/70 px-4 py-2.5 font-display text-xs font-bold uppercase tracking-[0.2em] text-purple-200 shadow-[0_0_20px_hsla(280,70%,50%,0.35)] backdrop-blur-sm transition hover:border-purple-400 hover:bg-purple-900/80 hover:shadow-[0_0_28px_hsla(280,70%,55%,0.45)]"
+        >
+          На доску квиза
+        </button>
+      )}
+
+      {/* Bottom-right: legacy wheel link (если не режим возврата с квиза) */}
+      {!(isHost && fromQuizPandora) && (
+        <a
+          href="https://node-script--gg22last.replit.app/adepts"
+          style={{
+            position: "fixed", bottom: 18, right: 18, zIndex: 30,
+            padding: "9px 20px",
+            border: "1px solid #f1c40f",
+            background: "rgba(0,0,0,0.75)",
+            color: "#f1c40f",
+            fontFamily: "monospace", fontSize: 12,
+            textTransform: "uppercase", letterSpacing: "3px",
+            textDecoration: "none",
+            textShadow: "0 0 10px rgba(241,196,15,0.6)",
+            boxShadow: "0 0 14px rgba(241,196,15,0.15)",
+            borderRadius: 4,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Колесо Адептов
+        </a>
+      )}
 
       {/* Top-left: spectator badge + avatar + text */}
       <div className="fixed top-4 left-4 z-30 flex flex-col items-center gap-1" style={{ width: 148 }}>
@@ -347,7 +373,7 @@ export function SpectatorPage() {
 
       {/* Game over overlay */}
       <AnimatePresence>
-        {gameOver && shotResult?.isBang && !showLotto && (
+        {gameOver && shotResult?.isBang && (
           <motion.div
             key="result-overlay"
             initial={{ opacity: 0 }}
@@ -400,37 +426,31 @@ export function SpectatorPage() {
                 )}
               </AnimatePresence>
 
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.0 }}
-                onClick={() => setShowLotto(true)}
-                className="w-full py-3 font-mono text-xs uppercase tracking-[3px] transition-all duration-200"
-                style={{
-                  background: "transparent",
-                  border: "1px solid #9b59b6",
-                  color: "#9b59b6",
-                  textShadow: "0 0 8px #9b59b6",
-                  boxShadow: "0 0 16px rgba(155,89,182,0.25)",
-                  cursor: "pointer",
-                }}
-              >
-                Заменить игрока за столом
-              </motion.button>
+              {isHost && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0 }}
+                  type="button"
+                  onClick={() => getQuizNavSocket().emit("hostPandoraLottoOpen")}
+                  className="w-full py-3 font-mono text-xs uppercase tracking-[3px] transition-all duration-200"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #9b59b6",
+                    color: "#9b59b6",
+                    textShadow: "0 0 8px #9b59b6",
+                    boxShadow: "0 0 16px rgba(155,89,182,0.25)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Заменить игрока за столом
+                </motion.button>
+              )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Lotto modal */}
-      <AnimatePresence>
-        {showLotto && (
-          <LottoModal
-            onClose={() => setShowLotto(false)}
-            onConfirm={() => { setShowLotto(false); rematch(); }}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

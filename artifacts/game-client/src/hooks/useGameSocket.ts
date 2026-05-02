@@ -1,6 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
+import {
+  getQuizPandoraNameForCurrentSeat,
+  peekFromQuizPandoraSession,
+} from "@/lib/quizPandoraRouletteClient";
 
 const MAX_PLAYERS = 5;
 
@@ -46,7 +50,27 @@ export function useGameSocket() {
       reconnectionAttempts: Infinity,
     });
     setSocket(s);
-    s.on("connect", () => setConnected(true));
+
+    function resolveAutoPandoraName(): string {
+      let n =
+        sessionStorage.getItem("pandora_player_name")?.trim().slice(0, 20) ?? "";
+      if (!n && peekFromQuizPandoraSession()) {
+        n = getQuizPandoraNameForCurrentSeat();
+        if (n) sessionStorage.setItem("pandora_player_name", n);
+      }
+      return n;
+    }
+
+    s.on("connect", () => {
+      setConnected(true);
+      const autoName = resolveAutoPandoraName();
+      if (autoName) {
+        setMyName(autoName);
+        queueMicrotask(() => {
+          s.emit("setName", autoName);
+        });
+      }
+    });
     s.on("disconnect", () => setConnected(false));
 
     // On auto-reconnect: re-send name to reclaim offline slot
@@ -162,9 +186,14 @@ export function useGameSocket() {
     s.on("gameInProgress", (data: { playerNames: Record<string, string>; onlineStatus: Record<string, boolean> }) => {
       setPlayerNames(data.playerNames);
       setOnlineStatus(data.onlineStatus);
-      // Auto-rejoin with saved name after reconnect
-      const savedName = sessionStorage.getItem("pandora_player_name");
+      let savedName =
+        sessionStorage.getItem("pandora_player_name")?.trim().slice(0, 20) ?? "";
+      if (!savedName && peekFromQuizPandoraSession()) {
+        savedName = getQuizPandoraNameForCurrentSeat();
+        if (savedName) sessionStorage.setItem("pandora_player_name", savedName);
+      }
       if (savedName) {
+        setMyName(savedName);
         s.emit("setName", savedName);
       } else {
         setGameInProgress(true);

@@ -15,10 +15,13 @@ import AdeptsQuizNotFound from "@/apps/adepts-game/pages/not-found";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
 import { QuizNavSync } from "@/components/QuizNavSync";
 import { QuizAdeptsWheelSync } from "@/components/QuizAdeptsWheelSync";
+import { QuizPandoraRouletteSync } from "@/components/QuizPandoraRouletteSync";
+import { QuizPandoraLottoSync } from "@/components/QuizPandoraLottoSync";
 import { QuizReturnToLoginSync } from "@/components/QuizReturnToLoginSync";
 import { AdeptsQuizBoardGuard } from "@/components/AdeptsQuizBoardGuard";
 import { RequireLogin } from "@/components/RequireLogin";
 import { AdeptsLobbyPage } from "@/pages/AdeptsLobbyPage";
+import { PandoraLottoPage } from "@/pages/PandoraLottoPage";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +62,7 @@ function App() {
               <Route path="/adepts" component={AdeptsWheelLegacyRedirect} />
               <Route path="/watch" component={ViewerPage} />
               <Route path="/spectate" component={SpectatorPage} />
+              <Route path="/pandora-lotto" component={PandoraLottoPage} />
               <Route path="/game" component={GamePage} />
               <Route path="/adepts-lobby" nest>
                 <RequireLogin>
@@ -90,6 +94,8 @@ function App() {
             <GamePhaseArrows />
             <QuizNavSync />
             <QuizAdeptsWheelSync />
+            <QuizPandoraRouletteSync />
+            <QuizPandoraLottoSync />
             <QuizReturnToLoginSync />
           </>
         </Router>

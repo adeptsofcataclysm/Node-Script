@@ -47,6 +47,31 @@ function getState(sessionId: string): GameState {
   return states.get(sessionId)!;
 }
 
+/** Перед открытием «Ящика Пандоры» с квиза: 5 слотов с именами мест 0–4, все офлайн — игроки подхватят по setName. */
+export function seedPandoraFromQuiz(
+  sessionId: string,
+  opts: { playerNames: string[]; initialTurnSeat: number },
+): void {
+  const gs = getState(sessionId);
+  const names = [...opts.playerNames].slice(0, 5);
+  while (names.length < 5) names.push("");
+  gs.bulletPos = -1;
+  gs.currentPos = 0;
+  gs.isSpinning = false;
+  gs.gameOver = false;
+  gs.gameStarted = false;
+  gs.roundCount = 0;
+  gs.eliminatedIndex = null;
+  gs.bannedNames = [];
+  gs.scores = {};
+  gs.turn = ((Math.floor(opts.initialTurnSeat) % 5) + 5) % 5;
+  gs.slots = names.map((raw, i) => {
+    const trimmed = String(raw ?? "").trim().slice(0, 20);
+    const name = trimmed.length > 0 ? trimmed : `Игрок ${i + 1}`;
+    return { socketId: null, name, isOnline: false };
+  });
+}
+
 function filledSlotCount(state: GameState): number {
   return state.slots.filter((s) => s !== null).length;
 }

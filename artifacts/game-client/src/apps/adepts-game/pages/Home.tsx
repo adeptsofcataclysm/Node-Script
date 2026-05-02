@@ -252,6 +252,25 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
                 }
               : undefined
           }
+          onHostBroadcastPandoraRoulette={
+            isHost
+              ? () => {
+                  const seat =
+                    ((Number(state.currentTurnSeat) % 5) + 5) % 5;
+                  getQuizNavSocket().emit("hostPandoraRouletteOpen", {
+                    returnHref: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+                    currentTurnSeat: seat,
+                    playerNames: state.players.map((p) =>
+                      String(p.name ?? "").trim().slice(0, 64),
+                    ),
+                  });
+                  updateQuestion(openCard.themeIndex, openCard.questionIndex, {
+                    used: true,
+                  });
+                  closeQuestion();
+                }
+              : undefined
+          }
         />
       )}
     </div>

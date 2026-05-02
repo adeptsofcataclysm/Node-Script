@@ -27,9 +27,12 @@ export function findSeatIndexForNick(rosterNicks: string[], playerNick: string):
   return rosterNicks.findIndex((r) => rosterNickKey(r) === key);
 }
 
+/** Пять слотов места за столом; пустые строки сохраняют позиции (не схлопываем как `filter(Boolean)`). */
 function normalizeNickList(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map((x) => String(x ?? "").trim().slice(0, 64)).filter(Boolean).slice(0, 5);
+  if (!Array.isArray(raw)) return ["", "", "", "", ""];
+  const row = raw.map((x) => String(x ?? "").trim().slice(0, 64)).slice(0, 5);
+  while (row.length < 5) row.push("");
+  return row;
 }
 
 /**

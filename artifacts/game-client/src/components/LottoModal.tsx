@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+import { useQuizSpectatorNicksForLotto } from "@/hooks/useQuizSpectatorNicksForLotto";
+import {
+  DEFAULT_PANDORA_LOTTO_PUBLIC,
+  type PandoraLottoPublicState,
+} from "@/lib/pandoraLottoPublicState";
 
 const BALL_COLORS = [
   "#e74c3c", "#e67e22", "#f1c40f", "#27ae60",
@@ -155,10 +161,13 @@ const DrumCanvas = memo(function DrumCanvas({
   names,
   drumPhase,
   onRollComplete,
+  forcedWinnerIndex,
 }: {
   names: string[];
   drumPhase: "spinning" | "rolling" | "revealed";
   onRollComplete: (idx: number) => void;
+  /** Общий индекс победителя с сервера (наблюдатели); иначе случайный у ведущего */
+  forcedWinnerIndex?: number | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const phaseRef = useRef(drumPhase);
@@ -171,11 +180,17 @@ const DrumCanvas = memo(function DrumCanvas({
   useEffect(() => { phaseRef.current = drumPhase; }, [drumPhase]);
   useEffect(() => { cbRef.current = onRollComplete; }, [onRollComplete]);
 
+  const namesSig = names.join("\0");
+
   // Initialise balls (runs when names change = new drum key)
   useEffect(() => {
     rolledRef.current = false;
     chosenRef.current = -1;
     const n = names.length;
+    if (n === 0) {
+      ballsRef.current = [];
+      return;
+    }
     const maxR = DRUM_R - BALL_R - 4;
     ballsRef.current = names.map((_, i) => {
       const a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
@@ -189,15 +204,25 @@ const DrumCanvas = memo(function DrumCanvas({
         label: String(i + 1), idx: i,
       };
     });
-  }, [names]);
+  }, [namesSig]);
 
-  // Pick chosen ball when rolling starts
+  // Pick chosen ball when rolling starts (или индекс с ведущего для наблюдателей)
   useEffect(() => {
-    if (drumPhase === "rolling") {
+    if (drumPhase === "rolling" && names.length > 0) {
       rolledRef.current = false;
-      chosenRef.current = Math.floor(Math.random() * names.length);
+      const forced = forcedWinnerIndex;
+      if (
+        typeof forced === "number" &&
+        Number.isInteger(forced) &&
+        forced >= 0 &&
+        forced < names.length
+      ) {
+        chosenRef.current = forced;
+      } else {
+        chosenRef.current = Math.floor(Math.random() * names.length);
+      }
     }
-  }, [drumPhase, names.length]);
+  }, [drumPhase, names.length, forcedWinnerIndex]);
 
   // Main animation loop — runs for the lifetime of the component
   useEffect(() => {
@@ -506,30 +531,95 @@ function BurstParticle({ tx, ty, color, shape, size, rot, delay }: typeof BURST[
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
+export type LottoModalProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  /** Режим наблюдателя — состояние с сервера (`pandoraLottoPublicState`) */
+  readOnly?: boolean;
+  snapshot?: PandoraLottoPublicState | null;
+  /**
+   * Ники, которые не должны попадать в авто-список зрителей для лото:
+   * игроки за столом рулетки, ведущий и т.д.
+   */
+  autoSpectatorExcludeNicks?: string[];
+};
+
+export function LottoModal({
+  onClose,
+  onConfirm,
+  readOnly = false,
+  snapshot = null,
+  autoSpectatorExcludeNicks = [],
+}: LottoModalProps) {
   const [phase, setPhase] = useState<"setup" | "drum">("setup");
   const [nameInput, setNameInput] = useState("");
   const [names, setNames] = useState<string[]>([]);
 
   const [drumPhase, setDrumPhase] = useState<"spinning" | "rolling" | "revealed">("spinning");
-  const [chosenIdx, setChosenIdx] = useState<number | null>(null);
+  /** Индекс выпавшего шара после «Остановить барабан» — синхронизируется с наблюдателями */
+  const [pickedWinner, setPickedWinner] = useState<number | null>(null);
   const [drumKey, setDrumKey] = useState(0);
   const [showHomer, setShowHomer] = useState(false);
   const [gifPopups, setGifPopups] = useState<GifPopup[]>([]);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
+  const spectatorPool = useQuizSpectatorNicksForLotto(autoSpectatorExcludeNicks);
+  const spectatorPoolSig = spectatorPool.join("\u0001");
+
+  const viewerSyncPending = readOnly && snapshot === null;
+
+  const disp = useMemo((): PandoraLottoPublicState => {
+    if (readOnly && snapshot) return snapshot;
+    if (!readOnly) {
+      return { phase, names, drumPhase, drumKey, winnerIndex: pickedWinner };
+    }
+    return DEFAULT_PANDORA_LOTTO_PUBLIC;
+  }, [readOnly, snapshot, phase, names, drumPhase, drumKey, pickedWinner]);
+
+  useEffect(() => {
+    if (readOnly) return;
+    const payload: PandoraLottoPublicState = {
+      phase,
+      names,
+      drumPhase,
+      drumKey,
+      winnerIndex: pickedWinner,
+    };
+    getQuizNavSocket().emit("hostPandoraLottoPublicSync", payload);
+  }, [readOnly, phase, names, drumPhase, drumKey, pickedWinner]);
+
+  /** Автодобавление зрителей из лобби квиза (не ведущий, не игроки за столом рулетки). */
+  useEffect(() => {
+    if (readOnly || phase !== "setup") return;
+    setNames((prev) => {
+      const prevLower = new Set(prev.map((n) => n.trim().toLowerCase()).filter(Boolean));
+      const next = [...prev];
+      let changed = false;
+      for (const n of spectatorPool) {
+        const t = n.trim().slice(0, 16);
+        const k = t.toLowerCase();
+        if (!k || prevLower.has(k)) continue;
+        if (next.length >= 12) break;
+        next.push(t);
+        prevLower.add(k);
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [readOnly, phase, spectatorPoolSig]);
+
   // Homer runs across the bottom when drum starts spinning
   useEffect(() => {
-    if (drumPhase !== "spinning") return;
+    if (disp.drumPhase !== "spinning") return;
     setShowHomer(true);
     const t = setTimeout(() => setShowHomer(false), 6400);
     return () => clearTimeout(t);
-  }, [drumPhase]);
+  }, [disp.drumPhase]);
 
   // GIF popups — spawn while drum is spinning (only after "Запустить барабан")
   useEffect(() => {
-    if (phase !== "drum" || drumPhase !== "spinning") {
+    if (disp.phase !== "drum" || disp.drumPhase !== "spinning") {
       setGifPopups([]);
       return;
     }
@@ -570,11 +660,11 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     spawnGif();
     const interval = setInterval(spawnGif, 4000 + Math.random() * 1000);
     return () => clearInterval(interval);
-  }, [phase, drumPhase]);
+  }, [disp.phase, disp.drumPhase]);
 
-  // Lotto music (drum phase only)
+  // Lotto music (drum phase only) — у ведущего и у наблюдателей
   useEffect(() => {
-    if (phase !== "drum") return;
+    if (disp.phase !== "drum") return;
     try {
       const audio = new Audio("/lotto-music.mp3");
       audio.loop = true; audio.volume = 0.45;
@@ -582,9 +672,10 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       musicRef.current = audio;
     } catch (_) {}
     return () => { if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
-  }, [phase]);
+  }, [disp.phase]);
 
   const addName = () => {
+    if (readOnly) return;
     const t = nameInput.trim();
     if (!t || names.includes(t) || names.length >= 12) return;
     setNames(prev => [...prev, t]);
@@ -592,21 +683,28 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
   };
 
   const startDrum = () => {
+    if (readOnly) return;
+    setPickedWinner(null);
     setPhase("drum");
     setDrumPhase("spinning");
-    setChosenIdx(null);
     setDrumKey(k => k + 1);
   };
 
-  const stopDrum = () => setDrumPhase("rolling");
+  const stopDrum = () => {
+    if (readOnly || names.length < 2) return;
+    const pick = Math.floor(Math.random() * names.length);
+    setPickedWinner(pick);
+    setDrumPhase("rolling");
+  };
 
-  const handleRollComplete = (idx: number) => {
-    setChosenIdx(idx);
+  const handleRollComplete = (_idx: number) => {
+    if (readOnly) return;
     setDrumPhase("revealed");
   };
 
   const respin = () => {
-    setChosenIdx(null);
+    if (readOnly) return;
+    setPickedWinner(null);
     setDrumPhase("spinning");
     setDrumKey(k => k + 1);
   };
@@ -620,10 +718,10 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     onClose();
   };
 
-  const isActive = drumPhase === "spinning";
-  const n = names.length;
-  const chosenName = chosenIdx !== null ? names[chosenIdx] : null;
-  const chosenColor = chosenIdx !== null ? BALL_COLORS[chosenIdx % BALL_COLORS.length] : "#f1c40f";
+  const isActive = disp.drumPhase === "spinning";
+  const winIdx = disp.winnerIndex;
+  const chosenName = winIdx !== null && winIdx >= 0 && winIdx < disp.names.length ? disp.names[winIdx] : null;
+  const chosenColor = winIdx !== null ? BALL_COLORS[winIdx % BALL_COLORS.length] : "#f1c40f";
 
   const STARS = useMemo(() => Array.from({ length: 12 }, (_, i) => {
     const a = (i / 12) * 360;
@@ -635,11 +733,21 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 overflow-hidden"
-      style={{ background: phase === "setup" ? "rgba(0,0,0,0.97)" : "rgba(0,0,0,0)" }}
+      style={{ background: disp.phase === "setup" ? "rgba(0,0,0,0.97)" : "rgba(0,0,0,0)" }}
     >
+      {viewerSyncPending ? (
+        <div
+          className="pointer-events-none absolute left-1/2 top-4 z-[60] -translate-x-1/2 rounded-md border border-[#f1c40f55] bg-black/75 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+          style={{ color: "#f1c40f" }}
+        >
+          Подключение к ведущему…
+        </div>
+      ) : null}
+
+      <>
       {/* Video background — no overlay */}
       <AnimatePresence>
-        {phase === "drum" && (
+        {disp.phase === "drum" && (
           <motion.video key="lotto-video" src="/lotto-bg.mp4" autoPlay muted loop playsInline
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
@@ -649,7 +757,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
       {/* Ambient particles */}
       <AnimatePresence>
-        {phase === "drum" && drumPhase !== "revealed" && (
+        {disp.phase === "drum" && disp.drumPhase !== "revealed" && (
           <>
             {COINS.map(p => <CoinParticle key={p.id} {...p} />)}
             {DOLLARS.map(p => <DollarParticle key={p.id} {...p} />)}
@@ -658,7 +766,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
       </AnimatePresence>
 
       {/* Full-screen confetti on reveal */}
-      <FullScreenConfetti active={phase === "drum" && drumPhase === "revealed"} />
+      <FullScreenConfetti active={disp.phase === "drum" && disp.drumPhase === "revealed"} />
 
       {/* GIF popups — random positions while drum spins */}
       <AnimatePresence>
@@ -712,7 +820,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
       <AnimatePresence mode="wait">
         {/* ════ SETUP ════ */}
-        {phase === "setup" ? (
+        {disp.phase === "setup" ? (
           <motion.div key="setup" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
             className="flex flex-col items-center gap-5 w-full max-w-sm" style={{ position: "relative", zIndex: 10 }}
           >
@@ -721,24 +829,26 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
               Барабан Лото
             </h2>
             <p className="text-xs font-mono uppercase tracking-[3px] text-center" style={{ color: "#555" }}>
-              Добавьте участников (мин. 2, макс. 12)
+              {readOnly ? "Участники (ведущий управляет списком)" : "Добавьте участников (мин. 2, макс. 12)"}
             </p>
 
-            <form className="flex gap-2 w-full" onSubmit={e => { e.preventDefault(); addName(); }}>
-              <input type="text" value={nameInput} onChange={e => setNameInput(e.target.value)}
-                maxLength={16} placeholder="Имя участника"
-                className="flex-1 px-3 py-2 font-mono text-sm uppercase tracking-wider outline-none"
-                style={{ background: "rgba(0,0,0,0.6)", border: "1px solid #f1c40f44", color: "white" }}
-              />
-              <button type="submit" className="px-4 py-2 font-mono text-lg font-bold"
-                style={{ background: "transparent", border: "1px solid #f1c40f", color: "#f1c40f", cursor: "pointer", textShadow: "0 0 8px #f1c40f" }}>
-                +
-              </button>
-            </form>
+            {!readOnly ? (
+              <form className="flex gap-2 w-full" onSubmit={e => { e.preventDefault(); addName(); }}>
+                <input type="text" value={nameInput} onChange={e => setNameInput(e.target.value)}
+                  maxLength={16} placeholder="Имя участника"
+                  className="flex-1 px-3 py-2 font-mono text-sm uppercase tracking-wider outline-none"
+                  style={{ background: "rgba(0,0,0,0.6)", border: "1px solid #f1c40f44", color: "white" }}
+                />
+                <button type="submit" className="px-4 py-2 font-mono text-lg font-bold"
+                  style={{ background: "transparent", border: "1px solid #f1c40f", color: "#f1c40f", cursor: "pointer", textShadow: "0 0 8px #f1c40f" }}>
+                  +
+                </button>
+              </form>
+            ) : null}
 
             <div className="flex flex-col gap-1.5 w-full max-h-52 overflow-y-auto pr-1">
-              {names.map((name, i) => (
-                <motion.div key={name} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
+              {disp.names.map((name, i) => (
+                <motion.div key={`${name}-${i}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
                   className="flex items-center justify-between px-3 py-2 font-mono text-sm uppercase"
                   style={{ border: `1px solid ${BALL_COLORS[i % BALL_COLORS.length]}44`, color: BALL_COLORS[i % BALL_COLORS.length], background: `${BALL_COLORS[i % BALL_COLORS.length]}11` }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -747,17 +857,25 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
                     </span>
                     {name}
                   </span>
-                  <button onClick={() => setNames(prev => prev.filter((_, j) => j !== i))}
-                    style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  {!readOnly ? (
+                    <button type="button" onClick={() => setNames(prev => prev.filter((_, j) => j !== i))}
+                      style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  ) : <span style={{ width: 18 }} />}
                 </motion.div>
               ))}
-              {names.length === 0 && <p className="text-center font-mono text-xs py-4" style={{ color: "#333" }}>Список пуст</p>}
+              {disp.names.length === 0 && <p className="text-center font-mono text-xs py-4" style={{ color: "#333" }}>Список пуст</p>}
             </div>
 
-            <div className="flex gap-3 w-full">
-              <PandoraBtn onClick={closeModal} accent="#555">Отмена</PandoraBtn>
-              <PandoraBtn onClick={startDrum} disabled={names.length < 2} accent="#f1c40f">Запустить барабан</PandoraBtn>
-            </div>
+            {!readOnly ? (
+              <div className="flex gap-3 w-full">
+                <PandoraBtn onClick={closeModal} accent="#555">Отмена</PandoraBtn>
+                <PandoraBtn onClick={startDrum} disabled={names.length < 2} accent="#f1c40f">Запустить барабан</PandoraBtn>
+              </div>
+            ) : (
+              <p className="text-center font-mono text-[10px] uppercase tracking-[2px]" style={{ color: "#444" }}>
+                Ожидайте, пока ведущий запустит барабан (нужно минимум 2 участника)
+              </p>
+            )}
           </motion.div>
 
         ) : (
@@ -823,13 +941,19 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
               </motion.svg>
 
               {/* Canvas physics drum */}
-              <DrumCanvas key={drumKey} names={names} drumPhase={drumPhase} onRollComplete={handleRollComplete} />
+              <DrumCanvas
+                key={disp.drumKey}
+                names={disp.names}
+                drumPhase={disp.drumPhase}
+                forcedWinnerIndex={disp.winnerIndex}
+                onRollComplete={readOnly ? () => {} : handleRollComplete}
+              />
 
               {/* Center hub — fades when ball rolls in */}
               <motion.div className="absolute z-20 rounded-full flex items-center justify-center"
                 style={{ width: 56, height: 56, background: "#0a0a0a", border: "2px solid #f1c40f", color: "#f1c40f", fontSize: 10, fontFamily: "monospace", letterSpacing: "1px", textAlign: "center", zIndex: 11 }}
                 animate={{
-                  opacity: drumPhase === "rolling" || drumPhase === "revealed" ? 0 : 1,
+                  opacity: disp.drumPhase === "rolling" || disp.drumPhase === "revealed" ? 0 : 1,
                   boxShadow: isActive ? ["0 0 8px rgba(241,196,15,0.2)", "0 0 24px rgba(241,196,15,0.7)", "0 0 8px rgba(241,196,15,0.2)"] : "0 0 12px rgba(241,196,15,0.3)",
                 }}
                 transition={{ duration: isActive ? 0.9 : 0.4, repeat: isActive ? Infinity : 0 }}>
@@ -838,12 +962,12 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
 
               {/* Confetti burst */}
               <AnimatePresence>
-                {drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
+                {disp.drumPhase === "revealed" && BURST.map(p => <BurstParticle key={p.id} {...p} />)}
               </AnimatePresence>
 
               {/* Stars on reveal */}
               <AnimatePresence>
-                {drumPhase === "revealed" && STARS.map(s => (
+                {disp.drumPhase === "revealed" && STARS.map(s => (
                   <motion.div key={s.id}
                     style={{ position: "absolute", left: "50%", top: "50%", width: s.size, height: s.size, marginLeft: -s.size / 2, marginTop: -s.size / 2, background: s.color, clipPath: "polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)", zIndex: 31 }}
                     initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
@@ -857,18 +981,24 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
             {/* ── Controls ── */}
             <div style={{ minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <AnimatePresence mode="wait">
-                {drumPhase === "spinning" && (
+                {disp.drumPhase === "spinning" && (
                   <motion.div key="btn-stop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <PandoraBtn onClick={stopDrum} accent="#e74c3c">Остановить барабан</PandoraBtn>
+                    {readOnly ? (
+                      <p className="font-mono text-xs uppercase tracking-[3px] text-center px-4" style={{ color: "#888" }}>
+                        Ведущий останавливает барабан…
+                      </p>
+                    ) : (
+                      <PandoraBtn onClick={stopDrum} accent="#e74c3c">Остановить барабан</PandoraBtn>
+                    )}
                   </motion.div>
                 )}
-                {drumPhase === "rolling" && (
+                {disp.drumPhase === "rolling" && (
                   <motion.p key="rolling-hint" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0.6, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
                     className="font-mono text-xs uppercase tracking-[3px]" style={{ color: "#f1c40f" }}>
                     Выбираем счастливчика...
                   </motion.p>
                 )}
-                {drumPhase === "revealed" && chosenName !== null && (
+                {disp.drumPhase === "revealed" && chosenName !== null && (
                   <motion.div key="reveal" initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: "spring", stiffness: 200, damping: 18 }}
                     className="flex flex-col items-center gap-4">
@@ -877,7 +1007,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
                       style={{ width: 130, height: 130, background: `radial-gradient(circle at 35% 30%,${chosenColor}ff,${chosenColor}88)`, color: "white", fontSize: 28, fontWeight: 900, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
                       animate={{ boxShadow: [`0 0 40px ${chosenColor}88,0 0 80px ${chosenColor}33,inset 0 8px 24px rgba(255,255,255,0.55)`, `0 0 80px ${chosenColor}cc,0 0 140px ${chosenColor}55,inset 0 8px 24px rgba(255,255,255,0.7)`, `0 0 40px ${chosenColor}88,0 0 80px ${chosenColor}33,inset 0 8px 24px rgba(255,255,255,0.55)`], scale: [1, 1.04, 1] }}
                       transition={{ duration: 1.2, repeat: Infinity }}>
-                      {(chosenIdx ?? 0) + 1}
+                      {(winIdx ?? 0) + 1}
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
                       className="flex flex-col items-center gap-1">
@@ -896,17 +1026,25 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
                         <div style={{ width: p.size + 6, height: p.size + 6, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%,#ffe566,#c8870f)`, border: "2px solid #b07010", boxShadow: "0 0 12px rgba(241,196,15,1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: (p.size + 6) * 0.38, fontWeight: 900, color: "#7a4e00" }}>$</div>
                       </motion.div>
                     ))}
-                    <div className="flex gap-3 mt-1">
-                      <PandoraBtn onClick={respin} accent="#555">Перекрутить</PandoraBtn>
-                      <PandoraBtn onClick={confirmChoice} accent={chosenColor}>Подтвердить замену</PandoraBtn>
+                    <div className="flex gap-3 mt-1 flex-wrap justify-center">
+                      {!readOnly ? (
+                        <>
+                          <PandoraBtn onClick={respin} accent="#555">Перекрутить</PandoraBtn>
+                          <PandoraBtn onClick={confirmChoice} accent={chosenColor}>Подтвердить замену</PandoraBtn>
+                        </>
+                      ) : (
+                        <p className="font-mono text-[10px] uppercase tracking-[2px]" style={{ color: "#666" }}>
+                          Подтверждение замены — только у ведущего
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {drumPhase === "spinning" && (
-              <button onClick={() => { setPhase("setup"); }}
+            {disp.drumPhase === "spinning" && !readOnly && (
+              <button type="button" onClick={() => { setPhase("setup"); setPickedWinner(null); }}
                 className="font-mono text-xs uppercase tracking-[2px] mt-1"
                 style={{ background: "none", border: "none", color: "#333", cursor: "pointer" }}>
                 ← Назад к списку
@@ -915,6 +1053,7 @@ export function LottoModal({ onClose, onConfirm }: { onClose: () => void; onConf
           </motion.div>
         )}
       </AnimatePresence>
+      </>
     </motion.div>
   );
 }
