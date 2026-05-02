@@ -47,6 +47,7 @@ export function getAdeptsBoardIdFromPath(fullPathname: string): AdeptsBoardId {
   const rel = normalize(p);
 
   if (rel.startsWith("/adepts-game-3") || /^\/adepts-game\/3(?:\/|$)/.test(rel)) return 3;
+  if (/^\/adepts-game\/funeral(?:\/|$)/.test(rel)) return 2;
   if (rel.startsWith("/adepts-game-2") || /^\/adepts-game\/2(?:\/|$)/.test(rel)) return 2;
   if (/^\/adepts-game\/1(?:\/|$)/.test(rel)) return 1;
   if (/^\/adepts-game(?:\/|$)/.test(rel)) return 1;
@@ -54,7 +55,12 @@ export function getAdeptsBoardIdFromPath(fullPathname: string): AdeptsBoardId {
 }
 
 /** Canonical paths under `/adepts-game` (relative to router base). */
-export const QUIZ_BOARD_PHASE_HREFS = ["/adepts-game/", "/adepts-game/2/", "/adepts-game/3/"] as const;
+export const QUIZ_BOARD_PHASE_HREFS = [
+  "/adepts-game/",
+  "/adepts-game/2/",
+  "/adepts-game/funeral/",
+  "/adepts-game/3/",
+] as const;
 
 export function buildQuizBoardUrl(boardIndex: number): string {
   const b = import.meta.env.BASE_URL.replace(/\/$/, "");

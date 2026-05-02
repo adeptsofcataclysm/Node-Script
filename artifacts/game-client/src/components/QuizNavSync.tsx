@@ -16,7 +16,7 @@ export function QuizNavSync() {
       const onPhase = (payload: { boardIndex?: unknown }) => {
         const raw = payload?.boardIndex;
         const boardIndex = typeof raw === "number" ? raw : Number(raw);
-        if (!Number.isInteger(boardIndex) || boardIndex < 0 || boardIndex > 2) return;
+        if (!Number.isInteger(boardIndex) || boardIndex < 0 || boardIndex > 3) return;
 
         const cur = getQuizBoardPhaseIndexForPathname(window.location.pathname);
         if (cur < 0) return;

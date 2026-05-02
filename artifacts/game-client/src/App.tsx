@@ -12,12 +12,14 @@ import { QuizAdeptsWheelPage } from "@/pages/QuizAdeptsWheelPage";
 
 import AdeptsQuizHome from "@/apps/adepts-game/pages/Home";
 import AdeptsQuizNotFound from "@/apps/adepts-game/pages/not-found";
+import FuneralRoundPage from "@/apps/adepts-game/pages/FuneralRoundPage";
 import { GamePhaseArrows } from "@/components/GamePhaseArrows";
 import { QuizNavSync } from "@/components/QuizNavSync";
 import { QuizAdeptsWheelSync } from "@/components/QuizAdeptsWheelSync";
 import { QuizPandoraRouletteSync } from "@/components/QuizPandoraRouletteSync";
 import { QuizPandoraLottoSync } from "@/components/QuizPandoraLottoSync";
 import { QuizReturnToLoginSync } from "@/components/QuizReturnToLoginSync";
+import { FuneralEndSync } from "@/components/FuneralEndSync";
 import { AdeptsQuizBoardGuard } from "@/components/AdeptsQuizBoardGuard";
 import { RequireLogin } from "@/components/RequireLogin";
 import { AdeptsLobbyPage } from "@/pages/AdeptsLobbyPage";
@@ -82,6 +84,7 @@ function App() {
                   <AdeptsQuizBoardGuard>
                     <Switch>
                       <Route path="/2">{() => <AdeptsQuizHome key={2} boardId={2} />}</Route>
+                      <Route path={/^(?:\/)?funeral(?:\/.*)?$/}>{() => <FuneralRoundPage />}</Route>
                       <Route path="/3">{() => <AdeptsQuizHome key={3} boardId={3} />}</Route>
                       <Route path="/">{() => <AdeptsQuizHome key={1} boardId={1} />}</Route>
                       <Route component={AdeptsQuizNotFound} />
@@ -97,6 +100,7 @@ function App() {
             <QuizPandoraRouletteSync />
             <QuizPandoraLottoSync />
             <QuizReturnToLoginSync />
+            <FuneralEndSync />
           </>
         </Router>
         <Toaster />

@@ -18,7 +18,7 @@ function parseLobbyPayload(p: unknown): QuizLobbyStatePayload | null {
   const gameStarted = Boolean(o.gameStarted);
   const raw = o.boardIndex;
   const boardIndex = typeof raw === "number" ? raw : Number(raw);
-  const bi = Number.isInteger(boardIndex) && boardIndex >= 0 && boardIndex <= 2 ? boardIndex : 0;
+  const bi = Number.isInteger(boardIndex) && boardIndex >= 0 && boardIndex <= 3 ? boardIndex : 0;
   const sn = o["seatPlayerNicks"];
   const seatPlayerNicks = Array.isArray(sn)
     ? (() => {

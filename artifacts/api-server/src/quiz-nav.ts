@@ -35,7 +35,7 @@ function canMutateLobbyEmoji(socket: Socket): boolean {
   return isQuizNavLobbyHost(socket);
 }
 
-const MAX_BOARD = 2;
+const MAX_BOARD = 3;
 
 /** Должно совпадать с числом строк в `game-client` `lobbyEmojiRevealLines.ts`. */
 const LOBBY_EMOJI_REVEAL_MAX = 40;
@@ -496,6 +496,16 @@ export function setupQuizNav(io: Server) {
           currentTurnSeat: n.adeptsWheelCurrentTurnSeat,
         });
       }
+    });
+
+    socket.on("hostFuneralEnd", () => {
+      if (!isQuizNavLobbyHost(socket)) return;
+      const n = getNav(sessionId);
+      if (!n.gameStarted) return;
+      n.lastBoardIndex = 3;
+      socket.to(sessionId).emit("funeralEnd", {});
+      socket.emit("funeralEnd", {});
+      logger.info({ sessionId }, "Quiz funeral round ended");
     });
 
     socket.on("hostNavigate", (payload: { boardIndex?: unknown }) => {

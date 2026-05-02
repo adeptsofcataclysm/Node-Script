@@ -28,7 +28,7 @@ export function QuizPandoraLottoSync() {
         }
         const rawBi = o["boardIndex"];
         const bi = typeof rawBi === "number" ? rawBi : Number(rawBi);
-        const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 2 ? bi : 0;
+        const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 3 ? bi : 0;
         const sessionId = getAdeptsSessionId();
         setAdeptsSessionId(sessionId);
         const quizHref = buildQuizBoardUrl(safeBi);
@@ -41,7 +41,7 @@ export function QuizPandoraLottoSync() {
         if (o["toQuizBoard"] === true) {
           const raw = o["boardIndex"];
           const bi = typeof raw === "number" ? raw : Number(raw);
-          const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 2 ? bi : 0;
+          const safeBi = Number.isInteger(bi) && bi >= 0 && bi <= 3 ? bi : 0;
           try {
             sessionStorage.removeItem(QUIZ_PANDORA_LOTTO_POST_URL_KEY);
           } catch {
