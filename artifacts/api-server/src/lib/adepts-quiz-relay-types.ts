@@ -37,6 +37,8 @@ export type AdeptsQuizRelayPayload = {
   dataVersion?: number;
   /** Журнал пожертвований. */
   donationLog?: AdeptsDonationLogEntry[];
+  /** После бонуса ×2 с «деда» на 400 — скрыть таблицу на квиз-доске 3; сброс при входе на похороны. */
+  hideDonationsTableOnBoard3?: boolean;
 };
 
 const THEME_COUNT = 8;
@@ -60,6 +62,7 @@ export function defaultQuizRelayPayload(sessionId: string): AdeptsQuizRelayPaylo
     questionUsedGrid,
     dataVersion: 59,
     donationLog: [],
+    hideDonationsTableOnBoard3: false,
   };
 }
 

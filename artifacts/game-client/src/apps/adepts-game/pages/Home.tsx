@@ -190,7 +190,9 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           </div>
         </main>
         <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
-          <DonationsTable donationLog={state.donationLog} />
+          {boardId === 3 && !state.hideDonationsTableOnBoard3 ? (
+            <DonationsTable donationLog={state.donationLog} />
+          ) : null}
         </aside>
       </div>
 

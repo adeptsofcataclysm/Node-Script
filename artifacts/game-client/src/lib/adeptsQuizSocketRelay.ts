@@ -36,6 +36,8 @@ export type AdeptsQuizRelayPayload = {
   dataVersion?: number;
   /** Журнал пожертвований (строки «ник — сумма»). */
   donationLog?: DonationLogEntry[];
+  /** Скрыть таблицу пожертвований на 3-й доске (после ×2 с деда); сброс на странице похорон. */
+  hideDonationsTableOnBoard3?: boolean;
 };
 
 export function buildAdeptsQuizRelayPayload(
@@ -48,6 +50,7 @@ export function buildAdeptsQuizRelayPayload(
     quizBoardHoverCell?: QuizBoardHoverCell | null;
     dataVersion?: number;
     donationLog: DonationLogEntry[];
+    hideDonationsTableOnBoard3?: boolean;
   },
   boardRoom: string,
   includeCatalog: boolean,
@@ -61,6 +64,7 @@ export function buildAdeptsQuizRelayPayload(
     quizBoardHoverCell: slice.quizBoardHoverCell ?? null,
     questionUsedGrid: slice.questions.map((row) => row.map((q) => Boolean(q.used))),
     donationLog: normalizeDonationLog(slice.donationLog) ?? [],
+    hideDonationsTableOnBoard3: slice.hideDonationsTableOnBoard3 === true,
   };
   if (boardId !== undefined) out.boardId = boardId;
   if (slice.dataVersion !== undefined) out.dataVersion = slice.dataVersion;

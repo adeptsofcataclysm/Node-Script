@@ -47,6 +47,9 @@ export function getQuizRelayOrDefault(sessionId: string): AdeptsQuizRelayPayload
   if (!Array.isArray(s.donationLog)) {
     s.donationLog = [];
   }
+  if (s.hideDonationsTableOnBoard3 === undefined) {
+    s.hideDonationsTableOnBoard3 = false;
+  }
   return s;
 }
 
@@ -109,8 +112,16 @@ export function setQuizRelayFull(sessionId: string, payload: AdeptsQuizRelayPayl
   if (Array.isArray(payload.themes) && payload.themes.length > 0) {
     base.themes = payload.themes.map((x) => String(x ?? "").trim().slice(0, 64));
   }
+  if (typeof payload.hideDonationsTableOnBoard3 === "boolean") {
+    base.hideDonationsTableOnBoard3 = payload.hideDonationsTableOnBoard3;
+  }
   // (lean relay, same board) → keep existing catalog intact so clients that connect later
   // still receive the most recently edited catalog for this board.
+}
+
+/** Снова показать таблицу пожертвований на 3-й доске (вход на страницу похорон). */
+export function clearHideDonationsTableOnBoard3(sessionId: string): void {
+  getQuizRelayOrDefault(sessionId).hideDonationsTableOnBoard3 = false;
 }
 
 export function applyHostQuizRelay(sessionId: string, payload: unknown): { ok: true } | { ok: false; error: string } {
@@ -354,6 +365,7 @@ export function applyHostMounts400DedDonationDoubleReward(
     const p = s.players[seat];
     if (p) p.score += add;
   }
+  s.hideDonationsTableOnBoard3 = true;
   return { ok: true };
 }
 

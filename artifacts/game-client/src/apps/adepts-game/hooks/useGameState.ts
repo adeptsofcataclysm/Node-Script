@@ -49,6 +49,8 @@ export type GameState = {
   boardRoom?: string;
   /** Журнал пожертвований (строки); общий для всех раундов квиза. */
   donationLog: DonationLogEntry[];
+  /** После ×2 с деда на 400 — скрыть таблицу на 3-й доске; сброс при входе на похороны (сервер). */
+  hideDonationsTableOnBoard3?: boolean;
 };
 
 const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
@@ -83,6 +85,7 @@ const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   dataVersion: undefined,
   boardRoom: undefined,
   donationLog: [...DEFAULT_DONATION_LOG],
+  hideDonationsTableOnBoard3: false,
 };
 
 const PLAYERS_KEY = "adepts-shared-players";
@@ -377,6 +380,10 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
           typeof parsed.quizBoardHoverCell.questionIndex === "number"
             ? parsed.quizBoardHoverCell
             : null,
+        hideDonationsTableOnBoard3:
+          typeof parsed.hideDonationsTableOnBoard3 === "boolean"
+            ? parsed.hideDonationsTableOnBoard3
+            : false,
       });
     }
   } catch (err) {
@@ -482,6 +489,7 @@ export function useGameState(boardId: AdeptsBoardId) {
             players: rec["players"],
             currentTurnSeat: rec["currentTurnSeat"],
             donationLog: rec["donationLog"],
+            hideDonationsTableOnBoard3: rec["hideDonationsTableOnBoard3"],
             // Reset all board-specific fields to safe defaults
             activeQuizCard: null,
             quizBoardHoverCell: null,
@@ -529,6 +537,10 @@ export function useGameState(boardId: AdeptsBoardId) {
         const incomingLog = normalizeDonationLog(recToUse["donationLog"]);
         const nextDonationLog = incomingLog ?? prev.donationLog;
 
+        const rawHide = recToUse["hideDonationsTableOnBoard3"];
+        const nextHideDonationsTableOnBoard3 =
+          typeof rawHide === "boolean" ? rawHide : (prev.hideDonationsTableOnBoard3 ?? false);
+
         let nextState = withClosedActiveQuizIfCellUsed(
           migrateCatalog(boardId, {
             ...prev,
@@ -544,6 +556,7 @@ export function useGameState(boardId: AdeptsBoardId) {
             quizBoardHoverCell: hoverFromRelay,
             dataVersion:
               typeof recToUse["dataVersion"] === "number" ? recToUse["dataVersion"] : prev.dataVersion,
+            hideDonationsTableOnBoard3: nextHideDonationsTableOnBoard3,
           })
         );
 

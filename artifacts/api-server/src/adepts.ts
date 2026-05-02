@@ -12,6 +12,7 @@ import {
   applyPickCell,
   applyPlayerDonation,
   applyHostMounts400DedDonationDoubleReward,
+  clearHideDonationsTableOnBoard3,
   cloneQuizRelay,
   getQuizRelayOrDefault,
 } from "./lib/adepts-quiz-room-store";
@@ -309,6 +310,11 @@ export function setupAdepts(io: Server): void {
             );
             return;
           }
+          run();
+          return;
+        }
+        case "showDonationsTableOnBoard3": {
+          clearHideDonationsTableOnBoard3(sessionId);
           run();
           return;
         }

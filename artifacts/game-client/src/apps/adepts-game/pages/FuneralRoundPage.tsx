@@ -8,7 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { DonationsTable } from "@/components/DonationsTable";
 import { FuneralDonationHat } from "@/components/FuneralDonationHat";
-import { readAdeptsPlayerSeatIndexForSocket } from "@/lib/adeptsCommandSocket";
+import { getAdeptsCommandSocket, readAdeptsPlayerSeatIndexForSocket } from "@/lib/adeptsCommandSocket";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
 const BOARD_BG = "/funeral-board-bg.png";
@@ -40,6 +40,11 @@ export default function FuneralRoundPage() {
   useEffect(() => {
     fetch(`/api/track/${trackKey}`, { method: "POST" }).catch(() => {});
   }, [trackKey]);
+
+  /** Снова показывать таблицу пожертвований на 3-й квиз-доске после визита на похороны. */
+  useEffect(() => {
+    getAdeptsCommandSocket().emit("command", { type: "showDonationsTableOnBoard3" });
+  }, []);
 
   const bgStyle = useMemo(
     () => ({
