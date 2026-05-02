@@ -18,8 +18,37 @@ export function HostPage() {
     <div style={{ minHeight: "100vh", background: "#2d3e50", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflowX: "hidden" }}>
 
       {/* Mode badge */}
-      <div style={{ position: "fixed", top: 16, left: 16, zIndex: 30, padding: "6px 18px", border: "1px solid #f1c40f", background: "rgba(0,0,0,0.6)", borderRadius: 4, fontFamily: "monospace", fontSize: 12, textTransform: "uppercase", letterSpacing: "4px", color: "#f1c40f", textShadow: "0 0 12px rgba(241,196,15,0.7)" }}>
-        Счастливчик
+      <div
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          zIndex: 30,
+          padding: "6px 18px",
+          border: "1px solid rgba(241, 196, 15, 0.85)",
+          background: "rgba(0, 0, 0, 0.6)",
+          borderRadius: 4,
+          fontFamily: "monospace",
+          fontSize: 12,
+          textTransform: "uppercase",
+          letterSpacing: "4px",
+          boxShadow:
+            "0 0 22px rgba(241, 196, 15, 0.35), inset 0 0 20px rgba(241, 196, 15, 0.05)",
+        }}
+      >
+        <span
+          style={{
+            background: "linear-gradient(165deg, #fffef5 0%, #f7dc6f 38%, #f1c40f 58%, #b8860b 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter:
+              "drop-shadow(0 0 6px rgba(255, 220, 140, 0.9)) drop-shadow(0 0 16px rgba(241, 196, 15, 0.65)) drop-shadow(0 0 28px rgba(255, 180, 0, 0.35))",
+          }}
+        >
+          Счастливчик
+        </span>
       </div>
 
       {/* Connection indicator */}
