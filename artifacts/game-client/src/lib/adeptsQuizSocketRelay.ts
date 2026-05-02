@@ -64,9 +64,10 @@ export function buildAdeptsQuizRelayPayload(
   };
   if (boardId !== undefined) out.boardId = boardId;
   if (slice.dataVersion !== undefined) out.dataVersion = slice.dataVersion;
+  /** Всегда шлём подписи тем — на сервере нужны для «Маунты 400» и т.п. без тяжёлого каталога. */
+  out.themes = slice.themes;
   if (includeCatalog) {
     out.catalogIncluded = true;
-    out.themes = slice.themes;
     out.questions = slice.questions;
   }
   return out;

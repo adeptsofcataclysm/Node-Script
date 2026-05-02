@@ -11,7 +11,22 @@ import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { DonationsTable } from "@/components/DonationsTable";
+import { getAdeptsCommandSocket } from "@/lib/adeptsCommandSocket";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
+
+/** Вопрос 400 = индекс 3. Бонус дед-слеша: тема «Маунты» по названию или любой dedFly в каталоге. */
+function shouldEmitDedFlyDonationBonus(
+  themeName: string | undefined,
+  questionIndex: number,
+  splashVariant: string | undefined,
+): boolean {
+  if (questionIndex !== 3) return false;
+  if (splashVariant === "dedFly") return true;
+  const n = String(themeName ?? "")
+    .trim()
+    .toLowerCase();
+  return n.includes("маунт") || n.includes("mount");
+}
 
 function resolveUrl(url: string): string {
   if (!url) return url;
@@ -218,7 +233,26 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           allowRaccoonSplashSeatPass={openCard.splashSeatPassUsed !== true}
           splashDismissed={openCard.splashDismissed === true}
           splashDedFlyExitStarted={openCard.splashDedFlyExitStarted === true}
-          onDedFlyExitStart={() => patchActiveQuizCard({ splashDedFlyExitStarted: true })}
+          onDedFlyExitStart={() => {
+            patchActiveQuizCard({ splashDedFlyExitStarted: true });
+            if (!isHost || !openCard) return;
+            const qMeta = state.questions[openCard.themeIndex]?.[openCard.questionIndex];
+            if (
+              shouldEmitDedFlyDonationBonus(
+                state.themes[openCard.themeIndex],
+                openCard.questionIndex,
+                qMeta?.splashVariant,
+              )
+            ) {
+              queueMicrotask(() => {
+                getAdeptsCommandSocket().emit("command", {
+                  type: "hostMounts400DedDonationBonus",
+                  themeIndex: openCard.themeIndex,
+                  questionIndex: openCard.questionIndex,
+                });
+              });
+            }
+          }}
           canFinalizeDedFlySplashDismiss={isHost}
           canDismissRaccoonSplash={canDismissSplash}
           onDismissSplash={() =>

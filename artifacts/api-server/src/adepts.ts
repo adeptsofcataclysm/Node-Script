@@ -11,6 +11,7 @@ import {
   applyActiveQuizPatch,
   applyPickCell,
   applyPlayerDonation,
+  applyHostMounts400DedDonationDoubleReward,
   cloneQuizRelay,
   getQuizRelayOrDefault,
 } from "./lib/adepts-quiz-room-store";
@@ -292,6 +293,22 @@ export function setupAdepts(io: Server): void {
         case "hostAdjustScore": {
           if (!host) return;
           applyHostAdjustScore(sessionId, Number(cmd["seat"]), Number(cmd["delta"]));
+          run();
+          return;
+        }
+        case "hostMounts400DedDonationBonus": {
+          if (!host) return;
+          const ti = Number(cmd["themeIndex"]);
+          const qi = Number(cmd["questionIndex"]);
+          if (!Number.isFinite(ti) || !Number.isFinite(qi)) return;
+          const r = applyHostMounts400DedDonationDoubleReward(sessionId, ti, qi);
+          if (!r.ok) {
+            logger.warn(
+              { sessionId, socketId: socket.id, err: r.error, themeIndex: ti, questionIndex: qi },
+              "hostMounts400DedDonationBonus rejected",
+            );
+            return;
+          }
           run();
           return;
         }

@@ -105,6 +105,10 @@ export function setQuizRelayFull(sessionId: string, payload: AdeptsQuizRelayPayl
     delete base.themes;
     delete base.questions;
   }
+  /** Каждый lean-relay от ведущего несёт `themes` — обновляем подписи без полного каталога. */
+  if (Array.isArray(payload.themes) && payload.themes.length > 0) {
+    base.themes = payload.themes.map((x) => String(x ?? "").trim().slice(0, 64));
+  }
   // (lean relay, same board) → keep existing catalog intact so clients that connect later
   // still receive the most recently edited catalog for this board.
 }
@@ -313,6 +317,44 @@ export function applySeatNickRosterToQuizRelay(sessionId: string, seatNicks: str
     const nick = row[i] ?? "";
     p.name = nick.length > 0 ? nick : `Игрок ${i + 1}`;
   }
+}
+
+/**
+ * Карточка на 400 (индекс вопроса 3): клик ведущего по «деду» (dedFly) — +2× сумма пожертвования на **место**
+ * (0–4) из журнала. Текущий игрок на месте получает очки. Название темы на сервере не проверяем (часто пусто
+ * или другое написание). Строки без `seatIndex` игнорируются.
+ */
+export function applyHostMounts400DedDonationDoubleReward(
+  sessionId: string,
+  themeIndex: number,
+  questionIndex: number,
+): { ok: true } | { ok: false; error: string } {
+  const s = getQuizRelayOrDefault(sessionId);
+  const c = s.activeQuizCard;
+  if (!c) return { ok: false, error: "no active card" };
+  const t = Math.floor(themeIndex);
+  const q = Math.floor(questionIndex);
+  if (c.themeIndex !== t || c.questionIndex !== q) return { ok: false, error: "card mismatch" };
+  if (pointValueForQuestionIndex(q) !== 400) return { ok: false, error: "not 400" };
+
+  const log = s.donationLog ?? [];
+  const bonusBySeat = new Map<number, number>();
+
+  for (const e of log) {
+    const amt = Math.floor(Number(e.amount));
+    if (!Number.isFinite(amt) || amt < 1) continue;
+    const si = e.seatIndex;
+    if (typeof si !== "number" || !Number.isInteger(si) || si < 0 || si > 4) continue;
+    const seat = ((si % 5) + 5) % 5;
+    const bonus = amt * 2;
+    bonusBySeat.set(seat, (bonusBySeat.get(seat) ?? 0) + bonus);
+  }
+
+  for (const [seat, add] of bonusBySeat) {
+    const p = s.players[seat];
+    if (p) p.score += add;
+  }
+  return { ok: true };
 }
 
 export function applyPlayerDonation(
