@@ -25,10 +25,21 @@ function publicUrl(path: string): string {
 }
 
 /** Стилизованный силуэт «адепта» + слой с официальной иконкой темы при наличии */
-function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: number }) {
+function SlotPortrait({
+  accentHsl,
+  slotIndex,
+  isInactiveTurn,
+}: {
+  accentHsl: string;
+  slotIndex: number;
+  /** Ход задан и не у этого места — портрет в градациях серого */
+  isInactiveTurn: boolean;
+}) {
   const [iconFailed, setIconFailed] = useState(false);
   const filterId = `adeptGlow-${slotIndex}`;
   const iconSrc = publicUrl("/lor-adeptov-icon.png");
+  const inactiveImgFilter = "grayscale(1) brightness(0.92) contrast(1.06) opacity(0.9)";
+  const activeImgFilter = `brightness(1.08) saturate(1.35) drop-shadow(0 0 12px ${hsl(accentHsl, 0.82)}) drop-shadow(0 0 32px ${hsl(accentHsl, 0.38)})`;
 
   return (
     <div className="relative z-[1] flex min-h-[53px] flex-1 flex-col items-center justify-center px-1.5 py-1.5 md:min-h-[62px]">
@@ -38,6 +49,8 @@ function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: 
           height: "78%",
           background: `radial-gradient(ellipse at center 35%, ${hsl(accentHsl, 0.52)} 0%, ${hsl(accentHsl, 0.18)} 40%, transparent 70%)`,
           filter: "blur(14px)",
+          opacity: isInactiveTurn ? 0.35 : 1,
+          transition: "opacity 0.45s ease-out",
         }}
       />
       {!iconFailed ? (
@@ -46,7 +59,8 @@ function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: 
           alt=""
           className="relative z-[1] max-h-[4.05rem] w-auto max-w-[72%] object-contain opacity-[0.98] md:max-h-[4.5rem]"
           style={{
-            filter: `brightness(1.08) saturate(1.35) drop-shadow(0 0 12px ${hsl(accentHsl, 0.82)}) drop-shadow(0 0 32px ${hsl(accentHsl, 0.38)})`,
+            filter: isInactiveTurn ? inactiveImgFilter : activeImgFilter,
+            transition: "filter 0.45s ease-out",
           }}
           onError={() => setIconFailed(true)}
         />
@@ -54,6 +68,10 @@ function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: 
         <svg
           viewBox="0 0 120 148"
           className="relative z-[1] h-[4.05rem] w-auto max-w-[88%] md:h-[4.5rem]"
+          style={{
+            filter: isInactiveTurn ? inactiveImgFilter : "none",
+            transition: "filter 0.45s ease-out",
+          }}
           aria-hidden
         >
           <defs>
@@ -280,6 +298,8 @@ export function Scoreboard({
             const theme = ADEPTS_SLOT_THEMES[index] ?? ADEPTS_SLOT_THEMES[0]!;
             const accent = theme.hsl;
             const isTurn = normalizedTurn === index;
+            const isInactiveTurnPortrait =
+              normalizedTurn !== undefined && !isTurn;
 
             return (
               <div
@@ -336,7 +356,7 @@ export function Scoreboard({
                   )}
                 </div>
 
-                <SlotPortrait accentHsl={accent} slotIndex={index} />
+                <SlotPortrait accentHsl={accent} slotIndex={index} isInactiveTurn={isInactiveTurnPortrait} />
 
                 <div
                   className="relative z-[1] mt-auto flex flex-col items-center gap-1 border-t px-2 py-1.5 pb-2"
