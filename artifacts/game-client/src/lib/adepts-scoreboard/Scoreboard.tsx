@@ -25,13 +25,35 @@ function publicUrl(path: string): string {
 }
 
 /** Стилизованный силуэт «адепта» + слой с официальной иконкой темы при наличии */
-function SlotPortrait({ accentHsl, slotIndex }: { accentHsl: string; slotIndex: number }) {
+function SlotPortrait({
+  accentHsl,
+  slotIndex,
+  isTurn,
+}: {
+  accentHsl: string;
+  slotIndex: number;
+  isTurn?: boolean;
+}) {
   const [iconFailed, setIconFailed] = useState(false);
   const filterId = `adeptGlow-${slotIndex}`;
   const iconSrc = publicUrl("/lor-adeptov-icon.png");
 
   return (
     <div className="relative z-[1] flex min-h-[53px] flex-1 flex-col items-center justify-center px-1.5 py-1.5 md:min-h-[62px]">
+      {isTurn ? (
+        <span
+          className="pointer-events-none absolute left-1 top-1 z-[2] rounded px-1 py-px font-display text-[9px] font-semibold uppercase leading-none tracking-wider shadow-sm md:left-1.5 md:top-1.5 md:text-[10px]"
+          style={{
+            color: hsl(accentHsl, 0.95),
+            background: `linear-gradient(135deg, hsl(270 40% 8% / 0.92), hsl(270 35% 4% / 0.88))`,
+            border: `1px solid ${hsl(accentHsl, 0.45)}`,
+            textShadow: `0 0 8px ${hsl(accentHsl, 0.55)}`,
+            boxShadow: `0 0 12px ${hsl(accentHsl, 0.2)}`,
+          }}
+        >
+          Ход
+        </span>
+      ) : null}
       <div
         className="pointer-events-none absolute left-[10%] right-[10%] top-[8%]"
         style={{
@@ -336,7 +358,7 @@ export function Scoreboard({
                   )}
                 </div>
 
-                <SlotPortrait accentHsl={accent} slotIndex={index} />
+                <SlotPortrait accentHsl={accent} slotIndex={index} isTurn={isTurn} />
 
                 <div
                   className="relative z-[1] mt-auto flex flex-col items-center gap-1 border-t px-2 py-1.5 pb-2"
