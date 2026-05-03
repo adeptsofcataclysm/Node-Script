@@ -115,6 +115,30 @@ export function setQuizRelayFull(sessionId: string, payload: AdeptsQuizRelayPayl
   if (typeof payload.hideDonationsTableOnBoard3 === "boolean") {
     base.hideDonationsTableOnBoard3 = payload.hideDonationsTableOnBoard3;
   }
+
+  /**
+   * Титры только на квиз-доске 3: relay с доски 1 или 2 не несёт полей титров — сбрасываем,
+   * чтобы при переходе между досками титры не оставались «включёнными» на сервере.
+   */
+  if (incomingBoardId === 1 || incomingBoardId === 2) {
+    base.creditsRollActive = false;
+    delete base.creditsRollStartedAt;
+  } else {
+    const pExtra = payload as Record<string, unknown>;
+    if ("creditsRollActive" in pExtra) {
+      base.creditsRollActive = pExtra["creditsRollActive"] === true;
+      if (!base.creditsRollActive) {
+        delete base.creditsRollStartedAt;
+      }
+    }
+    if (
+      "creditsRollStartedAt" in pExtra &&
+      typeof pExtra["creditsRollStartedAt"] === "number" &&
+      Number.isFinite(pExtra["creditsRollStartedAt"])
+    ) {
+      base.creditsRollStartedAt = Math.floor(pExtra["creditsRollStartedAt"] as number);
+    }
+  }
   // (lean relay, same board) → keep existing catalog intact so clients that connect later
   // still receive the most recently edited catalog for this board.
 }

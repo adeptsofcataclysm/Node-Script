@@ -39,6 +39,9 @@ export type AdeptsQuizRelayPayload = {
   donationLog?: AdeptsDonationLogEntry[];
   /** После бонуса ×2 с «деда» на 400 — скрыть таблицу на квиз-доске 3; сброс при входе на похороны. */
   hideDonationsTableOnBoard3?: boolean;
+  /** Титры (квиз-доска 3); обновляется только если поле присутствует в relay от доски 3. */
+  creditsRollActive?: boolean;
+  creditsRollStartedAt?: number;
 };
 
 const THEME_COUNT = 8;

@@ -51,6 +51,9 @@ export type GameState = {
   donationLog: DonationLogEntry[];
   /** После ×2 с деда на 400 — скрыть таблицу на 3-й доске; сброс при входе на похороны (сервер). */
   hideDonationsTableOnBoard3?: boolean;
+  /** Титры после игры (только квиз-доска 3). */
+  creditsRollActive?: boolean;
+  creditsRollStartedAt?: number;
 };
 
 const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
@@ -86,6 +89,8 @@ const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   boardRoom: undefined,
   donationLog: [...DEFAULT_DONATION_LOG],
   hideDonationsTableOnBoard3: false,
+  creditsRollActive: false,
+  creditsRollStartedAt: undefined,
 };
 
 const PLAYERS_KEY = "adepts-shared-players";
@@ -384,6 +389,9 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
           typeof parsed.hideDonationsTableOnBoard3 === "boolean"
             ? parsed.hideDonationsTableOnBoard3
             : false,
+        /** Титры не восстанавливаем из localStorage — только по кнопке «Титры». */
+        creditsRollActive: false,
+        creditsRollStartedAt: undefined,
       });
     }
   } catch (err) {
@@ -541,6 +549,30 @@ export function useGameState(boardId: AdeptsBoardId) {
         const nextHideDonationsTableOnBoard3 =
           typeof rawHide === "boolean" ? rawHide : (prev.hideDonationsTableOnBoard3 ?? false);
 
+        const nextCredits =
+          boardId !== 3
+            ? { creditsRollActive: false, creditsRollStartedAt: undefined as number | undefined }
+            : boardMismatch
+              ? {
+                  /** Relay с другой доски (1/2): титры не переносим; сервер уже сбросил credits. */
+                  creditsRollActive: false,
+                  creditsRollStartedAt: undefined,
+                }
+              : (() => {
+                  const active = recToUse["creditsRollActive"] === true;
+                  const rawAt = recToUse["creditsRollStartedAt"];
+                  const at =
+                    typeof rawAt === "number" && Number.isFinite(rawAt)
+                      ? Math.floor(rawAt)
+                      : active
+                        ? prev.creditsRollStartedAt
+                        : undefined;
+                  return {
+                    creditsRollActive: active,
+                    creditsRollStartedAt: active ? at : undefined,
+                  };
+                })();
+
         let nextState = withClosedActiveQuizIfCellUsed(
           migrateCatalog(boardId, {
             ...prev,
@@ -557,6 +589,8 @@ export function useGameState(boardId: AdeptsBoardId) {
             dataVersion:
               typeof recToUse["dataVersion"] === "number" ? recToUse["dataVersion"] : prev.dataVersion,
             hideDonationsTableOnBoard3: nextHideDonationsTableOnBoard3,
+            creditsRollActive: nextCredits.creditsRollActive,
+            creditsRollStartedAt: nextCredits.creditsRollStartedAt,
           })
         );
 
@@ -608,7 +642,11 @@ export function useGameState(boardId: AdeptsBoardId) {
   }, [boardId, adeptsSocketKey]);
 
   useEffect(() => {
-    localStorage.setItem(rt.storageKey, JSON.stringify(state));
+    const persisted: GameState =
+      boardId === 3
+        ? { ...state, creditsRollActive: false, creditsRollStartedAt: undefined }
+        : state;
+    localStorage.setItem(rt.storageKey, JSON.stringify(persisted));
     localStorage.setItem(PLAYERS_KEY, JSON.stringify(state.players));
     localStorage.setItem(DONATION_LOG_KEY, JSON.stringify(state.donationLog));
 
@@ -626,7 +664,7 @@ export function useGameState(boardId: AdeptsBoardId) {
       type: "hostQuizRelay",
       payload: buildAdeptsQuizRelayPayload(state, getAdeptsSessionId(), includeCatalog, boardId),
     });
-  }, [state, catalogReady, rt.storageKey]);
+  }, [state, catalogReady, rt.storageKey, boardId]);
 
   useEffect(() => {
     const storageKey = rt.storageKey;
@@ -634,7 +672,12 @@ export function useGameState(boardId: AdeptsBoardId) {
       if (e.key === storageKey && e.newValue) {
         try {
           skipEmitRef.current = true;
-          setState(JSON.parse(e.newValue));
+          const parsed = JSON.parse(e.newValue) as GameState;
+          if (boardId === 3) {
+            parsed.creditsRollActive = false;
+            parsed.creditsRollStartedAt = undefined;
+          }
+          setState(parsed);
         } catch {}
       }
       if (e.key === PLAYERS_KEY && e.newValue) {
@@ -830,6 +873,18 @@ export function useGameState(boardId: AdeptsBoardId) {
     getAdeptsCommandSocket().emit("command", { type: "playerDonation", amount });
   }, []);
 
+  const setBoard3CreditsRoll = useCallback(
+    (active: boolean) => {
+      if (boardId !== 3 || !isHostRole()) return;
+      setState((prev) => ({
+        ...prev,
+        creditsRollActive: active,
+        creditsRollStartedAt: active ? Date.now() : undefined,
+      }));
+    },
+    [boardId],
+  );
+
   const emitPickCell = useCallback(
     (themeIndex: number, questionIndex: number, opts?: { turnSeat?: number }) => {
       /**
@@ -869,5 +924,6 @@ export function useGameState(boardId: AdeptsBoardId) {
     resetGame,
     emitPickCell,
     submitPlayerDonation,
+    setBoard3CreditsRoll,
   };
 }

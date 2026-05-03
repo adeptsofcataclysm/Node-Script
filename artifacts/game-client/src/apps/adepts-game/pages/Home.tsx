@@ -11,6 +11,8 @@ import { useRole } from "@/hooks/useRole";
 import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { DonationsTable } from "@/components/DonationsTable";
+import { AdeptsCreditsRollOverlay } from "@/components/AdeptsCreditsRollOverlay";
+import { Button } from "@/components/ui/button";
 import { getAdeptsCommandSocket } from "@/lib/adeptsCommandSocket";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
 
@@ -65,6 +67,7 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
     patchActiveQuizCard,
     setQuizBoardHoverCell,
     emitPickCell,
+    setBoard3CreditsRoll,
   } = useGameState(boardId);
 
   const handleAwardPoints = (playerIndex: number, points: number) => {
@@ -165,9 +168,22 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         <h1 className="font-display text-2xl tracking-wider text-primary glow-text">
           САМЫЙ ДУШНЫЙ 3.0
         </h1>
-        <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
-          {BADGE_LABEL[boardId]}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
+            {BADGE_LABEL[boardId]}
+          </span>
+          {boardId === 3 && isHost ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="font-display text-xs uppercase tracking-wider border-primary/50 text-primary/90 hover:bg-primary/10"
+              onClick={() => setBoard3CreditsRoll(true)}
+            >
+              Титры
+            </Button>
+          ) : null}
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <QuizBoardReloadButton />
           {isHost && <GamePhaseNav />}
@@ -337,6 +353,15 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
       )}
 
       <QuizBoardPandoraLottoOverlay />
+
+      {boardId === 3 && state.creditsRollActive === true ? (
+        <AdeptsCreditsRollOverlay
+          open
+          startedAt={state.creditsRollStartedAt}
+          isHost={isHost}
+          onHostClose={() => setBoard3CreditsRoll(false)}
+        />
+      ) : null}
     </div>
   );
 }

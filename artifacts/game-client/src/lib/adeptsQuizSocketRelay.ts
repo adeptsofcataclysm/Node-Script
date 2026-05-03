@@ -38,6 +38,9 @@ export type AdeptsQuizRelayPayload = {
   donationLog?: DonationLogEntry[];
   /** Скрыть таблицу пожертвований на 3-й доске (после ×2 с деда); сброс на странице похорон. */
   hideDonationsTableOnBoard3?: boolean;
+  /** Титры после игры (только квиз-доска 3); в relay добавляется только при `boardId === 3`. */
+  creditsRollActive?: boolean;
+  creditsRollStartedAt?: number;
 };
 
 export function buildAdeptsQuizRelayPayload(
@@ -51,6 +54,8 @@ export function buildAdeptsQuizRelayPayload(
     dataVersion?: number;
     donationLog: DonationLogEntry[];
     hideDonationsTableOnBoard3?: boolean;
+    creditsRollActive?: boolean;
+    creditsRollStartedAt?: number;
   },
   boardRoom: string,
   includeCatalog: boolean,
@@ -73,6 +78,12 @@ export function buildAdeptsQuizRelayPayload(
   if (includeCatalog) {
     out.catalogIncluded = true;
     out.questions = slice.questions;
+  }
+  if (boardId === 3) {
+    out.creditsRollActive = slice.creditsRollActive === true;
+    if (slice.creditsRollActive === true && slice.creditsRollStartedAt !== undefined) {
+      out.creditsRollStartedAt = slice.creditsRollStartedAt;
+    }
   }
   return out;
 }
