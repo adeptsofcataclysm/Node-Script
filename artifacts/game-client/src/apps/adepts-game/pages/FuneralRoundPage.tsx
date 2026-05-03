@@ -166,7 +166,7 @@ export default function FuneralRoundPage() {
         </div>
       </header>
 
-      <div className="relative z-[110] grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
+      <div className="relative z-[110] grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)] gap-2">
         <aside className="flex min-h-0 min-w-0 flex-col p-2">
           <ChatPanel className="min-h-0 w-full flex-1" />
         </aside>
@@ -185,7 +185,7 @@ export default function FuneralRoundPage() {
             ) : null}
           </div>
         </main>
-        <aside className="flex min-h-0 min-w-0 flex-col p-2 pt-3">
+        <aside className="flex min-h-0 min-w-0 flex-col p-2">
           <DonationsTable donationLog={state.donationLog} />
         </aside>
       </div>

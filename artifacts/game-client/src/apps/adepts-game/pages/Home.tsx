@@ -149,10 +149,9 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
 
   const showDonationsTable =
     boardId === 3 && state.hideDonationsTableOnBoard3 !== true;
-  /** Third column matches chat (15%) when donations visible; collapsed to 0 otherwise. */
-  const threeColGridClass = showDonationsTable
-    ? "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]"
-    : "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,0)]";
+  /** Chat | board | donations (or empty rail same width as chat) so the board stays viewport-centered on every round. */
+  const threeColGridClass =
+    "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)] gap-2";
 
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col text-foreground overflow-hidden">
@@ -195,8 +194,8 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         <aside className="flex min-h-0 min-w-0 flex-col p-2">
           <ChatPanel className="min-h-0 w-full flex-1" />
         </aside>
-        <main className="flex min-h-0 min-w-0 flex-col py-3">
-          <div className="mx-auto h-full w-full max-w-7xl min-h-0 px-2">
+        <main className="flex h-full min-h-0 min-w-0 flex-col py-3">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center">
             <QuizBoard
               board={boardId}
               themes={state.themes}
@@ -213,16 +212,14 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           </div>
         </main>
         <aside
-          className={
-            showDonationsTable
-              ? "flex min-h-0 min-w-0 flex-col p-2 pt-3"
-              : "pointer-events-none w-0 min-w-0 overflow-hidden p-0"
-          }
+          className="flex min-h-0 min-w-0 flex-col p-2"
           aria-hidden={!showDonationsTable}
         >
           {showDonationsTable ? (
             <DonationsTable donationLog={state.donationLog} />
-          ) : null}
+          ) : (
+            <div className="min-h-0 flex-1" aria-hidden />
+          )}
         </aside>
       </div>
 

@@ -85,7 +85,7 @@ export function QuizBoard({
   );
 
   return (
-    <div className="h-full w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-2">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-full flex-col gap-2 px-2 py-2 sm:px-4 sm:py-4">
       {themes.map((theme, tIdx) => {
         const iconUrl = getQuizThemeIconUrl(theme);
         return (
