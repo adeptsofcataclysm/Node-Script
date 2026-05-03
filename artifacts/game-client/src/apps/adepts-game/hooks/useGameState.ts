@@ -688,12 +688,13 @@ export function useGameState(boardId: AdeptsBoardId) {
           ? { ...nextState, activeQuizCard: null, quizBoardHoverCell: null }
           : nextState;
 
-        if (boardId === 4) {
+        if (boardId === 4 && !stateToApply.superTttWinner) {
           const row0 = stateToApply.questions[0];
           const fourPrizeCardsDone =
             Array.isArray(row0) &&
             row0.length >= 4 &&
             row0.slice(0, 4).every((q) => q.used === true);
+          /** Не трогаем фазу победы: иначе при малом рассинхроне сетки и `questions` оверлей победителя исчезал. */
           if (!fourPrizeCardsDone && stateToApply.superTtt) {
             stateToApply = { ...stateToApply, superTtt: null, superTttWinner: null };
           }

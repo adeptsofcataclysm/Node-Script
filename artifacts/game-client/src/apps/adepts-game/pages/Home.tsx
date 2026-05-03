@@ -118,11 +118,21 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
     };
   }, [boardId, Boolean(state.superTtt), state.superTttWinner?.atMs, state.superTttWinner?.nick]);
 
+  /** 5 с показа с момента появления победителя у клиента (не только по server `atMs` — иначе поздний sync = 0 с на экране). */
+  const [superWinnerUntilMs, setSuperWinnerUntilMs] = useState<number | null>(null);
   const [, setWinnerTick] = useState(0);
   useEffect(() => {
     const w = state.superTttWinner;
-    if (!w || typeof w.atMs !== "number") return;
-    const left = Math.max(0, w.atMs + 5000 - Date.now());
+    if (!w) {
+      setSuperWinnerUntilMs(null);
+      return;
+    }
+    setSuperWinnerUntilMs(Date.now() + 5000);
+  }, [state.superTttWinner?.atMs, state.superTttWinner?.nick]);
+
+  useEffect(() => {
+    if (superWinnerUntilMs == null) return;
+    const left = Math.max(0, superWinnerUntilMs - Date.now());
     if (left <= 0) return;
     const t = window.setInterval(() => setWinnerTick((n) => n + 1), 200);
     const done = window.setTimeout(() => {
@@ -133,12 +143,13 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
       clearInterval(t);
       clearTimeout(done);
     };
-  }, [state.superTttWinner?.atMs, state.superTttWinner?.nick]);
+  }, [superWinnerUntilMs]);
 
   const superWinnerOverlay =
     boardId === 4 &&
     state.superTttWinner &&
-    Date.now() - state.superTttWinner.atMs < 5000 ? (
+    superWinnerUntilMs != null &&
+    Date.now() < superWinnerUntilMs ? (
       <div
         className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-black/50 p-4"
         aria-live="polite"
