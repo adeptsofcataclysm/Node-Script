@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AdeptsBoardId, Question } from "@/lib/adepts-quiz-types";
 import { useGameState } from "../hooks/useGameState";
 import { Scoreboard } from "@/lib/adepts-scoreboard";
@@ -12,6 +12,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { QuizBoardPandoraLottoOverlay } from "@/components/QuizBoardPandoraLottoOverlay";
 import { DonationsTable } from "@/components/DonationsTable";
 import { AdeptsCreditsRollOverlay } from "@/components/AdeptsCreditsRollOverlay";
+import { SuperGameTttPanel } from "@/components/SuperGameTttPanel";
 import { Button } from "@/components/ui/button";
 import { getAdeptsCommandSocket } from "@/lib/adeptsCommandSocket";
 import { getQuizNavSocket } from "@/hooks/quizNavSocket";
@@ -40,7 +41,11 @@ const BADGE_LABEL: Record<AdeptsBoardId, string> = {
   1: "Квиз-доска 1",
   2: "Квиз-доска 2",
   3: "Квиз-доска 3",
+  4: "СУПЕР ИГРА!",
 };
+
+/** Фон при переходе супер-игры на крестики-нолики (один раз за появление поля). */
+const SUPER_GAME_TTT_BGM = "/super-game-pump-it.mp3";
 
 /** Server opened a cell that is not yet in local `questions` (e.g. catalog/API drift) — still show the shell. */
 const FALLBACK_OPEN_QUESTION: Question = {
@@ -67,8 +72,91 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
     patchActiveQuizCard,
     setQuizBoardHoverCell,
     emitPickCell,
-    setBoard3CreditsRoll,
+    setCreditsRoll,
+    emitSuperTttPick,
+    emitSuperTttResetBoard,
+    emitCloseSuperGameCard,
   } = useGameState(boardId);
+
+  const superTttBgmStartedRef = useRef(false);
+  const superTttBgmAudioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const stopBgm = () => {
+      const el = superTttBgmAudioRef.current;
+      if (el) {
+        el.pause();
+        el.currentTime = 0;
+        superTttBgmAudioRef.current = null;
+      }
+    };
+
+    if (boardId !== 4) {
+      superTttBgmStartedRef.current = false;
+      stopBgm();
+      return;
+    }
+    if (state.superTttWinner) {
+      stopBgm();
+      return;
+    }
+    if (!state.superTtt) {
+      superTttBgmStartedRef.current = false;
+      stopBgm();
+      return;
+    }
+    if (superTttBgmStartedRef.current) return;
+    superTttBgmStartedRef.current = true;
+    const audio = new Audio(resolveUrl(SUPER_GAME_TTT_BGM));
+    audio.volume = 0.17;
+    audio.loop = false;
+    superTttBgmAudioRef.current = audio;
+    void audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      if (superTttBgmAudioRef.current === audio) superTttBgmAudioRef.current = null;
+    };
+  }, [boardId, Boolean(state.superTtt), state.superTttWinner?.atMs, state.superTttWinner?.nick]);
+
+  const [, setWinnerTick] = useState(0);
+  useEffect(() => {
+    const w = state.superTttWinner;
+    if (!w || typeof w.atMs !== "number") return;
+    const left = Math.max(0, w.atMs + 5000 - Date.now());
+    if (left <= 0) return;
+    const t = window.setInterval(() => setWinnerTick((n) => n + 1), 200);
+    const done = window.setTimeout(() => {
+      clearInterval(t);
+      setWinnerTick((n) => n + 1);
+    }, left);
+    return () => {
+      clearInterval(t);
+      clearTimeout(done);
+    };
+  }, [state.superTttWinner?.atMs, state.superTttWinner?.nick]);
+
+  const superWinnerOverlay =
+    boardId === 4 &&
+    state.superTttWinner &&
+    Date.now() - state.superTttWinner.atMs < 5000 ? (
+      <div
+        className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-black/50 p-4"
+        aria-live="polite"
+      >
+        <div
+          className="max-w-[min(96vw,520px)] rounded-2xl border-2 border-amber-400/60 bg-gradient-to-b from-amber-950/95 to-zinc-950/95 px-6 py-8 text-center shadow-[0_0_60px_hsla(43,96%,56%,0.35)]"
+          style={{ fontFamily: "WarCraft, sans-serif" }}
+        >
+          <p className="text-balance text-xl uppercase leading-snug tracking-wide text-amber-100 sm:text-2xl">
+            ПОЗДРАВЛЯЕМ!{" "}
+            <span className="text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.5)]">
+              {state.superTttWinner.nick}
+            </span>{" "}
+            САМЫЙ ДУШНЫЙ!!!
+          </p>
+        </div>
+      </div>
+    ) : null;
 
   const handleAwardPoints = (playerIndex: number, points: number) => {
     updatePlayerScore(playerIndex, state.players[playerIndex].score + points);
@@ -125,6 +213,12 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
   const canDismissSplash =
     openQuestion?.splashDismissHostOnly === true ? isHost : canDismissRaccoonSplash;
 
+  const canCloseSuperGameCard =
+    boardId === 4 &&
+    openCard != null &&
+    (isHost ||
+      (!isSpectator && seatIndex >= 0 && seatIndex <= 4 && seatIndex === state.currentTurnSeat));
+
   const handleQuestionClick = (themeIndex: number, questionIndex: number) => {
     if (!canOpenCards) return;
     const q = state.questions[themeIndex]?.[questionIndex];
@@ -168,13 +262,13 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           <span className="adepts-quiz-badge text-sm font-display tracking-wider text-primary/80 border border-primary/40 px-3 py-1.5 rounded">
             {BADGE_LABEL[boardId]}
           </span>
-          {boardId === 3 && isHost ? (
+          {boardId === 4 && isHost ? (
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="font-display text-xs uppercase tracking-wider border-primary/50 text-primary/90 hover:bg-primary/10"
-              onClick={() => setBoard3CreditsRoll(true)}
+              onClick={() => setCreditsRoll(true)}
             >
               Титры
             </Button>
@@ -195,20 +289,40 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
           <ChatPanel className="min-h-0 w-full flex-1" />
         </aside>
         <main className="flex h-full min-h-0 min-w-0 flex-col py-3">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center">
-            <QuizBoard
-              board={boardId}
-              themes={state.themes}
-              questions={state.questions}
-              onUpdateTheme={updateThemeName}
-              onQuestionClick={handleQuestionClick}
-              readonly={!canOpenCards}
-              themeEditReadonly={!isHost}
-              blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
-              hoverCell={state.quizBoardHoverCell ?? null}
-              canSyncBoardHover={canOpenCards}
-              onBoardHoverCellChange={setQuizBoardHoverCell}
-            />
+          <div className="adepts-quiz-board-scroll flex min-h-0 min-w-0 flex-1 flex-col items-stretch justify-center overflow-y-auto overflow-x-hidden">
+            {boardId !== 4 || !state.superTtt ? (
+              <QuizBoard
+                board={boardId}
+                themes={state.themes}
+                questions={state.questions}
+                onUpdateTheme={updateThemeName}
+                onQuestionClick={handleQuestionClick}
+                readonly={!canOpenCards}
+                themeEditReadonly={!isHost}
+                blockTurnPlayerFromPlayedOrFaceDownCells={blockTurnPlayerFromPlayedOrFaceDownCells}
+                hoverCell={state.quizBoardHoverCell ?? null}
+                canSyncBoardHover={canOpenCards}
+                onBoardHoverCellChange={setQuizBoardHoverCell}
+                superGameActiveCard={boardId === 4 ? openCard : null}
+                superGameOpenQuestion={boardId === 4 ? openQuestion : null}
+                canCloseSuperGameCard={canCloseSuperGameCard}
+                onCloseSuperGameCard={() => {
+                  if (!openCard || boardId !== 4) return;
+                  emitCloseSuperGameCard(openCard.themeIndex, openCard.questionIndex);
+                }}
+              />
+            ) : null}
+            {boardId === 4 && state.superTtt ? (
+              <SuperGameTttPanel
+                players={state.players}
+                superTtt={state.superTtt}
+                viewerSeatIndex={seatIndex}
+                isSpectator={isSpectator}
+                isHost={isHost}
+                onCellPick={(cell) => emitSuperTttPick(cell)}
+                onResetBoard={isHost ? emitSuperTttResetBoard : undefined}
+              />
+            ) : null}
           </div>
         </main>
         <aside
@@ -234,7 +348,7 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         />
       </div>
 
-      {openCard && (
+      {openCard && boardId !== 4 && (
         <QuestionModal
           key={`${openCard.themeIndex}-${openCard.questionIndex}`}
           board={boardId}
@@ -339,14 +453,16 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
 
       <QuizBoardPandoraLottoOverlay />
 
-      {boardId === 3 && state.creditsRollActive === true ? (
+      {(boardId === 3 || boardId === 4) && state.creditsRollActive === true ? (
         <AdeptsCreditsRollOverlay
           open
           startedAt={state.creditsRollStartedAt}
           isHost={isHost}
-          onHostClose={() => setBoard3CreditsRoll(false)}
+          onHostClose={() => setCreditsRoll(false)}
         />
       ) : null}
+
+      {superWinnerOverlay}
     </div>
   );
 }

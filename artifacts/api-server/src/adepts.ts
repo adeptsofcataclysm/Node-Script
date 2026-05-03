@@ -12,6 +12,10 @@ import {
   applyPickCell,
   applyPlayerDonation,
   applyHostMounts400DedDonationDoubleReward,
+  applySuperTttPick,
+  applySuperTttResetBoard,
+  applyBoard4LeaveReset,
+  applyCloseSuperGameCard,
   clearHideDonationsTableOnBoard3,
   cloneQuizRelay,
   getQuizRelayOrDefault,
@@ -207,6 +211,66 @@ export function setupAdepts(io: Server): void {
             logger.warn(
               { sessionId, socketId: socket.id, err: r.error, themeIndex: t, questionIndex: q, seat: seatForPick },
               "pickCell rejected",
+            );
+            return;
+          }
+          run();
+          return;
+        }
+        case "superTttPick": {
+          const seatResolved = resolvePickSeat(socket, cmd, host);
+          if (!host && seatResolved === null) {
+            logger.warn({ sessionId, socketId: socket.id }, "superTttPick rejected: no seat");
+            return;
+          }
+          const seatForPick = host ? (seatResolved ?? seat ?? 0) : seatResolved!;
+          const cellRaw = cmd["cellIndex"];
+          const cellIndex = typeof cellRaw === "number" ? cellRaw : Number(cellRaw);
+          const r = applySuperTttPick(sessionId, seatForPick, cellIndex, { hostBypass: host });
+          if (!r.ok) {
+            logger.warn(
+              { sessionId, socketId: socket.id, err: r.error, cellIndex, seat: seatForPick },
+              "superTttPick rejected",
+            );
+            return;
+          }
+          run();
+          return;
+        }
+        case "superTttResetBoard": {
+          if (!host) return;
+          const r = applySuperTttResetBoard(sessionId);
+          if (!r.ok) {
+            logger.warn({ sessionId, socketId: socket.id, err: r.error }, "superTttResetBoard rejected");
+            return;
+          }
+          run();
+          return;
+        }
+        case "board4LeaveReset": {
+          if (!host) return;
+          const r = applyBoard4LeaveReset(sessionId);
+          if (!r.ok) {
+            logger.warn({ sessionId, socketId: socket.id, err: r.error }, "board4LeaveReset rejected");
+            return;
+          }
+          run();
+          return;
+        }
+        case "closeSuperGameCard": {
+          const seatResolved = resolvePickSeat(socket, cmd, host);
+          if (!host && seatResolved === null) {
+            logger.warn({ sessionId, socketId: socket.id }, "closeSuperGameCard rejected: no seat");
+            return;
+          }
+          const seatForCmd = host ? (seatResolved ?? seat ?? 0) : seatResolved!;
+          const t = Number(cmd["themeIndex"]);
+          const q = Number(cmd["questionIndex"]);
+          const r = applyCloseSuperGameCard(sessionId, seatForCmd, t, q, { hostBypass: host });
+          if (!r.ok) {
+            logger.warn(
+              { sessionId, socketId: socket.id, err: r.error, themeIndex: t, questionIndex: q },
+              "closeSuperGameCard rejected",
             );
             return;
           }

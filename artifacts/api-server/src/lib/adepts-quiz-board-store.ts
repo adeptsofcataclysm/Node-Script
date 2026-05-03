@@ -13,8 +13,8 @@ import type {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Persisted quiz boards: round 1–3 match `AdeptsBoardId` in the game client. */
-export type AdeptsPersistedBoardId = 1 | 2 | 3;
+/** Persisted quiz boards: ids match `AdeptsBoardId` in the game client. */
+export type AdeptsPersistedBoardId = 1 | 2 | 3 | 4;
 
 const QUESTION_KEYS: (keyof AdeptsQuizQuestionPersisted)[] = [
   "text",
@@ -31,7 +31,7 @@ const QUESTION_KEYS: (keyof AdeptsQuizQuestionPersisted)[] = [
 
 export function parsePersistedBoardId(raw: unknown): AdeptsPersistedBoardId | null {
   const n = typeof raw === "string" ? Number(raw) : typeof raw === "number" ? raw : NaN;
-  if (n === 1 || n === 2 || n === 3) return n;
+  if (n === 1 || n === 2 || n === 3 || n === 4) return n;
   return null;
 }
 
@@ -51,7 +51,7 @@ export function persistedDataFilePath(boardId: AdeptsPersistedBoardId): string {
   return path.resolve(process.cwd(), "data", `adepts-quiz-board-${boardId}.json`);
 }
 
-function parseBoardJson(raw: string): AdeptsQuizBoardPersisted {
+function parseBoardJson(raw: string, boardId: AdeptsPersistedBoardId): AdeptsQuizBoardPersisted {
   const data = JSON.parse(raw) as unknown;
   if (!data || typeof data !== "object") throw new Error("Invalid board JSON");
   const o = data as Record<string, unknown>;
@@ -64,11 +64,18 @@ function parseBoardJson(raw: string): AdeptsQuizBoardPersisted {
     return row.map((cell) => normalizeQuestion(cell));
   });
   if (themes.length === 0) throw new Error("At least one theme required");
-  for (const row of questions) {
-    if (row.length !== 5) throw new Error("Each theme must have exactly 5 questions");
-  }
-  if (questions.length !== themes.length) {
-    throw new Error("themes and questions row counts must match");
+  if (boardId === 4) {
+    if (themes.length !== 1) throw new Error("Board 4 must have exactly 1 theme row");
+    const row = questions[0];
+    if (!row || row.length !== 4) throw new Error("Board 4 must have exactly 4 question cells");
+    if (questions.length !== 1) throw new Error("themes and questions row counts must match");
+  } else {
+    for (const row of questions) {
+      if (row.length !== 5) throw new Error("Each theme must have exactly 5 questions");
+    }
+    if (questions.length !== themes.length) {
+      throw new Error("themes and questions row counts must match");
+    }
   }
   return { themes, questions };
 }
@@ -144,7 +151,7 @@ function ensurePersistedFileFromSeed(boardId: AdeptsPersistedBoardId): void {
   const dir = path.dirname(target);
   mkdirSync(dir, { recursive: true });
   const seed = readFileSync(seedFilePath(boardId), "utf8");
-  parseBoardJson(seed);
+  parseBoardJson(seed, boardId);
   writeFileSync(target, seed, "utf8");
 }
 
@@ -163,7 +170,7 @@ export function readAdeptsQuizBoard(boardId: AdeptsPersistedBoardId): AdeptsQuiz
   ensurePersistedFileFromSeed(boardId);
   const target = persistedDataFilePath(boardId);
   const raw = readFileSync(target, "utf8");
-  return parseBoardJson(raw);
+  return parseBoardJson(raw, boardId);
 }
 
 export function writeAdeptsQuizBoard(
@@ -212,7 +219,8 @@ export function patchQuestionCell(
     ) {
       throw new Error("Invalid theme index");
     }
-    if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= 5) {
+    const rowLen = board.questions[themeIndex]!.length;
+    if (!Number.isInteger(questionIndex) || questionIndex < 0 || questionIndex >= rowLen) {
       throw new Error("Invalid question index");
     }
     const row = [...board.questions[themeIndex]!];

@@ -26,14 +26,15 @@ function boardIdFromReq(
   const raw = req.params["boardId"];
   const id = parsePersistedBoardId(raw);
   if (!id) {
-    res.status(400).json({ ok: false, error: "boardId must be 1, 2, or 3" });
+    res.status(400).json({ ok: false, error: "boardId must be 1, 2, 3, or 4" });
     return null;
   }
   return id;
 }
 
 function parsePutBody(
-  body: unknown
+  body: unknown,
+  boardId: AdeptsPersistedBoardId
 ): { ok: true; board: AdeptsQuizBoardPersisted } | { ok: false; error: string } {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "JSON body required" };
@@ -83,13 +84,26 @@ function parsePutBody(
     if (themes.length === 0) {
       return { ok: false, error: "At least one theme required" };
     }
-    for (const row of questions) {
-      if (row.length !== 5) {
-        return { ok: false, error: "Each theme must have exactly 5 questions" };
+    if (boardId === 4) {
+      if (themes.length !== 1) {
+        return { ok: false, error: "Board 4 must have exactly 1 theme" };
       }
-    }
-    if (questions.length !== themes.length) {
-      return { ok: false, error: "themes length must match questions rows" };
+      const r0 = questions[0];
+      if (!Array.isArray(r0) || r0.length !== 4) {
+        return { ok: false, error: "Board 4 must have exactly 4 questions in the single row" };
+      }
+      if (questions.length !== 1) {
+        return { ok: false, error: "Board 4 must have exactly one questions row" };
+      }
+    } else {
+      for (const row of questions) {
+        if (row.length !== 5) {
+          return { ok: false, error: "Each theme must have exactly 5 questions" };
+        }
+      }
+      if (questions.length !== themes.length) {
+        return { ok: false, error: "themes length must match questions rows" };
+      }
     }
     const board: AdeptsQuizBoardPersisted = {
       themes,
@@ -138,7 +152,7 @@ export function attachAdeptsQuizBoardRoutes(app: Express): void {
     } else {
       id = 1;
     }
-    const parsed = parsePutBody(req.body);
+    const parsed = parsePutBody(req.body, id);
     if (!parsed.ok) {
       res.status(400).json({ ok: false, error: parsed.error });
       return;

@@ -22,9 +22,24 @@ export type AdeptsDonationLogEntry = {
   seatIndex?: number;
 };
 
+export type AdeptsSuperTttMark = "X" | "O";
+
+/** Крестики-нолики 5×5: победа — линия из 4 символов (после 4 карточек на доске 4). */
+export type AdeptsSuperTttState = {
+  cells: (AdeptsSuperTttMark | null)[];
+  nextIsX: boolean;
+  seatX: number;
+  seatO: number;
+};
+
+export type AdeptsSuperTttWinner = {
+  nick: string;
+  atMs: number;
+};
+
 export type AdeptsQuizRelayPayload = {
   boardRoom: string;
-  /** Board id (1 | 2 | 3). Used to detect cross-board relay contamination. */
+  /** Board id (1–4). Used to detect cross-board relay contamination. */
   boardId?: number;
   players: AdeptsRelayPlayer[];
   activeQuizCard: AdeptsRelayActiveCard | null;
@@ -39,9 +54,15 @@ export type AdeptsQuizRelayPayload = {
   donationLog?: AdeptsDonationLogEntry[];
   /** После бонуса ×2 с «деда» на 400 — скрыть таблицу на квиз-доске 3; сброс при входе на похороны. */
   hideDonationsTableOnBoard3?: boolean;
-  /** Титры (квиз-доска 3); обновляется только если поле присутствует в relay от доски 3. */
+  /** Титры (квиз-доски 3 и 4); в relay от досок 1/2 не приходят — сервер сбрасывает. */
   creditsRollActive?: boolean;
   creditsRollStartedAt?: number;
+  /** Доска «СУПЕР ИГРА!» (id 4): поле 5 клеток после открытия всех карточек. */
+  superTtt?: AdeptsSuperTttState | null;
+  /** Победитель крестиков-ноликов (оверлей ~5 с). */
+  superTttWinner?: AdeptsSuperTttWinner | null;
+  /** Доска 4: место игрока, открывшего верхнюю правую карточку (тема 0, вопрос 1 в сетке 2×2) — ○ против лидера (✕). */
+  superBoardFourKeyOpenerSeat?: number | null;
 };
 
 const THEME_COUNT = 8;

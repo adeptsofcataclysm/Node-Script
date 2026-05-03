@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { AdeptsBoardId, Player, Question } from "@/lib/adepts-quiz-types";
+import type {
+  AdeptsBoardId,
+  AdeptsSuperTttState,
+  AdeptsSuperTttWinner,
+  Player,
+  Question,
+} from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import {
   ADEPTS_QUIZ_ASSIGNMENTS_EVENT,
@@ -51,9 +57,14 @@ export type GameState = {
   donationLog: DonationLogEntry[];
   /** После ×2 с деда на 400 — скрыть таблицу на 3-й доске; сброс при входе на похороны (сервер). */
   hideDonationsTableOnBoard3?: boolean;
-  /** Титры после игры (только квиз-доска 3). */
+  /** Титры после игры (квиз-доски 3 и 4). */
   creditsRollActive?: boolean;
   creditsRollStartedAt?: number;
+  /** Доска 4: крестики-нолики после 4 карточек. */
+  superTtt?: AdeptsSuperTttState | null;
+  superTttWinner?: AdeptsSuperTttWinner | null;
+  /** Доска 4: место игрока, открывшего верхнюю правую карточку (вопрос 1) — ○. */
+  superBoardFourKeyOpenerSeat?: number | null;
 };
 
 const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
@@ -62,7 +73,21 @@ const DEFAULT_PLAYERS: Player[] = Array.from({ length: 5 }, (_, i) => ({
   score: 0,
 }));
 
-function emptyGrid(): Pick<GameState, "themes" | "questions"> {
+function emptyGrid(boardId: AdeptsBoardId): Pick<GameState, "themes" | "questions"> {
+  if (boardId === 4) {
+    return {
+      themes: [""],
+      questions: [
+        Array.from({ length: 4 }, () => ({
+          text: "",
+          questionUrl: "",
+          answerText: "",
+          answerUrl: "",
+          used: false,
+        })),
+      ],
+    };
+  }
   const themeCount = 8;
   return {
     themes: Array.from({ length: themeCount }, () => ""),
@@ -91,6 +116,9 @@ const DEFAULT_CORE: Omit<GameState, "themes" | "questions"> = {
   hideDonationsTableOnBoard3: false,
   creditsRollActive: false,
   creditsRollStartedAt: undefined,
+  superTtt: null,
+  superTttWinner: null,
+  superBoardFourKeyOpenerSeat: undefined,
 };
 
 const PLAYERS_KEY = "adepts-shared-players";
@@ -129,14 +157,23 @@ function boardRuntime(boardId: AdeptsBoardId): BoardRuntime {
         dataVersion: 17,
         dataVersionKey: "adepts-game-3-data-version",
       };
+    case 4:
+      return {
+        storageKey: "adepts-game-4-state",
+        dataVersion: 1,
+        dataVersionKey: "adepts-game-4-data-version",
+      };
   }
 }
 
 function mergeBoardWithUsed(board: AdeptsQuizBoardPayload, prevQuestions: Question[][]): Question[][] {
+  const dimsMatch =
+    prevQuestions.length === board.questions.length &&
+    board.questions.every((row, tIdx) => row.length === (prevQuestions[tIdx]?.length ?? -1));
   return board.questions.map((row, tIdx) =>
     row.map((q, qIdx) => ({
       ...q,
-      used: prevQuestions[tIdx]?.[qIdx]?.used ?? false,
+      used: dimsMatch ? (prevQuestions[tIdx]?.[qIdx]?.used ?? false) : false,
     }))
   );
 }
@@ -333,6 +370,7 @@ function restoreRaccoonCards(state: GameState): GameState {
 }
 
 function migrateCatalog(boardId: AdeptsBoardId, state: GameState): GameState {
+  if (boardId === 4) return { ...state };
   if (boardId === 1) return restoreLegacyWheelCards(state);
   if (boardId === 2) return restoreLegacyPandoraVideos(state);
   return restoreRaccoonCards(state);
@@ -352,7 +390,7 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
         localStorage.removeItem(rt.storageKey);
         return migrateCatalog(boardId, {
           ...DEFAULT_CORE,
-          ...emptyGrid(),
+          ...emptyGrid(boardId),
           players: rosterPlayers,
           donationLog: loadSharedDonationLog(),
         });
@@ -365,7 +403,7 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
       if (boardId === 1 && parsed.dataVersion !== rt.dataVersion) {
         return migrateCatalog(boardId, {
           ...DEFAULT_CORE,
-          ...emptyGrid(),
+          ...emptyGrid(boardId),
           players: rosterPlayers,
           dataVersion: rt.dataVersion,
           donationLog: loadSharedDonationLog(),
@@ -392,6 +430,11 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
         /** Титры не восстанавливаем из localStorage — только по кнопке «Титры». */
         creditsRollActive: false,
         creditsRollStartedAt: undefined,
+        /** Доска 4: фаза крестиков-ноликов только по relay, иначе при заходе на /4/ сначала показывались нолики из LS. */
+        superTtt: boardId === 4 ? null : (parsed as GameState).superTtt ?? null,
+        superTttWinner: boardId === 4 ? null : (parsed as GameState).superTttWinner ?? null,
+        /** Не `null`: иначе первый hostQuizRelay после загрузки затирал бы серверный seat открывшего ключевую клетку. */
+        superBoardFourKeyOpenerSeat: undefined,
       });
     }
   } catch (err) {
@@ -400,7 +443,7 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
   if (boardId === 1) {
     return migrateCatalog(boardId, {
       ...DEFAULT_CORE,
-      ...emptyGrid(),
+      ...emptyGrid(boardId),
       players: rosterPlayers,
       dataVersion: rt.dataVersion,
       donationLog: loadSharedDonationLog(),
@@ -408,7 +451,7 @@ function loadInitialState(boardId: AdeptsBoardId): GameState {
   }
   return migrateCatalog(boardId, {
     ...DEFAULT_CORE,
-    ...emptyGrid(),
+    ...emptyGrid(boardId),
     players: rosterPlayers,
     donationLog: loadSharedDonationLog(),
   });
@@ -424,6 +467,7 @@ const TRACK_KEYS: Record<AdeptsBoardId, string> = {
   1: "adepts-game",
   2: "adepts-game-2",
   3: "adepts-game-3",
+  4: "adepts-game-4",
 };
 
 export function useGameState(boardId: AdeptsBoardId) {
@@ -503,6 +547,9 @@ export function useGameState(boardId: AdeptsBoardId) {
             quizBoardHoverCell: null,
             questionUsedGrid: undefined,
             catalogIncluded: false,
+            superTtt: null,
+            superTttWinner: null,
+            superBoardFourKeyOpenerSeat: null,
           }
         : rec;
 
@@ -549,12 +596,51 @@ export function useGameState(boardId: AdeptsBoardId) {
         const nextHideDonationsTableOnBoard3 =
           typeof rawHide === "boolean" ? rawHide : (prev.hideDonationsTableOnBoard3 ?? false);
 
+        const rawSuperT = recToUse["superTtt"];
+        const rawSuperW = recToUse["superTttWinner"];
+        const nextSuperTtt: GameState["superTtt"] =
+          boardId !== 4
+            ? null
+            : boardMismatch
+              ? null
+              : rawSuperT !== undefined
+                ? (rawSuperT as GameState["superTtt"])
+                : prev.superTtt ?? null;
+        const nextSuperWinner: GameState["superTttWinner"] =
+          boardId !== 4
+            ? null
+            : boardMismatch
+              ? null
+              : rawSuperW !== undefined
+                ? (rawSuperW as GameState["superTttWinner"])
+                : prev.superTttWinner ?? null;
+
+        const rawKeyOp = recToUse["superBoardFourKeyOpenerSeat"];
+        let nextKeyOpener: GameState["superBoardFourKeyOpenerSeat"];
+        if (boardId !== 4) {
+          nextKeyOpener = undefined;
+        } else if (boardMismatch) {
+          nextKeyOpener = null;
+        } else if (rawKeyOp !== undefined) {
+          if (rawKeyOp === null) {
+            nextKeyOpener = null;
+          } else if (typeof rawKeyOp === "number" && Number.isInteger(rawKeyOp)) {
+            const n = Math.floor(rawKeyOp);
+            nextKeyOpener = n >= 0 && n <= 4 ? ((n % 5) + 5) % 5 : prev.superBoardFourKeyOpenerSeat;
+          } else {
+            nextKeyOpener = prev.superBoardFourKeyOpenerSeat;
+          }
+        } else {
+          nextKeyOpener = prev.superBoardFourKeyOpenerSeat;
+        }
+
+        const creditsBoard = boardId === 3 || boardId === 4;
         const nextCredits =
-          boardId !== 3
+          !creditsBoard
             ? { creditsRollActive: false, creditsRollStartedAt: undefined as number | undefined }
             : boardMismatch
               ? {
-                  /** Relay с другой доски (1/2): титры не переносим; сервер уже сбросил credits. */
+                  /** Relay с другой доски: титры не переносим; сервер уже сбросил credits. */
                   creditsRollActive: false,
                   creditsRollStartedAt: undefined,
                 }
@@ -591,13 +677,28 @@ export function useGameState(boardId: AdeptsBoardId) {
             hideDonationsTableOnBoard3: nextHideDonationsTableOnBoard3,
             creditsRollActive: nextCredits.creditsRollActive,
             creditsRollStartedAt: nextCredits.creditsRollStartedAt,
+            superTtt: nextSuperTtt,
+            superTttWinner: nextSuperWinner,
+            superBoardFourKeyOpenerSeat: nextKeyOpener,
           })
         );
 
         const closeAfterWheel = consumeAdeptsWheelReturnCloseQuizCardFlag();
-        const stateToApply = closeAfterWheel
+        let stateToApply = closeAfterWheel
           ? { ...nextState, activeQuizCard: null, quizBoardHoverCell: null }
           : nextState;
+
+        if (boardId === 4) {
+          const row0 = stateToApply.questions[0];
+          const fourPrizeCardsDone =
+            Array.isArray(row0) &&
+            row0.length >= 4 &&
+            row0.slice(0, 4).every((q) => q.used === true);
+          if (!fourPrizeCardsDone && stateToApply.superTtt) {
+            stateToApply = { ...stateToApply, superTtt: null, superTttWinner: null };
+          }
+        }
+
         const rebroadcast = closeAfterWheel || hadRoster;
         skipEmitRef.current = true;
         if (rebroadcast) {
@@ -641,9 +742,45 @@ export function useGameState(boardId: AdeptsBoardId) {
     };
   }, [boardId, adeptsSocketKey]);
 
+  /**
+   * Ведущий перешёл с доски 4 на другую (не cleanup размонтирования — иначе Strict Mode сбрасывал игру при входе на /4/).
+   * Чистим LS доски 4 и шлём board4LeaveReset, чтобы следующий заход снова с карточек.
+   */
+  useEffect(() => {
+    const LAST_QUIZ_BOARD_KEY = "adepts-last-open-quiz-board";
+    try {
+      const prev = sessionStorage.getItem(LAST_QUIZ_BOARD_KEY);
+      sessionStorage.setItem(LAST_QUIZ_BOARD_KEY, String(boardId));
+      if (prev !== "4" || boardId === 4) return;
+      if (!isHostRole()) return;
+      const storageKey = boardRuntime(4).storageKey;
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as GameState;
+        const next: GameState = {
+          ...parsed,
+          superTtt: null,
+          superTttWinner: null,
+          superBoardFourKeyOpenerSeat: null,
+          activeQuizCard: null,
+          quizBoardHoverCell: null,
+        };
+        if (Array.isArray(next.questions?.[0])) {
+          next.questions = next.questions.map((row, ti) =>
+            ti === 0 ? row.map((q, qi) => (qi < 4 ? { ...q, used: false } : q)) : row,
+          );
+        }
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      }
+      getAdeptsCommandSocket().emit("command", { type: "board4LeaveReset" });
+    } catch (err) {
+      console.error("board4 leave after navigation", err);
+    }
+  }, [boardId]);
+
   useEffect(() => {
     const persisted: GameState =
-      boardId === 3
+      boardId === 3 || boardId === 4
         ? { ...state, creditsRollActive: false, creditsRollStartedAt: undefined }
         : state;
     localStorage.setItem(rt.storageKey, JSON.stringify(persisted));
@@ -673,7 +810,7 @@ export function useGameState(boardId: AdeptsBoardId) {
         try {
           skipEmitRef.current = true;
           const parsed = JSON.parse(e.newValue) as GameState;
-          if (boardId === 3) {
+          if (boardId === 3 || boardId === 4) {
             parsed.creditsRollActive = false;
             parsed.creditsRollStartedAt = undefined;
           }
@@ -864,6 +1001,9 @@ export function useGameState(boardId: AdeptsBoardId) {
         dataVersion: rt.dataVersion,
         boardRoom: getAdeptsSessionId(),
         donationLog: Array.isArray(prev.donationLog) ? [...prev.donationLog] : [...DEFAULT_DONATION_LOG],
+        superTtt: null,
+        superTttWinner: null,
+        superBoardFourKeyOpenerSeat: null,
       })
     );
   }, [boardId, rt.dataVersion]);
@@ -873,9 +1013,9 @@ export function useGameState(boardId: AdeptsBoardId) {
     getAdeptsCommandSocket().emit("command", { type: "playerDonation", amount });
   }, []);
 
-  const setBoard3CreditsRoll = useCallback(
+  const setCreditsRoll = useCallback(
     (active: boolean) => {
-      if (boardId !== 3 || !isHostRole()) return;
+      if ((boardId !== 3 && boardId !== 4) || !isHostRole()) return;
       setState((prev) => ({
         ...prev,
         creditsRollActive: active,
@@ -884,6 +1024,30 @@ export function useGameState(boardId: AdeptsBoardId) {
     },
     [boardId],
   );
+
+  const emitSuperTttPick = useCallback((cellIndex: number) => {
+    skipEmitRef.current = true;
+    getAdeptsCommandSocket().emit("command", {
+      type: "superTttPick",
+      cellIndex,
+      seat: readAdeptsPlayerSeatIndexForSocket(),
+    });
+  }, []);
+
+  const emitSuperTttResetBoard = useCallback(() => {
+    skipEmitRef.current = true;
+    getAdeptsCommandSocket().emit("command", { type: "superTttResetBoard" });
+  }, []);
+
+  const emitCloseSuperGameCard = useCallback((themeIndex: number, questionIndex: number) => {
+    skipEmitRef.current = true;
+    getAdeptsCommandSocket().emit("command", {
+      type: "closeSuperGameCard",
+      themeIndex,
+      questionIndex,
+      seat: readAdeptsPlayerSeatIndexForSocket(),
+    });
+  }, []);
 
   const emitPickCell = useCallback(
     (themeIndex: number, questionIndex: number, opts?: { turnSeat?: number }) => {
@@ -923,7 +1087,10 @@ export function useGameState(boardId: AdeptsBoardId) {
     setQuizBoardHoverCell,
     resetGame,
     emitPickCell,
+    emitSuperTttPick,
+    emitSuperTttResetBoard,
+    emitCloseSuperGameCard,
     submitPlayerDonation,
-    setBoard3CreditsRoll,
+    setCreditsRoll,
   };
 }

@@ -918,6 +918,8 @@ export function QuestionModal({
       ? splashPassHoverSeatProp
       : null;
 
+  const isSuperBoard4 = board === 4;
+
   let isCelebration = false;
   let isPandora = false;
   if (board === 1) {
@@ -926,12 +928,12 @@ export function QuestionModal({
   } else if (board === 2) {
     isPandora = themeName === "Треш" && points === 500;
     isCelebration = (themeName === "Цитаты и Фразы" && points === 500) || (themeName === "Тактики" && points === 200);
-  } else {
+  } else if (board === 3) {
     isPandora = themeName === "Пасхалки" && points === 200;
     isCelebration = (themeName === "Зацени Look" && points === 500) || (themeName === "Боссы" && points === 200);
   }
 
-  const hideQuestionTimer = themeName === "Дед прими таблетки";
+  const hideQuestionTimer = themeName === "Дед прими таблетки" || isSuperBoard4;
 
   const isWowEventsLargeQuestionMedia =
     board === 3 && themeName === "События в WoW" && [100, 200, 400, 500].includes(points);
@@ -1152,7 +1154,7 @@ export function QuestionModal({
                         {themeName}
                       </div>
                       <div className="font-display text-3xl lg:text-5xl text-primary glow-text leading-none">
-                        {points}
+                        {isSuperBoard4 ? "★" : points}
                       </div>
                     </div>
                     {question.headerUrl && (
@@ -1485,7 +1487,7 @@ export function QuestionModal({
                       )}
 
                       {/* Award points — hidden for celebration and for зрителя */}
-                      {!isCelebration && !readonly && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
+                      {!isCelebration && !readonly && !isSuperBoard4 && <div className="px-5 lg:px-8 pb-3 lg:pb-6 pt-2 lg:pt-3 space-y-2 border-t border-border/40 mt-1">
                         <div className="mb-2 flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-primary" />
@@ -1699,7 +1701,7 @@ export function QuestionModal({
                     </Button>
                   ) : (
                     <>
-                      {stage === "answer" && (
+                      {stage === "answer" && !isSuperBoard4 && (
                         <>
                           <Button
                             variant="outline"
@@ -1728,7 +1730,11 @@ export function QuestionModal({
                         onClick={handleSkip}
                         className="font-bold tracking-wide text-base"
                       >
-                        {isPandora || isCelebration ? "Закрыть" : "Никто не ответил — закрыть"}
+                        {isSuperBoard4
+                          ? "Закрыть карточку"
+                          : isPandora || isCelebration
+                            ? "Закрыть"
+                            : "Никто не ответил — закрыть"}
                       </Button>
                     </>
                   ))}

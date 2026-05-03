@@ -86,6 +86,7 @@ function App() {
                       <Route path="/2">{() => <AdeptsQuizHome key={2} boardId={2} />}</Route>
                       <Route path={/^(?:\/)?funeral(?:\/.*)?$/}>{() => <FuneralRoundPage />}</Route>
                       <Route path="/3">{() => <AdeptsQuizHome key={3} boardId={3} />}</Route>
+                      <Route path="/4">{() => <AdeptsQuizHome key={4} boardId={4} />}</Route>
                       <Route path="/">{() => <AdeptsQuizHome key={1} boardId={1} />}</Route>
                       <Route component={AdeptsQuizNotFound} />
                     </Switch>

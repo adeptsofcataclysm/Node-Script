@@ -1,5 +1,20 @@
 /** Shared quiz shape for all adepts boards (game-client + modal). */
-export type AdeptsBoardId = 1 | 2 | 3;
+export type AdeptsBoardId = 1 | 2 | 3 | 4;
+
+export type AdeptsSuperTttMark = "X" | "O";
+
+/** 25 ячеек (5×5), индекс row*5+col; победа — 4 в ряд. */
+export type AdeptsSuperTttState = {
+  cells: (AdeptsSuperTttMark | null)[];
+  nextIsX: boolean;
+  seatX: number;
+  seatO: number;
+};
+
+export type AdeptsSuperTttWinner = {
+  nick: string;
+  atMs: number;
+};
 
 export type Player = {
   id: string;

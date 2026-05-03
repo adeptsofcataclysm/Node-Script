@@ -17,6 +17,7 @@ const PHASES: Phase[] = [
   { href: QUIZ_BOARD_PHASE_HREFS[1], label: "Квиз-доска 2" },
   { href: QUIZ_BOARD_PHASE_HREFS[2], label: "Похороны" },
   { href: QUIZ_BOARD_PHASE_HREFS[3], label: "Квиз-доска 3" },
+  { href: QUIZ_BOARD_PHASE_HREFS[4], label: "СУПЕР ИГРА!" },
 ];
 
 /** Routes that render their own inline phase nav inside a header. */

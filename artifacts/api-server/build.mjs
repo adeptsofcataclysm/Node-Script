@@ -119,7 +119,7 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     },
   });
 
-  for (const id of [1, 2, 3]) {
+  for (const id of [1, 2, 3, 4]) {
     await cp(
       path.resolve(artifactDir, `src/lib/default-adepts-quiz-board-${id}.json`),
       path.resolve(distDir, `default-adepts-quiz-board-${id}.json`),

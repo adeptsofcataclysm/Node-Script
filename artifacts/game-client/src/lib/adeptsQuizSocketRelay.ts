@@ -1,4 +1,9 @@
-import type { Player, Question } from "@/lib/adepts-quiz-types";
+import type {
+  AdeptsSuperTttState,
+  AdeptsSuperTttWinner,
+  Player,
+  Question,
+} from "@/lib/adepts-quiz-types";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import type { AdeptsQuizBoardPayload } from "@/lib/adeptsQuizBoardApi";
 import type { DonationLogEntry } from "@/lib/donationLog";
@@ -19,7 +24,7 @@ export type AdeptsQuizRelayActiveCard = {
 export type AdeptsQuizRelayPayload = {
   boardRoom: string;
   /**
-   * Board id (1 | 2 | 3). Included so receivers can reject a `catalogIncluded` relay that
+   * Board id (1–4). Included so receivers can reject a `catalogIncluded` relay that
    * belongs to a different board when all boards share the same socket room.
    */
   boardId?: number;
@@ -38,9 +43,14 @@ export type AdeptsQuizRelayPayload = {
   donationLog?: DonationLogEntry[];
   /** Скрыть таблицу пожертвований на 3-й доске (после ×2 с деда); сброс на странице похорон. */
   hideDonationsTableOnBoard3?: boolean;
-  /** Титры после игры (только квиз-доска 3); в relay добавляется только при `boardId === 3`. */
+  /** Титры после игры (квиз-доски 3 и 4); в relay добавляется при `boardId === 3` или `4`. */
   creditsRollActive?: boolean;
   creditsRollStartedAt?: number;
+  /** Квиз-доска 4 «СУПЕР ИГРА!». */
+  superTtt?: AdeptsSuperTttState | null;
+  superTttWinner?: AdeptsSuperTttWinner | null;
+  /** Доска 4: место того, кто открыл верхнюю правую карточку (вопрос 1) — ○ в крестиках-ноликах. */
+  superBoardFourKeyOpenerSeat?: number | null;
 };
 
 export function buildAdeptsQuizRelayPayload(
@@ -56,6 +66,9 @@ export function buildAdeptsQuizRelayPayload(
     hideDonationsTableOnBoard3?: boolean;
     creditsRollActive?: boolean;
     creditsRollStartedAt?: number;
+    superTtt?: AdeptsSuperTttState | null;
+    superTttWinner?: AdeptsSuperTttWinner | null;
+    superBoardFourKeyOpenerSeat?: number | null;
   },
   boardRoom: string,
   includeCatalog: boolean,
@@ -79,10 +92,20 @@ export function buildAdeptsQuizRelayPayload(
     out.catalogIncluded = true;
     out.questions = slice.questions;
   }
-  if (boardId === 3) {
+  if (boardId === 3 || boardId === 4) {
     out.creditsRollActive = slice.creditsRollActive === true;
     if (slice.creditsRollActive === true && slice.creditsRollStartedAt !== undefined) {
       out.creditsRollStartedAt = slice.creditsRollStartedAt;
+    }
+  }
+  if (boardId === 4) {
+    out.superTtt = slice.superTtt ?? null;
+    out.superTttWinner = slice.superTttWinner ?? null;
+    const keySeat = slice.superBoardFourKeyOpenerSeat;
+    if (typeof keySeat === "number" && Number.isInteger(keySeat)) {
+      out.superBoardFourKeyOpenerSeat = ((keySeat % 5) + 5) % 5;
+    } else if (keySeat === null) {
+      out.superBoardFourKeyOpenerSeat = null;
     }
   }
   return out;

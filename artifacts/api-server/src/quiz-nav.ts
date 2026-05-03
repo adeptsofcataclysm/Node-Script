@@ -35,7 +35,8 @@ function canMutateLobbyEmoji(socket: Socket): boolean {
   return isQuizNavLobbyHost(socket);
 }
 
-const MAX_BOARD = 3;
+/** Индексы фаз `QUIZ_BOARD_PHASE_HREFS` (0..4). */
+const MAX_BOARD = 4;
 
 /** Должно совпадать с числом строк в `game-client` `lobbyEmojiRevealLines.ts`. */
 const LOBBY_EMOJI_REVEAL_MAX = 40;

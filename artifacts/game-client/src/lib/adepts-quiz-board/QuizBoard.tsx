@@ -4,6 +4,13 @@ import { getQuizThemeIconUrl } from "@/lib/quizThemeIcons";
 import { isAdeptsWheelFaceDownCell } from "@/lib/isAdeptsWheelFaceDownCell";
 import type { QuizBoardHoverCell } from "@/lib/quizBoardHover";
 import type { AdeptsBoardId, Question } from "@/lib/adepts-quiz-types";
+import { Button } from "@/components/ui/button";
+
+function resolveQuizAssetUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith("http") || url.startsWith("//")) return url;
+  return import.meta.env.BASE_URL + url.replace(/^\//, "");
+}
 
 const THEME_DISPLAY_BOARD2: Record<string, string> = {
   "великие подвиги": "Великие\nподвиги",
@@ -54,6 +61,11 @@ interface QuizBoardProps {
   onBoardHoverCellChange?: (cell: QuizBoardHoverCell) => void;
   /** When true, theme titles cannot be edited (e.g. only the host may rename themes). */
   themeEditReadonly?: boolean;
+  /** Доска 4: карточка открыта через pickCell — показ на столе с кнопкой «Закрыть». */
+  superGameActiveCard?: { themeIndex: number; questionIndex: number } | null;
+  superGameOpenQuestion?: Question | null;
+  canCloseSuperGameCard?: boolean;
+  onCloseSuperGameCard?: () => void;
 }
 
 export function QuizBoard({
@@ -68,6 +80,10 @@ export function QuizBoard({
   canSyncBoardHover = false,
   onBoardHoverCellChange,
   themeEditReadonly,
+  superGameActiveCard,
+  superGameOpenQuestion,
+  canCloseSuperGameCard = false,
+  onCloseSuperGameCard,
 }: QuizBoardProps) {
   const [editingTheme, setEditingTheme] = useState<number | null>(null);
   const [themeDraft, setThemeDraft] = useState("");
@@ -83,6 +99,167 @@ export function QuizBoard({
     () => normalizeBoardHover(hoverCell, themes.length, questions),
     [hoverCell, themes.length, questions]
   );
+
+  if (board === 4) {
+    const title = (themes[0] ?? "").trim() || "СУПЕР ИГРА!";
+    const row = questions[0] ?? [];
+    const superCardLabelSize = "clamp(0.62rem, 2.1vmin + 0.35vw, 1.05rem)";
+    return (
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-full flex-col items-center justify-center gap-3 px-2 py-2 sm:gap-4 sm:px-4 sm:py-4">
+        <motion.h2
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="shrink-0 text-center font-display text-[clamp(1.1rem,3.2vmin+0.5vw,1.85rem)] uppercase tracking-[0.2em] text-primary glow-text sm:tracking-[0.25em]"
+          style={{ fontFamily: "WarCraft, sans-serif", textShadow: "0 0 28px hsla(280,65%,55%,0.45)" }}
+        >
+          {title}
+        </motion.h2>
+        <div
+          className="mx-auto grid aspect-square w-full max-w-full shrink-0 grid-cols-2 grid-rows-2 gap-[clamp(0.35rem,1.4vmin,0.9rem)] sm:gap-3 md:gap-4"
+          style={{ width: "min(92vw, min(52dvh, 34rem))" }}
+        >
+          {row.map((q, qIdx) => {
+            const turnPlayerBlockedCell =
+              blockTurnPlayerFromPlayedOrFaceDownCells &&
+              (q.used || isAdeptsWheelFaceDownCell(q));
+            const isThisOpen =
+              superGameActiveCard != null &&
+              superGameActiveCard.themeIndex === 0 &&
+              superGameActiveCard.questionIndex === qIdx;
+            const cellReadonly = readonly || (turnPlayerBlockedCell && !isThisOpen);
+            const syncHovered =
+              hoverNorm != null && hoverNorm.themeIndex === 0 && hoverNorm.questionIndex === qIdx;
+            const canEmitHover =
+              canSyncBoardHover &&
+              !q.used &&
+              !turnPlayerBlockedCell &&
+              typeof onBoardHoverCellChange === "function";
+            const prizeImgSrc = (() => {
+              const raw = isThisOpen ? (superGameOpenQuestion?.questionUrl ?? q.questionUrl) : q.questionUrl;
+              const u = String(raw ?? "").trim();
+              return u ? resolveQuizAssetUrl(u) : resolveQuizAssetUrl("/lor-adeptov-icon.png");
+            })();
+
+            return (
+              <div
+                key={qIdx}
+                className="min-h-0 min-w-0 [perspective:min(1100px,95vmin)]"
+                data-quiz-point=""
+                onPointerEnter={() => {
+                  if (canEmitHover) onBoardHoverCellChange({ themeIndex: 0, questionIndex: qIdx });
+                }}
+                onPointerLeave={(e) => {
+                  if (!canEmitHover) return;
+                  const rel = e.relatedTarget as HTMLElement | null;
+                  if (rel?.closest?.("[data-quiz-point]")) return;
+                  onBoardHoverCellChange?.(null);
+                }}
+              >
+                {!q.used && !isThisOpen ? (
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: qIdx * 0.05, type: "spring", damping: 20, stiffness: 200 }}
+                    disabled={cellReadonly}
+                    onClick={() => !cellReadonly && onQuestionClick(0, qIdx)}
+                    className={`
+                      relative h-full min-h-0 w-full min-w-0 overflow-hidden rounded-2xl border-2 text-center font-display font-bold
+                      transition-[box-shadow,border-color] duration-150
+                      ${
+                        syncHovered
+                          ? "border-accent bg-secondary shadow-[0_0_22px_hsla(280,65%,50%,0.45)]"
+                          : "border-accent/40 bg-secondary/50"
+                      }
+                      ${cellReadonly ? "cursor-default opacity-60" : "cursor-pointer hover:border-accent"}
+                    `}
+                  >
+                    <span
+                      className="glow-text flex h-full w-full items-center justify-center px-[clamp(0.15rem,0.8vmin,0.45rem)] leading-tight"
+                      style={{ fontSize: superCardLabelSize }}
+                    >
+                      Открой меня!
+                    </span>
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: qIdx * 0.05, type: "spring", damping: 20, stiffness: 200 }}
+                    className="relative h-full min-h-0 w-full min-w-0"
+                  >
+                    <motion.div
+                      className="relative h-full w-full"
+                      initial={{ rotateY: q.used ? 180 : 0 }}
+                      animate={{ rotateY: q.used || isThisOpen ? 180 : 0 }}
+                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ transformStyle: "preserve-3d" }}
+                    >
+                      <div
+                        className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl border-2 border-accent/40 bg-secondary/50 [backface-visibility:hidden]"
+                        style={{ WebkitBackfaceVisibility: "hidden" }}
+                      >
+                        <span
+                          className="glow-text px-[clamp(0.15rem,0.8vmin,0.45rem)] text-center leading-tight"
+                          style={{ fontSize: superCardLabelSize }}
+                        >
+                          Открой меня!
+                        </span>
+                      </div>
+                      <div
+                        className="absolute inset-0 overflow-hidden rounded-2xl border-2 border-accent/45 bg-card [backface-visibility:hidden] [transform:rotateY(180deg)]"
+                        style={{ WebkitBackfaceVisibility: "hidden" }}
+                      >
+                        {q.used ? (
+                          <div className="relative h-full w-full overflow-hidden">
+                            <img
+                              src={prizeImgSrc}
+                              alt=""
+                              className="absolute inset-0 h-full w-full object-cover opacity-[0.35] grayscale"
+                              draggable={false}
+                            />
+                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-background/55 to-background/25 p-2">
+                              <div className="h-px w-[72%] rotate-[-18deg] bg-muted-foreground/45" />
+                              <div className="mt-3 h-px w-[72%] rotate-[18deg] bg-muted-foreground/35" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative h-full w-full overflow-hidden">
+                            <img
+                              src={prizeImgSrc}
+                              alt=""
+                              className="absolute inset-0 h-full w-full object-cover"
+                              draggable={false}
+                            />
+                            {canCloseSuperGameCard && typeof onCloseSuperGameCard === "function" ? (
+                              <div className="absolute bottom-1.5 right-1.5 z-10 sm:bottom-2 sm:right-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  className="font-display text-xs uppercase tracking-wider shadow-md"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCloseSuperGameCard();
+                                  }}
+                                >
+                                  Закрыть
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-full flex-col gap-2 px-2 py-2 sm:px-4 sm:py-4">
