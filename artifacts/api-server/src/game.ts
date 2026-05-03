@@ -234,6 +234,18 @@ export function setupGame(io: Server) {
         scores: gameState.scores,
       });
       socket.on("rematch", doRematch);
+
+      socket.on("hostPassTurn", () => {
+        if (socket.handshake.query.pandoraQuizHost !== "1") return;
+        const gs = getState(sessionId);
+        if (!gs.gameStarted || gs.gameOver) return;
+        if (gs.isSpinning) return;
+        const turnSlot = gs.slots[gs.turn];
+        if (turnSlot?.isOnline) return;
+        gs.turn = nextOnlineTurn(gs, gs.turn);
+        io.to(sessionId).emit("nextTurn", { turn: gs.turn });
+      });
+
       socket.on("disconnect", () => {
         logger.info({ socketId: socket.id, sessionId }, "Spectator disconnected");
       });
@@ -292,10 +304,15 @@ export function setupGame(io: Server) {
         return;
       }
 
+      const offlineNameMatch = (s: SlotInfo | null) =>
+        s !== null &&
+        !s.isOnline &&
+        String(s.name ?? "")
+          .trim()
+          .slice(0, 20) === safeName;
+
       if (assignedIndex === -1) {
-        const matchIdx = gs.slots.findIndex(
-          (s) => s !== null && !s.isOnline && s.name === safeName
-        );
+        const matchIdx = gs.slots.findIndex(offlineNameMatch);
         if (matchIdx === -1) {
           socket.emit("slotReserved");
           return;
@@ -326,11 +343,7 @@ export function setupGame(io: Server) {
       }
 
       const offlineMatchIdx = gs.slots.findIndex(
-        (s, i) =>
-          s !== null &&
-          !s.isOnline &&
-          s.name === safeName &&
-          i !== assignedIndex
+        (s, i) => offlineNameMatch(s) && i !== assignedIndex
       );
 
       if (offlineMatchIdx !== -1) {
@@ -425,9 +438,11 @@ export function setupGame(io: Server) {
       if (slot.name) {
         gs.slots[assignedIndex] = { ...slot, socketId: null, isOnline: false };
 
+        // After the first spin, do not auto-skip the turn when the active player disconnects —
+        // the quiz host uses `hostPassTurn` from the spectator view to advance manually.
         if (gs.turn === assignedIndex && !gs.gameOver) {
           const online = onlineIndices(gs);
-          if (online.length > 0) {
+          if (online.length > 0 && !gs.gameStarted) {
             gs.turn = nextOnlineTurn(gs, assignedIndex);
             io.to(sessionId).emit("nextTurn", { turn: gs.turn });
           }

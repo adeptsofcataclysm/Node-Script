@@ -29,9 +29,18 @@ export function useSpectatorSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
+    const pandoraQuizHost =
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("player_role")?.trim().toLowerCase() === "host"
+        ? "1"
+        : "0";
     const s = io({
       path: "/socket.io",
-      query: { spectator: "1", sessionId: getAdeptsSessionId() },
+      query: {
+        spectator: "1",
+        sessionId: getAdeptsSessionId(),
+        pandoraQuizHost,
+      },
       transports: ["websocket"],
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -146,6 +155,10 @@ export function useSpectatorSocket() {
     if (socketRef.current) socketRef.current.emit("rematch");
   }, []);
 
+  const hostPassTurn = useCallback(() => {
+    if (socketRef.current) socketRef.current.emit("hostPassTurn");
+  }, []);
+
   return {
     playerCount,
     playerNames,
@@ -165,5 +178,6 @@ export function useSpectatorSocket() {
     gameStarted,
     connected,
     rematch,
+    hostPassTurn,
   };
 }

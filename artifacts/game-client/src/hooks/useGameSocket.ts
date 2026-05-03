@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { getAdeptsSessionId } from "@/lib/adeptsSessionId";
 import {
@@ -39,6 +39,10 @@ export function useGameSocket() {
   const [gameStarted, setGameStarted] = useState(false);
 
   const [connected, setConnected] = useState(false);
+  const myNameRef = useRef("");
+  useEffect(() => {
+    myNameRef.current = myName;
+  }, [myName]);
 
   useEffect(() => {
     const s = io({
@@ -51,34 +55,48 @@ export function useGameSocket() {
     });
     setSocket(s);
 
-    function resolveAutoPandoraName(): string {
+    /** Same sources as first join: storage, quiz session, then last known in-memory name (reconnect). */
+    function resolveResumePandoraName(): string {
       let n =
         sessionStorage.getItem("pandora_player_name")?.trim().slice(0, 20) ?? "";
       if (!n && peekFromQuizPandoraSession()) {
         n = getQuizPandoraNameForCurrentSeat();
-        if (n) sessionStorage.setItem("pandora_player_name", n);
+        if (n) {
+          try {
+            sessionStorage.setItem("pandora_player_name", n);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      if (!n) {
+        n = myNameRef.current?.trim().slice(0, 20) ?? "";
       }
       return n;
     }
 
+    function emitResumePandoraName() {
+      const n = resolveResumePandoraName();
+      if (!n) return;
+      setMyName(n);
+      setGameInProgress(false);
+      queueMicrotask(() => {
+        s.emit("setName", n);
+      });
+    }
+
     s.on("connect", () => {
       setConnected(true);
-      const autoName = resolveAutoPandoraName();
-      if (autoName) {
-        setMyName(autoName);
-        queueMicrotask(() => {
-          s.emit("setName", autoName);
-        });
-      }
+      emitResumePandoraName();
     });
-    s.on("disconnect", () => setConnected(false));
+    s.on("disconnect", () => {
+      setConnected(false);
+      setMyIndex(null);
+    });
 
-    // On auto-reconnect: re-send name to reclaim offline slot
+    // Reclaim seeded/offline slot after transport reconnect (must match `connect` name sources).
     s.io.on("reconnect", () => {
-      const savedName = sessionStorage.getItem("pandora_player_name");
-      if (savedName) {
-        s.emit("setName", savedName);
-      }
+      emitResumePandoraName();
     });
 
     s.on("assignedIndex", (index: number) => setMyIndex(index));
@@ -186,15 +204,11 @@ export function useGameSocket() {
     s.on("gameInProgress", (data: { playerNames: Record<string, string>; onlineStatus: Record<string, boolean> }) => {
       setPlayerNames(data.playerNames);
       setOnlineStatus(data.onlineStatus);
-      let savedName =
-        sessionStorage.getItem("pandora_player_name")?.trim().slice(0, 20) ?? "";
-      if (!savedName && peekFromQuizPandoraSession()) {
-        savedName = getQuizPandoraNameForCurrentSeat();
-        if (savedName) sessionStorage.setItem("pandora_player_name", savedName);
-      }
+      const savedName = resolveResumePandoraName();
       if (savedName) {
         setMyName(savedName);
-        s.emit("setName", savedName);
+        setGameInProgress(false);
+        queueMicrotask(() => s.emit("setName", savedName));
       } else {
         setGameInProgress(true);
       }

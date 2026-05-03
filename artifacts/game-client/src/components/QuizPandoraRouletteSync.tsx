@@ -52,12 +52,19 @@ export function QuizPandoraRouletteSync() {
         }
         const po = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
         /**
-         * Ответ на `requestPandoraRouletteState` при устаревшем `pandoraRouletteActive` на сервере
-         * (уже вернулись на доску, но флаг не сброшен). Смена доски снова дергает guard → не уводить на рулетку.
+         * Реплей `requestPandoraRouletteState`: если флаг на сервере устарел после возврата с рулетки,
+         * не уводить ведущего/зрителя с квиз-доски повторно на `/spectate`.
+         * Игрок за столом (место 0–4) при активной рулетке после перезагрузки/реконнекта страницы
+         * как раз должен попасть на `/game` — для него этот ранний выход не применяем.
          */
         if (po["stateReplay"] === true) {
           try {
-            if (window.location.pathname.includes("/adepts-game")) return;
+            if (
+              window.location.pathname.includes("/adepts-game") &&
+              !clientJoinsPandoraRouletteAsPlayer()
+            ) {
+              return;
+            }
           } catch {
             /* ignore */
           }

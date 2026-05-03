@@ -10,6 +10,7 @@ import {
 } from "@/lib/quizPandoraRouletteClient";
 import { Cylinder } from "../components/Cylinder";
 import { PlayerCard, PLAYER_COLORS } from "../components/PlayerCard";
+import { PandoraButton } from "@/components/PandoraButton";
 import { playSound, preloadSounds, unlockSounds } from "../utils/sfx";
 
 const BG_URL = "url('/pandora-bg.png')";
@@ -43,7 +44,9 @@ export function SpectatorPage() {
     fateAnnounced,
     maxPlayers,
     allSlotsReady,
+    gameStarted,
     connected,
+    hostPassTurn,
   } = useSpectatorSocket();
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
@@ -51,6 +54,11 @@ export function SpectatorPage() {
   const mutedRef = useRef(false);
   const [muted, setMuted] = useState(false);
   const gameReady = allSlotsReady;
+  const currentTurnOffline =
+    gameReady &&
+    gameStarted &&
+    !gameOver &&
+    onlineStatus[String(turn)] === false;
 
   const toggleMute = () => {
     const next = !mutedRef.current;
@@ -361,13 +369,24 @@ export function SpectatorPage() {
           gameOver={gameOver}
         />
 
-        {/* No controls — spectator only */}
-        <p
-          className="text-xs font-mono uppercase tracking-[4px]"
-          style={{ color: "#555" }}
-        >
-          {gameReady && !gameOver ? "— только наблюдение —" : ""}
-        </p>
+        {isHost && currentTurnOffline && !isSpinning ? (
+          <div className="flex gap-5">
+            <PandoraButton
+              type="button"
+              onClick={hostPassTurn}
+              data-testid="button-host-pass-turn"
+            >
+              Передать ход
+            </PandoraButton>
+          </div>
+        ) : (
+          <p
+            className="text-xs font-mono uppercase tracking-[4px]"
+            style={{ color: "#555" }}
+          >
+            {gameReady && !gameOver ? "— только наблюдение —" : ""}
+          </p>
+        )}
 
       </div>
 
