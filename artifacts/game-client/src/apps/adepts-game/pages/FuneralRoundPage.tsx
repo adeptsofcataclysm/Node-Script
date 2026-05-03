@@ -190,19 +190,15 @@ export default function FuneralRoundPage() {
         </aside>
       </div>
 
-      <div className="relative z-[110] grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
-        <div className="min-w-0" aria-hidden="true" />
-        <div className="min-w-0">
-          <Scoreboard
-            players={state.players}
-            onUpdateName={updatePlayerName}
-            onUpdateScore={updatePlayerScore}
-            onResetScores={resetScores}
-            readonly={!isHost}
-            currentTurnSeat={state.currentTurnSeat}
-          />
-        </div>
-        <div className="min-w-0" aria-hidden="true" />
+      <div className="relative z-[110] w-full min-w-0 shrink-0">
+        <Scoreboard
+          players={state.players}
+          onUpdateName={updatePlayerName}
+          onUpdateScore={updatePlayerScore}
+          onResetScores={resetScores}
+          readonly={!isHost}
+          currentTurnSeat={state.currentTurnSeat}
+        />
       </div>
 
       <QuizBoardPandoraLottoOverlay />

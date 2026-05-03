@@ -153,9 +153,6 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
   const threeColGridClass = showDonationsTable
     ? "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]"
     : "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,0)]";
-  const scoreboardGridClass = showDonationsTable
-    ? "grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]"
-    : "grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,0)]";
 
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col text-foreground overflow-hidden">
@@ -229,23 +226,14 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         </aside>
       </div>
 
-      <div className={scoreboardGridClass}>
-        <div className="min-w-0" aria-hidden="true" />
-        <div className="min-w-0">
-          <Scoreboard
-            players={state.players}
-            onUpdateName={updatePlayerName}
-            onUpdateScore={updatePlayerScore}
-            onResetScores={resetScores}
-            readonly={!isHost}
-            currentTurnSeat={state.currentTurnSeat}
-          />
-        </div>
-        <div
-          className={
-            showDonationsTable ? "min-w-0" : "w-0 min-w-0 overflow-hidden p-0"
-          }
-          aria-hidden="true"
+      <div className="w-full min-w-0 shrink-0">
+        <Scoreboard
+          players={state.players}
+          onUpdateName={updatePlayerName}
+          onUpdateScore={updatePlayerScore}
+          onResetScores={resetScores}
+          readonly={!isHost}
+          currentTurnSeat={state.currentTurnSeat}
         />
       </div>
 

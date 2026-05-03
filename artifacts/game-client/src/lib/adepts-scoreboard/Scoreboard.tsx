@@ -260,7 +260,7 @@ export function Scoreboard({
       : undefined;
 
   return (
-    <div className="w-screen max-w-[100vw] shrink-0 border-t border-[hsla(275,55%,42%,0.35)] bg-gradient-to-t from-[hsla(278,42%,6%,1)] via-[hsla(274,42%,5%,0.97)] to-[hsla(270,42%,9%,0.92)] py-2 backdrop-blur-md md:py-2.5 ml-[calc(50%-50vw)]">
+    <div className="w-full min-w-0 shrink-0 border-t border-[hsla(275,55%,42%,0.35)] bg-gradient-to-t from-[hsla(278,42%,6%,1)] via-[hsla(274,42%,5%,0.97)] to-[hsla(270,42%,9%,0.92)] py-2 backdrop-blur-md md:py-2.5">
       {!readonly && (
         <div className="mx-auto mb-2 flex w-full max-w-[1080px] justify-end px-2">
           <div className="flex items-center gap-2">
