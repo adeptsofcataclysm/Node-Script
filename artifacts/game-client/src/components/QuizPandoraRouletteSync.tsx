@@ -52,17 +52,15 @@ export function QuizPandoraRouletteSync() {
         }
         const po = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
         /**
-         * Реплей `requestPandoraRouletteState`: если флаг на сервере устарел после возврата с рулетки,
-         * не уводить ведущего/зрителя с квиз-доски повторно на `/spectate`.
-         * Игрок за столом (место 0–4) при активной рулетке после перезагрузки/реконнекта страницы
-         * как раз должен попасть на `/game` — для него этот ранний выход не применяем.
+         * Реплей `requestPandoraRouletteState` с монтирования `AdeptsQuizBoardGuard` (в т.ч. после
+         * возврата с колеса): устаревший `pandoraRouletteActive` после прошлой рулетки не должен
+         * уводить никого с доски на `/game`/`/spectate`. Раньше исключали только игроков 0–4 —
+         * из‑за этого после «рулетка → раунд → колесо → доска» игроки снова попадали в рулетку.
+         * Запрос реплея шлётся только с маршрутов `/adepts-game/*`, а не со страницы `/game`.
          */
         if (po["stateReplay"] === true) {
           try {
-            if (
-              window.location.pathname.includes("/adepts-game") &&
-              !clientJoinsPandoraRouletteAsPlayer()
-            ) {
+            if (window.location.pathname.includes("/adepts-game")) {
               return;
             }
           } catch {

@@ -485,6 +485,17 @@ export function setupQuizNav(io: Server) {
       const href = targetNav.adeptsWheelReturnHref;
       targetNav.adeptsWheelActive = false;
       targetNav.adeptsWheelReturnHref = null;
+      /**
+       * After roulette, `pandoraRouletteActive` can remain true until host navigates or
+       * `hostPandoraRouletteReturn` runs. If it is still set when the table returns from the
+       * wheel, `requestPandoraRouletteState` replays `pandoraRouletteOpened` and seated players
+       * were wrongly sent back to `/game`. Clearing here keeps wheel return idempotent with the board.
+       */
+      if (targetNav.pandoraRouletteActive) {
+        targetNav.pandoraRouletteActive = false;
+        targetNav.pandoraRouletteReturnHref = null;
+        targetNav.pandoraRoulettePlayerNames = [];
+      }
       ns.to(targetSessionId).emit("adeptsWheelReturn", { returnHref: href });
       logger.info({ sessionId, targetSessionId, returnHref: href }, "Quiz adepts wheel return");
     });
