@@ -143,16 +143,13 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-black/50 p-4"
         aria-live="polite"
       >
-        <div
-          className="max-w-[min(96vw,520px)] rounded-2xl border-2 border-amber-400/60 bg-gradient-to-b from-amber-950/95 to-zinc-950/95 px-6 py-8 text-center shadow-[0_0_60px_hsla(43,96%,56%,0.35)]"
-          style={{ fontFamily: "WarCraft, sans-serif" }}
-        >
-          <p className="text-balance text-xl uppercase leading-snug tracking-wide text-amber-100 sm:text-2xl">
-            ПОЗДРАВЛЯЕМ!{" "}
-            <span className="text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.5)]">
+        <div className="max-w-[min(96vw,580px)] rounded-2xl border-2 border-amber-400/55 bg-gradient-to-b from-amber-950/95 via-zinc-950/98 to-zinc-950/95 px-7 py-9 text-center shadow-[0_0_70px_hsla(43,96%,52%,0.38)] ring-1 ring-amber-500/20 sm:px-10 sm:py-11">
+          <p className="text-balance font-display text-[clamp(1.05rem,3.6vw,1.65rem)] font-black uppercase leading-[1.4] tracking-[0.14em] text-amber-50/95 sm:text-[clamp(1.2rem,3.1vw,2rem)] sm:tracking-[0.18em]">
+            <span className="glow-text text-amber-100/95">ПОЗДРАВЛЯЕМ!</span>{" "}
+            <span className="bg-gradient-to-b from-amber-50 via-yellow-100 to-amber-400 bg-clip-text font-black text-transparent drop-shadow-[0_0_22px_rgba(252,211,77,0.55)]">
               {state.superTttWinner.nick}
             </span>{" "}
-            САМЫЙ ДУШНЫЙ!!!
+            <span className="glow-text text-amber-100/95">САМЫЙ ДУШНЫЙ!!!</span>
           </p>
         </div>
       </div>
