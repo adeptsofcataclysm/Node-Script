@@ -111,6 +111,11 @@ export function AdeptsLobbyPage() {
   const emojiAllShown = lineIdx >= LOBBY_EMOJI_REVEAL_LINE_COUNT - 1;
   const emojiAtStart = lineIdx < 0;
 
+  /** Фиксированная область только между чатом и правым краем / сайдбаром — без перекрытия блоков. */
+  const emojiLayerInsetClass = isHost
+    ? "left-[calc(0.5rem+min(32vw,360px)+0.5rem)] right-[calc(0.5rem+min(420px,46vw)+0.5rem)] sm:left-[calc(0.75rem+min(32vw,360px)+0.75rem)] sm:right-[calc(0.75rem+min(420px,46vw)+0.75rem)] lg:right-[calc(1rem+min(420px,40vw)+1rem)]"
+    : "left-[calc(0.5rem+min(32vw,360px)+0.5rem)] right-3 sm:left-[calc(0.75rem+min(32vw,360px)+0.75rem)] sm:right-4";
+
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col overflow-hidden text-foreground">
       <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-border bg-card/80 px-4 py-3 backdrop-blur-sm sm:px-6">
@@ -131,10 +136,12 @@ export function AdeptsLobbyPage() {
         <ChatPanel className="mx-2 mb-2 mt-1 w-[min(32%,360px)] flex-shrink-0 sm:mx-3 sm:mb-3 sm:mt-2" />
 
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          {/* Центр экрана (под шапкой); pointer-events-none — чат и боковая панель кликабельны сквозь пустоту */}
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 top-16 z-[15] flex flex-col items-center justify-center gap-4 px-4 sm:gap-6 sm:px-6">
+          {/* Центр в полосе между чатом и сайдбаром; pointer-events-none — клики сквозь пустоту к чату/панели */}
+          <div
+            className={`pointer-events-none fixed bottom-0 top-16 z-[15] flex min-w-0 flex-col items-center justify-center gap-4 px-1 sm:gap-6 sm:px-2 ${emojiLayerInsetClass}`}
+          >
             <div
-              className="pointer-events-auto flex w-full max-w-[min(94vw,720px)] min-h-[min(48vh,440px)] flex-col items-center justify-center rounded-[1.125rem] border border-amber-400/45 bg-transparent px-4 py-6 text-center shadow-[0_0_20px_rgba(234,179,8,0.35),0_0_48px_rgba(250,204,21,0.18),inset_0_0_24px_rgba(234,179,8,0.06)] sm:min-h-[min(52vh,480px)] sm:rounded-[1.25rem] sm:px-8 sm:py-10"
+              className="pointer-events-auto flex w-full max-w-[min(720px,100%)] min-h-[min(48vh,440px)] min-w-0 flex-col items-center justify-center overflow-x-hidden rounded-[1.125rem] border border-amber-400/45 bg-transparent px-3 py-6 text-center shadow-[0_0_20px_rgba(234,179,8,0.35),0_0_48px_rgba(250,204,21,0.18),inset_0_0_24px_rgba(234,179,8,0.06)] sm:min-h-[min(52vh,480px)] sm:rounded-[1.25rem] sm:px-6 sm:py-10 md:px-8"
               style={{
                 fontFamily:
                   "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif",
@@ -144,7 +151,7 @@ export function AdeptsLobbyPage() {
                 <p
                   className="w-full max-w-full whitespace-pre-wrap break-words text-center font-normal leading-[1.2] tracking-[0.02em]"
                   style={{
-                    fontSize: "clamp(2.25rem, min(9vmin, 11vw), 5.25rem)",
+                    fontSize: "clamp(2rem, min(9vmin, 10vw), 5.25rem)",
                     wordSpacing: "0.12em",
                   }}
                 >
