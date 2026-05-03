@@ -130,10 +130,11 @@ export function AdeptsLobbyPage() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <ChatPanel className="mx-2 mb-2 mt-1 w-[min(32%,360px)] flex-shrink-0 sm:mx-3 sm:mb-3 sm:mt-2" />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden px-2 pb-3 pt-0 sm:px-4 sm:pb-4 sm:pt-1 lg:pr-4">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto py-4">
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {/* Центр экрана (под шапкой); pointer-events-none — чат и боковая панель кликабельны сквозь пустоту */}
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 top-16 z-[15] flex flex-col items-center justify-center gap-4 px-4 sm:gap-6 sm:px-6">
             <div
-              className="flex w-full max-w-[min(94vw,720px)] min-h-[min(48vh,440px)] flex-col items-center justify-center rounded-[1.125rem] border border-amber-400/45 bg-transparent px-4 py-6 text-center shadow-[0_0_20px_rgba(234,179,8,0.35),0_0_48px_rgba(250,204,21,0.18),inset_0_0_24px_rgba(234,179,8,0.06)] sm:min-h-[min(52vh,480px)] sm:rounded-[1.25rem] sm:px-8 sm:py-10"
+              className="pointer-events-auto flex w-full max-w-[min(94vw,720px)] min-h-[min(48vh,440px)] flex-col items-center justify-center rounded-[1.125rem] border border-amber-400/45 bg-transparent px-4 py-6 text-center shadow-[0_0_20px_rgba(234,179,8,0.35),0_0_48px_rgba(250,204,21,0.18),inset_0_0_24px_rgba(234,179,8,0.06)] sm:min-h-[min(52vh,480px)] sm:rounded-[1.25rem] sm:px-8 sm:py-10"
               style={{
                 fontFamily:
                   "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif",
@@ -157,7 +158,7 @@ export function AdeptsLobbyPage() {
               )}
             </div>
             {isHost ? (
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 sm:gap-4">
                 <button
                   type="button"
                   disabled={emojiAtStart}
@@ -178,18 +179,21 @@ export function AdeptsLobbyPage() {
             ) : null}
           </div>
 
-          {isHost ? (
-            <aside className="flex min-h-0 w-fit max-w-[min(420px,46vw)] shrink-0 flex-col self-stretch overflow-hidden pt-1 lg:max-w-[min(420px,40vw)]">
-              <LobbyQuizPlayersTable
-                variant="sidebar"
-                className="h-full min-h-0 w-fit max-w-full"
-                onStartGame={() => emitStartGame(computeTopSeatNicks(lobbyTablePlayers, scoresByNick))}
-                players={lobbyTablePlayers}
-                scoresByNick={scoresByNick}
-                onScoresByNickChange={setScoresByNick}
-              />
-            </aside>
-          ) : null}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden px-2 pb-3 pt-0 sm:px-4 sm:pb-4 sm:pt-1 lg:pr-4">
+            <div className="min-h-0 min-w-0 flex-1" />
+            {isHost ? (
+              <aside className="flex min-h-0 w-fit max-w-[min(420px,46vw)] shrink-0 flex-col self-stretch overflow-hidden pt-1 lg:max-w-[min(420px,40vw)]">
+                <LobbyQuizPlayersTable
+                  variant="sidebar"
+                  className="h-full min-h-0 w-fit max-w-full"
+                  onStartGame={() => emitStartGame(computeTopSeatNicks(lobbyTablePlayers, scoresByNick))}
+                  players={lobbyTablePlayers}
+                  scoresByNick={scoresByNick}
+                  onScoresByNickChange={setScoresByNick}
+                />
+              </aside>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

@@ -553,7 +553,7 @@ function SplashOverlay({
 
 const DED_FLY_IN_DURATION_SEC = 12;
 const DED_FLY_EXIT_DURATION_SEC = 1.05;
-const DED_FLY_CAPTION = "Благословение ДЕДА!";
+const DED_FLY_CAPTION = "Вас настигло Благословение ДЕДА!";
 
 function DedFlySplashOverlay({
   url,
