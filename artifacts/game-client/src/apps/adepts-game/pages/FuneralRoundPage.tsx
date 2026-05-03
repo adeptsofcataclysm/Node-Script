@@ -185,7 +185,7 @@ export default function FuneralRoundPage() {
             ) : null}
           </div>
         </main>
-        <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
+        <aside className="flex min-h-0 min-w-0 flex-col p-2 pt-3">
           <DonationsTable donationLog={state.donationLog} />
         </aside>
       </div>

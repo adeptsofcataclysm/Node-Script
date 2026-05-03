@@ -144,6 +144,16 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
     setActiveQuizCard(null);
   };
 
+  const showDonationsTable =
+    boardId === 3 && state.hideDonationsTableOnBoard3 !== true;
+  /** Third column matches chat (15%) when donations visible; collapsed to 0 otherwise. */
+  const threeColGridClass = showDonationsTable
+    ? "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]"
+    : "grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,0)]";
+  const scoreboardGridClass = showDonationsTable
+    ? "grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]"
+    : "grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,0)]";
+
   return (
     <div className="adepts-quiz-theme h-screen flex flex-col text-foreground overflow-hidden">
       <div style={{ display: "none" }} aria-hidden="true">
@@ -168,7 +178,7 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
+      <div className={threeColGridClass}>
         <aside className="flex min-h-0 min-w-0 flex-col p-2">
           <ChatPanel className="min-h-0 w-full flex-1" />
         </aside>
@@ -189,14 +199,21 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
             />
           </div>
         </main>
-        <aside className="flex min-h-0 min-w-0 flex-col items-end p-2 pt-3">
-          {boardId === 3 && !state.hideDonationsTableOnBoard3 ? (
+        <aside
+          className={
+            showDonationsTable
+              ? "flex min-h-0 min-w-0 flex-col p-2 pt-3"
+              : "pointer-events-none w-0 min-w-0 overflow-hidden p-0"
+          }
+          aria-hidden={!showDonationsTable}
+        >
+          {showDonationsTable ? (
             <DonationsTable donationLog={state.donationLog} />
           ) : null}
         </aside>
       </div>
 
-      <div className="grid shrink-0 grid-cols-[minmax(0,15%)_minmax(0,1fr)_minmax(0,15%)]">
+      <div className={scoreboardGridClass}>
         <div className="min-w-0" aria-hidden="true" />
         <div className="min-w-0">
           <Scoreboard
@@ -208,7 +225,12 @@ export default function Home({ boardId }: { boardId: AdeptsBoardId }) {
             currentTurnSeat={state.currentTurnSeat}
           />
         </div>
-        <div className="min-w-0" aria-hidden="true" />
+        <div
+          className={
+            showDonationsTable ? "min-w-0" : "w-0 min-w-0 overflow-hidden p-0"
+          }
+          aria-hidden="true"
+        />
       </div>
 
       {openCard && (
