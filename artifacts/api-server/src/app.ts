@@ -3,7 +3,6 @@ import path from "node:path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import router from "./routes";
 import { logger } from "./lib/logger";
 import { attachVisitTrackRoutes } from "./visit-track-routes";
 import { attachAdeptsQuizBoardRoutes } from "./adepts-quiz-board-routes";
@@ -38,7 +37,6 @@ attachVisitTrackRoutes(app);
 attachAdeptsQuizBoardRoutes(app);
 attachAdeptsSessionRoutes(app);
 
-app.use("/api", router);
 
 const webStaticRoot = process.env["WEB_STATIC_ROOT"]?.trim();
 if (webStaticRoot) {

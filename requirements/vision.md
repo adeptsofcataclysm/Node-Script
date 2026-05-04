@@ -2,6 +2,26 @@
 
 High-level product vision for the game application.
 
+## Overall game flow
+
+Game starts from lobby. Players are choosen from Spectators via **Opening the show** mini-game.
+
+Then we have a first quiz round. Some question cards can trigger **Roulette** and **Wheel of Adepts** mini-games. **Several** such mini-games may run **in the same round** (each time a matching card opens or the Host returns to the quiz and later opens another).
+
+When all question cards are revealed we can proceed to the second round.
+
+Second round is the same as first but with own themes and questions.
+
+There is a between-round transition after second round  - **Between-rounds transition**.
+
+Then players go through questions in third round.
+
+There is an additional between-round transition from third round to the Final round.
+
+PLayer with top score and player who opened "Final round" card in between-round transition are participating in Final Round.
+
+Winner defined by 5x5 TicTacToe in a Final round.
+
 ## Adepts game
 
 The main game runs in **three rounds**. Each round has several **question categories**. Every category holds **five questions**. Each question has a **point value** shown on the game board.
@@ -72,13 +92,13 @@ After all **Round 1** Players are known—but **before** Round 1 begins—Specta
 
 ### Roulette
 
-Triggered when a **Pandora’s box** (or equivalent) card opens on the board.
+Triggered when a **Pandora’s box** (or equivalent) card opens on the board. **Multiple** Roulette runs may occur **within one main round** as different cards open across the show.
 
 All **five Players** take turns “spinning” a **revolver drum** until one Player is **eliminated**. That Player becomes a **Spectator**. To continue the main game, a **lottery** is run: the Host fills a participant list from **Spectators**, then a random draw picks a winner who becomes a **Player** again (replacing or filling a seat per your rules).
 
 ### Wheel of Adepts
 
-Available when the matching card is opened. Two variants exist: **one** spin after a correct answer on a combined card, or **three** spins with **no** prior question. When the card opens, the active Player gets the wheel; **Host** and **Spectators** also switch to the wheel view. Final scoring is applied by the **Host** (or automated).
+Available when the matching card is opened. **Multiple** Wheel sessions may occur **within one main round** (each matching card can start another). Two variants exist: **one** spin after a correct answer on a combined card, or **three** spins with **no** prior question. When the card opens, the active Player gets the wheel; **Host** and **Spectators** also switch to the wheel view. Final scoring is applied by the **Host** (or automated).
 
 ### Between-rounds transition
 
@@ -89,8 +109,7 @@ This beat runs **only after Round 2**. When Round 2 ends, everyone (**Host**, **
 **Host** — Runs the session: pacing, reveals, scoring, and structural moves. In this product, the Host is whoever uses the **`/admin`** route and completes **authentication**.
 
 - Controls rounds and the question board—moves between rounds, opens and closes questions, adjusts scores, manages Players.
-- Can open the **Roulette** view.
-- Can open the **Wheel of Adepts** view.
+- Can open the **Roulette** view and the **Wheel of Adepts** view **repeatedly within a round** when cards call for them.
 - Can start the **Lottery** to seat a new Player after Roulette.
 
 **Player** — Sees the quiz board, can spin the Wheel of Adepts when allowed, and takes part in **Russian roulette** when that mini-game runs.
@@ -115,8 +134,8 @@ This beat runs **only after Round 2**. When Round 2 ends, everyone (**Host**, **
 | **Turn** | The right to answer or pick the next **question**; on a wrong answer on a **standard card**, **turn** passes to the **Player on the right**. |
 | **Score** | Points per **Player number**; the Host changes them via cards, direct entry, or **±** in steps of **100** as described above. |
 | **Mini-game** | A separate mode: **Wheel of Adepts**, **Roulette**, **between-rounds** flow, **opening** emoji round, **Spectator picks**. |
-| **Wheel of Adepts** | Spinning wheel with score sectors and **special sectors**; card variants—three spins with no question, or one spin after a correct answer on a **combined** card; outcome credited by Host or automation. |
-| **Roulette** | Revolver-style **mini-game** tied to **Pandora’s box**; eliminated **Player** → **Spectator**, then **Lottery** among Spectators for a new **Player**. |
+| **Wheel of Adepts** | Spinning wheel with score sectors and **special sectors**; card variants—three spins with no question, or one spin after a correct answer on a **combined** card; outcome credited by Host or automation. **Several** runs may occur in one **round**. |
+| **Roulette** | Revolver-style **mini-game** tied to **Pandora’s box**; eliminated **Player** → **Spectator**, then **Lottery** among Spectators for a new **Player**. **Several** runs may occur in one **round**. |
 | **Lottery** | Random draw from a list the **Host** builds from **Spectators**, used after **Roulette** to assign a new **Player** to a seat. |
 | **Pandora’s box** | **Question card** type that launches **Roulette**. |
 | **“Raccoon in a sack”** | **Question card** type: current **Player** gives the **question** to another **Player** and does not answer. |
